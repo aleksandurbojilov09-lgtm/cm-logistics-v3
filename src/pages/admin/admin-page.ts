@@ -17,6 +17,13 @@ const ADMIN_VIEW_CONFIG = {
         icon: "📦"
     },
 
+    discrepancies: {
+        title: "Несъответствия",
+        subtitle: "Сигнали от шофьори и история по фирми",
+        label: "Сигнали",
+        icon: "⚠️"
+    },
+
     trips: {
         title: "Активни курсове",
         subtitle: "Следене и редакция на маршрутите",
