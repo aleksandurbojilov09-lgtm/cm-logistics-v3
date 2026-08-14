@@ -1,4 +1,5 @@
 import "./client-page.css";
+import "./client-notifications.css";
 
 import {
     createClientOrder,
@@ -10,6 +11,14 @@ import {
     type ClientOrderStatus,
     type ClientPortalContext
 } from "../../features/orders/client-orders-service";
+
+import {
+    confirmClientDriverEta,
+    loadClientActiveNotifications,
+    loadClientDiscrepancies,
+    type ClientDiscrepancy,
+    type ClientDriverNotification
+} from "../../features/notifications/client-notification-service";
 
 import {
     logoutCurrentSession
@@ -35,8 +44,23 @@ let calendarOrders:
     [];
 
 
+let notifications:
+    ClientDriverNotification[] =
+    [];
+
+
+let discrepancies:
+    ClientDiscrepancy[] =
+    [];
+
+
 let refreshVersion =
     0;
+
+
+let notificationTimer:
+    number | null =
+    null;
 
 
 /* =========================================================
@@ -52,6 +76,22 @@ function formatTons(
         .toFixed(3)
         .replace(/0+$/, "")
         .replace(/\.$/, "");
+}
+
+
+function formatDifference(
+    value: number
+): string {
+
+    const prefix =
+        value > 0
+            ? "+"
+            : "";
+
+
+    return `${prefix}${formatTons(
+        value
+    )} т.`;
 }
 
 
@@ -89,6 +129,7 @@ string {
     const year =
         now.getFullYear();
 
+
     const month =
         String(
             now.getMonth() + 1
@@ -96,6 +137,7 @@ string {
             2,
             "0"
         );
+
 
     const day =
         String(
@@ -174,8 +216,7 @@ function assignedTons(
                 assignment
             ) =>
                 total +
-                assignment
-                    .assignedTons,
+                assignment.assignedTons,
             0
         );
 }
@@ -241,6 +282,7 @@ function setPageMessage(
     element.textContent =
         message;
 
+
     element.className =
         "client-page-message";
 
@@ -270,6 +312,7 @@ string {
             <header
                 class="client-topbar"
             >
+
                 <div
                     class="client-brand"
                 >
@@ -298,6 +341,7 @@ string {
                 >
                     Изход
                 </button>
+
             </header>
 
 
@@ -331,6 +375,56 @@ string {
                     class="client-page-message"
                     aria-live="polite"
                 ></div>
+
+
+                <section
+                    class="
+                        client-panel
+                        client-notifications-panel
+                    "
+                >
+
+                    <header
+                        class="
+                            client-panel-header
+                            client-panel-header-row
+                        "
+                    >
+
+                        <div>
+                            <h2>
+                                🔔 Известия
+                            </h2>
+
+                            <p>
+                                Сигнали от шофьора
+                                и несъответствия при товарене.
+                            </p>
+                        </div>
+
+
+                        <span
+                            id="k3ClientNotificationsCount"
+                            class="client-count"
+                        >
+                            0
+                        </span>
+
+                    </header>
+
+
+                    <div
+                        id="k3ClientNotificationsList"
+                        class="client-notifications-list"
+                    >
+                        <div
+                            class="client-empty"
+                        >
+                            Зареждане...
+                        </div>
+                    </div>
+
+                </section>
 
 
                 <div
@@ -417,8 +511,12 @@ string {
                     >
 
                         <header
-                            class="client-panel-header client-panel-header-row"
+                            class="
+                                client-panel-header
+                                client-panel-header-row
+                            "
                         >
+
                             <div>
                                 <h2>
                                     🚚 Активни заявки
@@ -437,6 +535,7 @@ string {
                             >
                                 0
                             </span>
+
                         </header>
 
 
@@ -457,12 +556,19 @@ string {
 
 
                 <section
-                    class="client-panel client-history-panel"
+                    class="
+                        client-panel
+                        client-history-panel
+                    "
                 >
 
                     <header
-                        class="client-panel-header client-panel-header-row"
+                        class="
+                            client-panel-header
+                            client-panel-header-row
+                        "
                     >
+
                         <div>
                             <h2>
                                 📅 История на поръчките
@@ -482,6 +588,7 @@ string {
                         >
                             📅 Календар на поръчките
                         </button>
+
                     </header>
 
 
@@ -494,6 +601,7 @@ string {
                         <div
                             class="client-calendar-controls"
                         >
+
                             <label>
                                 Избери дата
 
@@ -511,6 +619,7 @@ string {
                             >
                                 Покажи заявките
                             </button>
+
                         </div>
 
 
@@ -536,6 +645,62 @@ string {
                 id="k3ClientEditDialog"
                 class="client-edit-dialog"
             ></dialog>
+
+
+            <div
+                id="k3ClientDriverNotification"
+                class="client-driver-notification"
+                hidden
+            >
+
+                <div
+                    class="client-driver-notification-card"
+                >
+
+                    <div
+                        class="client-driver-notification-icon"
+                    >
+                        🚛
+                    </div>
+
+
+                    <div
+                        class="client-driver-notification-label"
+                    >
+                        Известие от шофьора
+                    </div>
+
+
+                    <h2
+                        id="k3ClientDriverNotificationTitle"
+                    >
+                        Шофьорът е на път
+                    </h2>
+
+
+                    <p
+                        id="k3ClientDriverNotificationMessage"
+                    ></p>
+
+
+                    <div
+                        id="k3ClientDriverNotificationDate"
+                        class="client-driver-notification-date"
+                    ></div>
+
+
+                    <button
+                        id="k3ClientDriverNotificationConfirm"
+                        type="button"
+                        class="client-notification-confirm"
+                        data-client-action="confirm-driver-eta"
+                    >
+                        ✅ Потвърждавам
+                    </button>
+
+                </div>
+
+            </div>
 
         </div>
     `;
@@ -600,14 +765,17 @@ void {
         context.sites.length ===
         0
     ) {
+
         siteSelect.innerHTML = `
             <option value="">
                 Няма активни обекти
             </option>
         `;
 
+
         siteSelect.disabled =
             true;
+
 
         return;
     }
@@ -642,6 +810,633 @@ void {
                 `
             )
             .join("");
+}
+
+
+/* =========================================================
+   CLIENT NOTIFICATIONS
+   ========================================================= */
+
+
+function pendingNotification():
+ClientDriverNotification | null {
+
+    return (
+        notifications.find(
+            notification =>
+                notification
+                    .requiresConfirmation &&
+                !notification.confirmed
+        ) ||
+        null
+    );
+}
+
+
+function renderNotificationOverlay():
+void {
+
+    const overlay =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3ClientDriverNotification"
+        );
+
+
+    const title =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3ClientDriverNotificationTitle"
+        );
+
+
+    const message =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3ClientDriverNotificationMessage"
+        );
+
+
+    const date =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3ClientDriverNotificationDate"
+        );
+
+
+    const button =
+        document.querySelector<
+            HTMLButtonElement
+        >(
+            "#k3ClientDriverNotificationConfirm"
+        );
+
+
+    if (
+        !overlay ||
+        !title ||
+        !message ||
+        !date ||
+        !button
+    ) {
+        return;
+    }
+
+
+    const notification =
+        pendingNotification();
+
+
+    if (!notification) {
+
+        overlay.hidden =
+            true;
+
+
+        delete button.dataset
+            .notificationId;
+
+
+        return;
+    }
+
+
+    title.textContent =
+        notification.title ||
+        "Шофьорът е на път";
+
+
+    message.textContent =
+        notification.message ||
+        "Камионът пристига.";
+
+
+    date.textContent =
+        formatDate(
+            notification.createdAt
+        );
+
+
+    button.dataset.notificationId =
+        notification.id;
+
+
+    button.disabled =
+        false;
+
+
+    button.textContent =
+        "✅ Потвърждавам";
+
+
+    overlay.hidden =
+        false;
+}
+
+
+function renderStandardNotification(
+    notification:
+        ClientDriverNotification
+): string {
+
+    return `
+        <article
+            class="
+                client-notification-card
+                ${
+                    notification.confirmed
+                        ? "client-notification-confirmed"
+                        : "client-notification-pending"
+                }
+            "
+        >
+
+            <div
+                class="client-notification-icon"
+            >
+                🚛
+            </div>
+
+
+            <div
+                class="client-notification-content"
+            >
+
+                <strong>
+                    ${escapeHtml(
+                        notification.title ||
+                        "Шофьорът е на път"
+                    )}
+                </strong>
+
+
+                <p>
+                    ${escapeHtml(
+                        notification.message
+                    )}
+                </p>
+
+
+                <div
+                    class="client-notification-meta"
+                >
+                    ${escapeHtml(
+                        formatDate(
+                            notification.createdAt
+                        )
+                    )}
+                </div>
+
+
+                <div
+                    class="
+                        client-notification-state
+                        ${
+                            notification.confirmed
+                                ? "client-notification-state-confirmed"
+                                : "client-notification-state-pending"
+                        }
+                    "
+                >
+                    ${
+                        notification.confirmed
+
+                            ? "✅ Потвърдено"
+
+                            : "⏳ Очаква вашето потвърждение"
+                    }
+                </div>
+
+            </div>
+
+        </article>
+    `;
+}
+
+
+function discrepancyDescription(
+    discrepancy:
+        ClientDiscrepancy
+): string {
+
+    if (
+        discrepancy.differenceTons < 0
+    ) {
+
+        return `Натоварени са с ${formatTons(
+            Math.abs(
+                discrepancy.differenceTons
+            )
+        )} т. по-малко от зачисленото.`;
+    }
+
+
+    if (
+        discrepancy.differenceTons > 0
+    ) {
+
+        return `Натоварени са с ${formatTons(
+            discrepancy.differenceTons
+        )} т. повече от зачисленото.`;
+    }
+
+
+    return "Реалното количество съвпада със зачисленото.";
+}
+
+
+function renderDiscrepancy(
+    discrepancy:
+        ClientDiscrepancy
+): string {
+
+    const reviewed =
+        discrepancy.status ===
+            "reviewed";
+
+
+    return `
+        <article
+            class="
+                client-discrepancy-card
+                ${
+                    reviewed
+                        ? "client-discrepancy-reviewed"
+                        : ""
+                }
+            "
+        >
+
+            <div
+                class="client-discrepancy-icon"
+            >
+                ⚠️
+            </div>
+
+
+            <div
+                class="client-discrepancy-content"
+            >
+
+                <strong>
+                    Подадено несъответствие
+                </strong>
+
+
+                <p>
+                    Шофьорът е регистрирал
+                    несъответствие при товаренето.
+                </p>
+
+
+                <div
+                    class="client-discrepancy-grid"
+                >
+
+                    <div>
+                        <span>
+                            Зачислени
+                        </span>
+
+                        <strong>
+                            ${escapeHtml(
+                                formatTons(
+                                    discrepancy
+                                        .assignedTons
+                                )
+                            )}
+                            т.
+                        </strong>
+                    </div>
+
+
+                    <div>
+                        <span>
+                            Реално
+                        </span>
+
+                        <strong>
+                            ${escapeHtml(
+                                formatTons(
+                                    discrepancy
+                                        .actualLoadedTons
+                                )
+                            )}
+                            т.
+                        </strong>
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="client-discrepancy-difference"
+                >
+
+                    <span>
+                        Разлика
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(
+                            formatDifference(
+                                discrepancy
+                                    .differenceTons
+                            )
+                        )}
+                    </strong>
+
+                    <small>
+                        ${escapeHtml(
+                            discrepancyDescription(
+                                discrepancy
+                            )
+                        )}
+                    </small>
+
+                </div>
+
+
+                ${
+                    discrepancy.note
+
+                        ? `
+                            <div
+                                class="client-discrepancy-note"
+                            >
+                                📝
+                                ${escapeHtml(
+                                    discrepancy.note
+                                )}
+                            </div>
+                        `
+
+                        : ""
+                }
+
+
+                <div
+                    class="client-notification-meta"
+                >
+                    🚛
+                    ${escapeHtml(
+                        discrepancy.truckNumber ||
+                        "-"
+                    )}
+
+                    •
+                    ${escapeHtml(
+                        discrepancy.driverName ||
+                        "-"
+                    )}
+
+                    <br>
+
+                    ${escapeHtml(
+                        formatDate(
+                            discrepancy.createdAt
+                        )
+                    )}
+                </div>
+
+
+                <div
+                    class="
+                        client-discrepancy-state
+                        ${
+                            reviewed
+                                ? "client-discrepancy-state-reviewed"
+                                : ""
+                        }
+                    "
+                >
+                    ${
+                        reviewed
+
+                            ? "✅ Прегледано от администрацията"
+
+                            : "⚠️ Изпратено към администрацията"
+                    }
+                </div>
+
+            </div>
+
+        </article>
+    `;
+}
+
+
+function renderNotifications():
+void {
+
+    const container =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3ClientNotificationsList"
+        );
+
+
+    const count =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3ClientNotificationsCount"
+        );
+
+
+    if (
+        !container ||
+        !count
+    ) {
+        return;
+    }
+
+
+    const items = [
+
+        ...notifications.map(
+            notification => ({
+                createdAt:
+                    notification.createdAt,
+
+                html:
+                    renderStandardNotification(
+                        notification
+                    )
+            })
+        ),
+
+
+        ...discrepancies.map(
+            discrepancy => ({
+                createdAt:
+                    discrepancy.createdAt,
+
+                html:
+                    renderDiscrepancy(
+                        discrepancy
+                    )
+            })
+        )
+
+    ].sort(
+        (
+            first,
+            second
+        ) =>
+            new Date(
+                second.createdAt ||
+                0
+            ).getTime()
+            -
+            new Date(
+                first.createdAt ||
+                0
+            ).getTime()
+    );
+
+
+    count.textContent =
+        String(
+            items.length
+        );
+
+
+    if (
+        items.length === 0
+    ) {
+
+        container.innerHTML = `
+            <div
+                class="client-empty"
+            >
+                Няма активни известия
+                или регистрирани несъответствия.
+            </div>
+        `;
+
+
+        renderNotificationOverlay();
+
+
+        return;
+    }
+
+
+    container.innerHTML =
+        items
+            .map(
+                item =>
+                    item.html
+            )
+            .join("");
+
+
+    renderNotificationOverlay();
+}
+
+
+async function refreshNotifications(
+    showError:
+        boolean = false
+): Promise<void> {
+
+    try {
+
+        const [
+            nextNotifications,
+            nextDiscrepancies
+        ] =
+            await Promise.all([
+                loadClientActiveNotifications(),
+                loadClientDiscrepancies()
+            ]);
+
+
+        const root =
+            document.querySelector(
+                "#k3ClientPortal"
+            );
+
+
+        if (!root?.isConnected) {
+
+            stopNotificationPolling();
+
+            return;
+        }
+
+
+        notifications =
+            nextNotifications;
+
+
+        discrepancies =
+            nextDiscrepancies;
+
+
+        renderNotifications();
+
+
+    } catch (error) {
+
+        if (showError) {
+
+            setPageMessage(
+                errorMessage(
+                    error
+                ),
+                "error"
+            );
+
+        } else {
+
+            console.warn(
+                "K3 Client notification refresh failed.",
+                error
+            );
+        }
+    }
+}
+
+
+function startNotificationPolling():
+void {
+
+    stopNotificationPolling();
+
+
+    notificationTimer =
+        window.setInterval(
+            () => {
+                void refreshNotifications();
+            },
+            5000
+        );
+}
+
+
+function stopNotificationPolling():
+void {
+
+    if (
+        notificationTimer !==
+        null
+    ) {
+
+        window.clearInterval(
+            notificationTimer
+        );
+
+
+        notificationTimer =
+            null;
+    }
 }
 
 
@@ -695,6 +1490,7 @@ function assignmentHtml(
                             <div
                                 class="client-assignment"
                             >
+
                                 <strong>
                                     🚛
                                     ${escapeHtml(
@@ -702,6 +1498,7 @@ function assignmentHtml(
                                         "Камион"
                                     )}
                                 </strong>
+
 
                                 <span>
                                     ⚖️
@@ -712,6 +1509,7 @@ function assignmentHtml(
                                     )}
                                     т.
                                 </span>
+
 
                                 ${
                                     assignment.trailerNumber
@@ -735,6 +1533,7 @@ function assignmentHtml(
 
                                         : ""
                                 }
+
                             </div>
                         `
                     )
@@ -779,6 +1578,7 @@ function renderOrderCard(
             <header
                 class="client-order-header"
             >
+
                 <div>
                     <span>
                         Заявка
@@ -813,6 +1613,7 @@ function renderOrderCard(
                         )
                     )}
                 </span>
+
             </header>
 
 
@@ -943,6 +1744,7 @@ void {
         activeOrders.length ===
         0
     ) {
+
         container.innerHTML = `
             <div
                 class="client-empty"
@@ -950,6 +1752,7 @@ void {
                 В момента няма активни заявки.
             </div>
         `;
+
 
         return;
     }
@@ -993,6 +1796,7 @@ void {
         calendarOrders.length ===
         0
     ) {
+
         container.innerHTML = `
             <div
                 class="client-empty"
@@ -1000,6 +1804,7 @@ void {
                 Няма заявки за избраната дата.
             </div>
         `;
+
 
         return;
     }
@@ -1019,7 +1824,7 @@ void {
 
 
 /* =========================================================
-   REFRESH
+   REFRESH ORDERS
    ========================================================= */
 
 
@@ -1061,7 +1866,9 @@ Promise<void> {
     } catch (error) {
 
         setPageMessage(
-            errorMessage(error),
+            errorMessage(
+                error
+            ),
             "error"
         );
     }
@@ -1069,7 +1876,7 @@ Promise<void> {
 
 
 /* =========================================================
-   CREATE
+   CREATE ORDER
    ========================================================= */
 
 
@@ -1125,13 +1932,13 @@ async function submitOrder(
         );
 
 
-    if (
-        !site.value
-    ) {
+    if (!site.value) {
+
         setPageMessage(
             "Изберете обект.",
             "error"
         );
+
 
         return;
     }
@@ -1143,10 +1950,12 @@ async function submitOrder(
         ) ||
         requestedTons <= 0
     ) {
+
         setPageMessage(
             "Въведете валидно количество.",
             "error"
         );
+
 
         return;
     }
@@ -1154,6 +1963,7 @@ async function submitOrder(
 
     button.disabled =
         true;
+
 
     button.textContent =
         "Изпращане...";
@@ -1183,7 +1993,9 @@ async function submitOrder(
     } catch (error) {
 
         setPageMessage(
-            errorMessage(error),
+            errorMessage(
+                error
+            ),
             "error"
         );
 
@@ -1193,6 +2005,7 @@ async function submitOrder(
         button.disabled =
             false;
 
+
         button.textContent =
             "📦 Изпрати заявка";
     }
@@ -1200,7 +2013,7 @@ async function submitOrder(
 
 
 /* =========================================================
-   EDIT
+   EDIT ORDER
    ========================================================= */
 
 
@@ -1218,7 +2031,9 @@ function openEditDialog(
 
     if (
         !order ||
-        isEditLocked(order)
+        isEditLocked(
+            order
+        )
     ) {
         return;
     }
@@ -1238,7 +2053,9 @@ function openEditDialog(
 
 
     const alreadyAssigned =
-        assignedTons(order);
+        assignedTons(
+            order
+        );
 
 
     dialog.innerHTML = `
@@ -1253,6 +2070,7 @@ function openEditDialog(
             <header
                 class="client-edit-header"
             >
+
                 <div>
                     <h2>
                         ✏️ Редакция
@@ -1274,6 +2092,7 @@ function openEditDialog(
                 >
                     ✕
                 </button>
+
             </header>
 
 
@@ -1285,6 +2104,7 @@ function openEditDialog(
                             class="client-edit-info"
                         >
                             Вече са зачислени
+
                             <strong>
                                 ${escapeHtml(
                                     formatTons(
@@ -1326,7 +2146,8 @@ function openEditDialog(
                     id="k3ClientEditNote"
                     rows="5"
                 >${escapeHtml(
-                    order.note || ""
+                    order.note ||
+                    ""
                 )}</textarea>
             </label>
 
@@ -1411,6 +2232,7 @@ async function submitEdit(
     button.disabled =
         true;
 
+
     button.textContent =
         "Запазване...";
 
@@ -1441,7 +2263,9 @@ async function submitEdit(
     } catch (error) {
 
         setPageMessage(
-            errorMessage(error),
+            errorMessage(
+                error
+            ),
             "error"
         );
 
@@ -1451,8 +2275,74 @@ async function submitEdit(
         button.disabled =
             false;
 
+
         button.textContent =
             "💾 Запази промените";
+    }
+}
+
+
+/* =========================================================
+   CONFIRM ETA
+   ========================================================= */
+
+
+async function confirmDriverEta(
+    button: HTMLButtonElement
+): Promise<void> {
+
+    const notificationId =
+        button.dataset
+            .notificationId;
+
+
+    if (!notificationId) {
+        return;
+    }
+
+
+    button.disabled =
+        true;
+
+
+    button.textContent =
+        "Потвърждаване...";
+
+
+    try {
+
+        await confirmClientDriverEta(
+            notificationId
+        );
+
+
+        await refreshNotifications(
+            true
+        );
+
+
+        setPageMessage(
+            "✅ Известието е потвърдено.",
+            "success"
+        );
+
+
+    } catch (error) {
+
+        setPageMessage(
+            errorMessage(
+                error
+            ),
+            "error"
+        );
+
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "✅ Потвърждавам";
     }
 }
 
@@ -1482,11 +2372,14 @@ async function handleSubmit(
         form.id ===
         "k3ClientOrderForm"
     ) {
+
         event.preventDefault();
+
 
         await submitOrder(
             form
         );
+
 
         return;
     }
@@ -1496,7 +2389,9 @@ async function handleSubmit(
         form.id ===
         "k3ClientEditForm"
     ) {
+
         event.preventDefault();
+
 
         await submitEdit(
             form
@@ -1534,60 +2429,96 @@ async function handleClick(
 
 
     const action =
-        button.dataset.clientAction;
+        button.dataset
+            .clientAction;
 
 
     if (
-        action === "logout"
+        action ===
+        "logout"
     ) {
 
         button.disabled =
             true;
 
+
         try {
+
+            stopNotificationPolling();
+
+
             await logoutCurrentSession();
+
+
         } catch (error) {
+
             button.disabled =
                 false;
 
+
             setPageMessage(
-                errorMessage(error),
+                errorMessage(
+                    error
+                ),
                 "error"
             );
         }
+
 
         return;
     }
 
 
     if (
-        action === "edit-order"
+        action ===
+        "confirm-driver-eta"
+    ) {
+
+        await confirmDriverEta(
+            button
+        );
+
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "edit-order"
     ) {
 
         const orderId =
             button.dataset.orderId;
 
+
         if (orderId) {
+
             openEditDialog(
                 orderId
             );
         }
 
+
         return;
     }
 
 
     if (
-        action === "close-edit"
+        action ===
+        "close-edit"
     ) {
+
         closeEditDialog();
 
+
         return;
     }
 
 
     if (
-        action === "toggle-calendar"
+        action ===
+        "toggle-calendar"
     ) {
 
         const panel =
@@ -1612,7 +2543,8 @@ async function handleClick(
 
 
     if (
-        action === "load-calendar"
+        action ===
+        "load-calendar"
     ) {
 
         if (!context) {
@@ -1632,10 +2564,12 @@ async function handleClick(
             !input ||
             !input.value
         ) {
+
             setPageMessage(
                 "Изберете дата.",
                 "error"
             );
+
 
             return;
         }
@@ -1660,7 +2594,9 @@ async function handleClick(
         } catch (error) {
 
             setPageMessage(
-                errorMessage(error),
+                errorMessage(
+                    error
+                ),
                 "error"
             );
 
@@ -1724,6 +2660,7 @@ Promise<void> {
 
 
     if (dateInput) {
+
         dateInput.value =
             localDateInputValue();
     }
@@ -1750,8 +2687,18 @@ Promise<void> {
     } catch (error) {
 
         setPageMessage(
-            errorMessage(error),
+            errorMessage(
+                error
+            ),
             "error"
         );
     }
+
+
+    await refreshNotifications(
+        true
+    );
+
+
+    startNotificationPolling();
 }
