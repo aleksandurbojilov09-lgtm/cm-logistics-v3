@@ -1,0 +1,696 @@
+/* =========================================================
+   K3 LOGISTICS V3
+   ADMIN DISCREPANCIES
+   ========================================================= */
+
+
+.discrepancies-section {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+
+/* =========================================================
+   MESSAGE
+   ========================================================= */
+
+
+.discrepancies-message {
+    display: none;
+
+    padding: 12px 14px;
+
+    border-radius: 11px;
+
+    font-size: 13px;
+}
+
+
+.discrepancies-message-success {
+    display: block;
+
+    border: 1px solid #166534;
+
+    background:
+        rgba(
+            20,
+            83,
+            45,
+            0.35
+        );
+
+    color: #86efac;
+}
+
+
+.discrepancies-message-error {
+    display: block;
+
+    border: 1px solid #991b1b;
+
+    background: #450a0a;
+
+    color: #fecaca;
+}
+
+
+/* =========================================================
+   SUMMARY
+   ========================================================= */
+
+
+.discrepancies-summary {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(
+                0,
+                1fr
+            )
+        );
+
+    gap: 10px;
+}
+
+
+.discrepancies-summary-card {
+    min-width: 0;
+
+    padding: 15px;
+
+    border: 1px solid var(--cm-color-border);
+
+    border-radius: 13px;
+
+    background: var(--cm-color-surface);
+}
+
+
+.discrepancies-summary-card span {
+    display: block;
+
+    color: var(--cm-color-text-muted);
+
+    font-size: 11px;
+}
+
+
+.discrepancies-summary-card strong {
+    display: block;
+
+    margin-top: 6px;
+
+    font-size: 26px;
+}
+
+
+/* =========================================================
+   PANEL
+   ========================================================= */
+
+
+.discrepancies-panel {
+    overflow: hidden;
+
+    border: 1px solid var(--cm-color-border);
+
+    border-radius: 16px;
+
+    background: var(--cm-color-surface);
+}
+
+
+.discrepancies-panel-header {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 14px;
+
+    padding: 18px;
+
+    border-bottom: 1px solid var(--cm-color-border);
+}
+
+
+.discrepancies-panel-header h3 {
+    margin: 0;
+
+    font-size: 19px;
+}
+
+
+.discrepancies-panel-header p {
+    margin: 5px 0 0;
+
+    color: var(--cm-color-text-muted);
+
+    font-size: 12px;
+}
+
+
+.discrepancies-refresh-button {
+    min-height: 40px;
+
+    padding: 8px 13px;
+
+    border: 1px solid #475569;
+
+    border-radius: 10px;
+
+    background: #1e293b;
+
+    color: #ffffff;
+
+    cursor: pointer;
+
+    font-weight: 700;
+}
+
+
+.discrepancies-refresh-button:disabled {
+    opacity: 0.5;
+}
+
+
+/* =========================================================
+   TABS
+   ========================================================= */
+
+
+.discrepancies-tabs {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(
+                0,
+                1fr
+            )
+        );
+
+    gap: 8px;
+
+    padding: 12px;
+
+    border-bottom: 1px solid var(--cm-color-border);
+}
+
+
+.discrepancies-tab {
+    min-height: 42px;
+
+    padding: 9px 10px;
+
+    border: 1px solid #334155;
+
+    border-radius: 10px;
+
+    background: #0f172a;
+
+    color: #94a3b8;
+
+    font-weight: 800;
+}
+
+
+.discrepancies-tab-active {
+    border-color: #d97706;
+
+    background:
+        rgba(
+            120,
+            53,
+            15,
+            0.3
+        );
+
+    color: #fde68a;
+}
+
+
+/* =========================================================
+   CONTENT
+   ========================================================= */
+
+
+.discrepancies-content {
+    padding: 14px;
+}
+
+
+.discrepancies-list {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 11px;
+}
+
+
+.discrepancies-empty {
+    padding: 46px 18px;
+
+    color: var(--cm-color-text-muted);
+
+    text-align: center;
+}
+
+
+/* =========================================================
+   CARD
+   ========================================================= */
+
+
+.discrepancy-card {
+    padding: 15px;
+
+    border: 1px solid #92400e;
+
+    border-radius: 13px;
+
+    background:
+        rgba(
+            120,
+            53,
+            15,
+            0.16
+        );
+}
+
+
+.discrepancy-card-reviewed {
+    border-color: #334155;
+
+    background: #020617;
+}
+
+
+.discrepancy-card-header {
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 9px;
+}
+
+
+.discrepancy-card-header > div {
+    min-width: 0;
+}
+
+
+.discrepancy-card-header strong {
+    display: block;
+
+    overflow-wrap: anywhere;
+
+    color: #fbbf24;
+
+    font-size: 16px;
+}
+
+
+.discrepancy-card-reviewed
+.discrepancy-card-header strong {
+    color: #e2e8f0;
+}
+
+
+.discrepancy-card-header span {
+    display: block;
+
+    margin-top: 4px;
+
+    color: #64748b;
+
+    font-size: 10px;
+}
+
+
+.discrepancy-status {
+    padding: 6px 9px;
+
+    border-radius: 9999px;
+
+    font-size: 10px;
+
+    font-weight: 800;
+}
+
+
+.discrepancy-status-reported {
+    background: #78350f;
+
+    color: #fde68a;
+}
+
+
+.discrepancy-status-reviewed {
+    background: #14532d;
+
+    color: #86efac;
+}
+
+
+/* =========================================================
+   TONS
+   ========================================================= */
+
+
+.discrepancy-tons-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(
+                0,
+                1fr
+            )
+        );
+
+    gap: 7px;
+
+    margin-top: 13px;
+}
+
+
+.discrepancy-tons-grid > div {
+    min-width: 0;
+
+    padding: 10px 7px;
+
+    border: 1px solid #334155;
+
+    border-radius: 10px;
+
+    background: #0f172a;
+
+    text-align: center;
+}
+
+
+.discrepancy-tons-grid span {
+    display: block;
+
+    color: #64748b;
+
+    font-size: 9px;
+}
+
+
+.discrepancy-tons-grid strong {
+    display: block;
+
+    margin-top: 4px;
+
+    overflow-wrap: anywhere;
+
+    font-size: 14px;
+}
+
+
+.discrepancy-difference-negative {
+    border-color: #991b1b !important;
+}
+
+
+.discrepancy-difference-negative strong {
+    color: #fca5a5;
+}
+
+
+.discrepancy-difference-positive {
+    border-color: #d97706 !important;
+}
+
+
+.discrepancy-difference-positive strong {
+    color: #fcd34d;
+}
+
+
+.discrepancy-difference-zero strong {
+    color: #86efac;
+}
+
+
+.discrepancy-description {
+    margin-top: 9px;
+
+    color: #cbd5e1;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   DETAILS
+   ========================================================= */
+
+
+.discrepancy-meta {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 8px 14px;
+
+    margin-top: 11px;
+
+    color: #94a3b8;
+
+    font-size: 11px;
+}
+
+
+.discrepancy-note {
+    margin-top: 10px;
+
+    padding: 10px;
+
+    border-radius: 9px;
+
+    background: #0f172a;
+
+    color: #cbd5e1;
+
+    font-size: 11px;
+}
+
+
+.discrepancy-reviewed-at {
+    margin-top: 10px;
+
+    color: #86efac;
+
+    font-size: 10px;
+}
+
+
+.discrepancy-review-button {
+    width: 100%;
+
+    min-height: 45px;
+
+    margin-top: 13px;
+
+    padding: 10px 13px;
+
+    border: 0;
+
+    border-radius: 10px;
+
+    background: #b45309;
+
+    color: #ffffff;
+
+    cursor: pointer;
+
+    font-weight: 900;
+}
+
+
+.discrepancy-review-button:hover:not(:disabled) {
+    background: #d97706;
+}
+
+
+.discrepancy-review-button:disabled {
+    opacity: 0.5;
+}
+
+
+/* =========================================================
+   COMPANY ARCHIVE
+   ========================================================= */
+
+
+.discrepancy-company-list {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 16px;
+}
+
+
+.discrepancy-company-group {
+    overflow: hidden;
+
+    border: 1px solid #334155;
+
+    border-radius: 14px;
+
+    background: #0f172a;
+}
+
+
+.discrepancy-company-header {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 9px;
+
+    padding: 14px;
+
+    border-bottom: 1px solid #334155;
+}
+
+
+.discrepancy-company-header strong {
+    display: block;
+
+    font-size: 16px;
+}
+
+
+.discrepancy-company-header span {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #64748b;
+
+    font-size: 10px;
+}
+
+
+.discrepancy-company-group
+.discrepancies-list {
+    padding: 12px;
+}
+
+
+.discrepancy-company-pending,
+.discrepancy-company-ok {
+    align-self: flex-start;
+
+    padding: 5px 8px;
+
+    border-radius: 9999px;
+
+    font-size: 10px;
+
+    font-weight: 800;
+}
+
+
+.discrepancy-company-pending {
+    background: #78350f;
+
+    color: #fde68a;
+}
+
+
+.discrepancy-company-ok {
+    background: #14532d;
+
+    color: #86efac;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+
+@media (min-width: 640px) {
+
+    .discrepancies-panel-header {
+        flex-direction: row;
+
+        align-items: center;
+
+        justify-content: space-between;
+    }
+
+
+    .discrepancies-refresh-button {
+        flex: 0 0 auto;
+    }
+
+
+    .discrepancy-card-header {
+        flex-direction: row;
+
+        align-items: flex-start;
+
+        justify-content: space-between;
+    }
+
+
+    .discrepancy-company-header {
+        flex-direction: row;
+
+        align-items: center;
+
+        justify-content: space-between;
+    }
+
+
+    .discrepancy-company-pending,
+    .discrepancy-company-ok {
+        align-self: auto;
+    }
+
+}
+
+
+@media (min-width: 1050px) {
+
+    .discrepancies-list {
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+    }
+
+
+    .discrepancy-company-group
+    .discrepancies-list {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+    }
+
+}
