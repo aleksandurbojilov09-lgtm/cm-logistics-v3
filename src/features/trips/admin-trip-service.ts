@@ -1131,3 +1131,209 @@ cancelAdminTruckChange(
         );
     }
 }
+
+
+export type AdminPendingTruckChange = {
+    id: string;
+
+    tripId: string;
+
+    status: "pending_driver_km";
+
+    changeMode:
+        AdminTruckChangeMode;
+
+    requestedAt:
+        string | null;
+
+    driverId:
+        string | null;
+
+    driverName:
+        string | null;
+
+    fromTruckId:
+        string | null;
+
+    fromTruckNumber:
+        string | null;
+
+    toTruckId:
+        string | null;
+
+    toTruckNumber:
+        string | null;
+
+    trailerId:
+        string | null;
+
+    trailerNumber:
+        string | null;
+
+    trailerPermit:
+        string | null;
+};
+
+
+function mapPendingTruckChange(
+    value: unknown
+): AdminPendingTruckChange | null {
+
+    if (!isRecord(value)) {
+        return null;
+    }
+
+
+    const id =
+        textValue(
+            value.id
+        );
+
+
+    const tripId =
+        textValue(
+            value.tripId
+        );
+
+
+    const status =
+        textValue(
+            value.status
+        );
+
+
+    const changeMode =
+        textValue(
+            value.changeMode
+        );
+
+
+    if (
+        !id ||
+        !tripId ||
+        status !== "pending_driver_km" ||
+        (
+            changeMode !== "temporary_for_trip" &&
+            changeMode !== "permanent"
+        )
+    ) {
+        return null;
+    }
+
+
+    return {
+        id,
+
+        tripId,
+
+        status:
+            "pending_driver_km",
+
+        changeMode,
+
+        requestedAt:
+            nullableText(
+                value.requestedAt
+            ),
+
+        driverId:
+            nullableText(
+                value.driverId
+            ),
+
+        driverName:
+            nullableText(
+                value.driverName
+            ),
+
+        fromTruckId:
+            nullableText(
+                value.fromTruckId
+            ),
+
+        fromTruckNumber:
+            nullableText(
+                value.fromTruckNumber
+            ),
+
+        toTruckId:
+            nullableText(
+                value.toTruckId
+            ),
+
+        toTruckNumber:
+            nullableText(
+                value.toTruckNumber
+            ),
+
+        trailerId:
+            nullableText(
+                value.trailerId
+            ),
+
+        trailerNumber:
+            nullableText(
+                value.trailerNumber
+            ),
+
+        trailerPermit:
+            nullableText(
+                value.trailerPermit
+            )
+    };
+}
+
+
+export async function
+loadAdminPendingTruckChange(
+    tripId: string
+): Promise<AdminPendingTruckChange | null> {
+
+    if (!tripId) {
+        throw new Error(
+            "Курсът не е избран."
+        );
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await supabase.rpc(
+            "trips_admin_get_pending_truck_change",
+            {
+                p_trip_id:
+                    tripId
+            }
+        );
+
+
+    if (error) {
+        throw new Error(
+            error.message ||
+            "Активната заявка за смяна на камион не можа да бъде заредена."
+        );
+    }
+
+
+    if (data === null) {
+        return null;
+    }
+
+
+    const pending =
+        mapPendingTruckChange(
+            data
+        );
+
+
+    if (!pending) {
+        throw new Error(
+            "Получена е невалидна заявка за смяна на камион."
+        );
+    }
+
+
+    return pending;
+}
