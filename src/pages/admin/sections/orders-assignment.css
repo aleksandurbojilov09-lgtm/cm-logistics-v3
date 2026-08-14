@@ -1,0 +1,215 @@
+/* K3 LOGISTICS V3 — ADMIN ORDER ASSIGNMENT */
+
+
+.order-info-remaining {
+    border-color: #92400e;
+
+    background:
+        rgba(
+            120,
+            53,
+            15,
+            0.22
+        );
+}
+
+
+.order-info-remaining > span,
+.order-info-remaining > strong {
+    color: #fcd34d;
+}
+
+
+.order-subtitle {
+    margin-bottom: 10px;
+
+    font-size: 13px;
+
+    font-weight: 800;
+}
+
+
+.order-assignment-history {
+    margin-top: 14px;
+
+    padding-top: 14px;
+
+    border-top:
+        1px solid
+        var(--cm-color-border);
+}
+
+
+.order-assignment-row {
+    display: grid;
+
+    grid-template-columns: 1fr;
+
+    gap: 8px;
+
+    margin-top: 8px;
+
+    padding: 11px;
+
+    border: 1px solid #334155;
+
+    border-radius: 10px;
+
+    background: #0f172a;
+}
+
+
+.order-assignment-row > div {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+
+.order-assignment-row strong {
+    font-size: 12px;
+}
+
+
+.order-assignment-row span {
+    color:
+        var(--cm-color-text-muted);
+
+    font-size: 11px;
+}
+
+
+.order-assignment-controls {
+    margin-top: 14px;
+
+    padding-top: 14px;
+
+    border-top:
+        1px solid
+        var(--cm-color-border);
+}
+
+
+.order-assignment-controls select,
+.order-assignment-controls input {
+    width: 100%;
+
+    min-height: 46px;
+
+    padding: 10px 12px;
+
+    border: 1px solid #475569;
+
+    border-radius: 10px;
+
+    outline: none;
+
+    background: #1e293b;
+
+    color: #ffffff;
+
+    font: inherit;
+}
+
+
+.order-assignment-controls select:focus,
+.order-assignment-controls input:focus {
+    border-color: #3b82f6;
+}
+
+
+.order-assignment-tons-row {
+    display: grid;
+
+    grid-template-columns: 1fr;
+
+    gap: 9px;
+
+    margin-top: 9px;
+}
+
+
+.order-assignment-tons-row label {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 6px;
+
+    color: #cbd5e1;
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+
+.order-assign-button {
+    min-height: 46px;
+
+    padding: 10px 14px;
+
+    border: 0;
+
+    border-radius: 10px;
+
+    background: #2563eb;
+
+    color: #ffffff;
+
+    cursor: pointer;
+
+    font-weight: 800;
+}
+
+
+.order-assign-button:hover:not(:disabled) {
+    background: #3b82f6;
+}
+
+
+.order-assign-button:disabled,
+.order-assignment-controls input:disabled {
+    opacity: 0.48;
+
+    cursor: not-allowed;
+}
+
+
+.order-capacity-message {
+    margin-top: 8px;
+
+    color:
+        var(--cm-color-text-muted);
+
+    font-size: 11px;
+}
+
+
+@media (min-width: 600px) {
+
+    .order-assignment-row {
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(0, 1fr)
+            );
+    }
+
+
+    .order-assignment-tons-row {
+        grid-template-columns:
+            minmax(0, 1fr)
+            auto;
+
+        align-items: end;
+    }
+
+
+    .order-assign-button {
+        min-width: 130px;
+    }
+
+}
