@@ -1,5 +1,5 @@
 {
-  "name": "cm-logistics-v3",
+  "name": "k3-logistics-v3",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -7,6 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0"
   },
   "devDependencies": {
     "typescript": "7.0.2",
