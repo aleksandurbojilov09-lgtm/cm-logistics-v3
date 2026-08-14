@@ -15,23 +15,8 @@ const VALID_ROLES = new Set([
 ]);
 
 
-type CreateUserBody = {
-    action: "create";
-
-    loginId: string;
-
-    displayName: string;
-
-    password: string;
-
-    roleCode:
-        | "admin"
-        | "dispatcher"
-        | "driver"
-        | "client";
-
-    employeeCode?: string | null;
-};
+type JsonRecord =
+    Record<string, unknown>;
 
 
 function jsonError(
@@ -50,40 +35,30 @@ function jsonError(
 }
 
 
-function normalizeLoginId(
+function textValue(
     value: unknown
 ): string {
-    if (
-        typeof value !== "string"
-    ) {
-        return "";
-    }
+    return typeof value === "string"
+        ? value.trim()
+        : "";
+}
 
-    return value
-        .trim()
+
+function loginValue(
+    value: unknown
+): string {
+    return textValue(value)
         .toLowerCase();
 }
 
 
-function normalizeText(
+function isRecord(
     value: unknown
-): string {
-    if (
-        typeof value !== "string"
-    ) {
-        return "";
-    }
-
-    return value.trim();
-}
-
-
-function isValidLoginId(
-    value: string
-): boolean {
+): value is JsonRecord {
     return (
-        /^[a-z0-9][a-z0-9._-]{2,31}$/
-            .test(value)
+        typeof value === "object" &&
+        value !== null &&
+        !Array.isArray(value)
     );
 }
 
@@ -98,9 +73,9 @@ export default {
             request,
             context
         ) => {
+
             if (
-                request.method !==
-                "POST"
+                request.method !== "POST"
             ) {
                 return jsonError(
                     "Методът не е позволен.",
@@ -121,34 +96,29 @@ export default {
             }
 
 
-            /*
-             * =================================================
-             * VERIFY ACTIVE ADMIN
-             * =================================================
-             */
+            /* =============================================
+               VERIFY ACTIVE ADMIN
+               ============================================= */
 
 
             const {
                 data: callerProfile,
-                error: callerProfileError
+                error: profileError
             } =
                 await context
                     .supabaseAdmin
                     .from("profiles")
                     .select("is_active")
-                    .eq(
-                        "id",
-                        callerId
-                    )
+                    .eq("id", callerId)
                     .maybeSingle();
 
 
             if (
-                callerProfileError ||
+                profileError ||
                 !callerProfile?.is_active
             ) {
                 return jsonError(
-                    "Потребителят няма право за тази операция.",
+                    "Нямате право за тази операция.",
                     403
                 );
             }
@@ -162,10 +132,7 @@ export default {
                     .supabaseAdmin
                     .from("roles")
                     .select("id")
-                    .eq(
-                        "code",
-                        "admin"
-                    )
+                    .eq("code", "admin")
                     .single();
 
 
@@ -179,16 +146,15 @@ export default {
                 );
 
                 return jsonError(
-                    "Системната роля Admin не е намерена.",
+                    "Системната Admin роля липсва.",
                     500
                 );
             }
 
 
             const {
-                data: callerAdminRole,
-                error:
-                    callerAdminRoleError
+                data: callerAdmin,
+                error: callerAdminError
             } =
                 await context
                     .supabaseAdmin
@@ -206,8 +172,8 @@ export default {
 
 
             if (
-                callerAdminRoleError ||
-                !callerAdminRole
+                callerAdminError ||
+                !callerAdmin
             ) {
                 return jsonError(
                     "Само администратор може да управлява потребители.",
@@ -216,19 +182,17 @@ export default {
             }
 
 
-            /*
-             * =================================================
-             * REQUEST
-             * =================================================
-             */
+            /* =============================================
+               BODY
+               ============================================= */
 
 
-            let body:
-                Partial<CreateUserBody>;
+            let parsedBody:
+                unknown;
 
 
             try {
-                body =
+                parsedBody =
                     await request.json();
             } catch {
                 return jsonError(
@@ -239,9 +203,53 @@ export default {
 
 
             if (
-                body.action !==
-                "create"
+                !isRecord(parsedBody)
             ) {
+                return jsonError(
+                    "Невалидни данни.",
+                    400
+                );
+            }
+
+
+            const action =
+                textValue(
+                    parsedBody.action
+                );
+
+
+            const loginId =
+                loginValue(
+                    parsedBody.loginId
+                );
+
+
+            const displayName =
+                textValue(
+                    parsedBody.displayName
+                );
+
+
+            const password =
+                typeof parsedBody.password ===
+                    "string"
+                    ? parsedBody.password
+                    : "";
+
+
+            const roleCode =
+                textValue(
+                    parsedBody.roleCode
+                ).toLowerCase();
+
+
+            const employeeCode =
+                textValue(
+                    parsedBody.employeeCode
+                ) || null;
+
+
+            if (action !== "create") {
                 return jsonError(
                     "Неподдържана операция.",
                     400
@@ -249,44 +257,12 @@ export default {
             }
 
 
-            const loginId =
-                normalizeLoginId(
-                    body.loginId
-                );
-
-
-            const displayName =
-                normalizeText(
-                    body.displayName
-                );
-
-
-            const password =
-                typeof body.password ===
-                    "string"
-                    ? body.password
-                    : "";
-
-
-            const roleCode =
-                normalizeText(
-                    body.roleCode
-                );
-
-
-            const employeeCode =
-                normalizeText(
-                    body.employeeCode
-                ) || null;
-
-
             if (
-                !isValidLoginId(
-                    loginId
-                )
+                !/^[a-z0-9][a-z0-9._-]{2,31}$/
+                    .test(loginId)
             ) {
                 return jsonError(
-                    "ID-то трябва да е 3–32 символа и да съдържа само малки латински букви, цифри, точка, тире или долна черта.",
+                    "ID-то трябва да е 3–32 символа и може да съдържа латински букви, цифри, точка, тире и долна черта.",
                     400
                 );
             }
@@ -296,7 +272,7 @@ export default {
                 displayName.length < 2
             ) {
                 return jsonError(
-                    "Въведете име на потребителя.",
+                    "Въведете име.",
                     400
                 );
             }
@@ -324,17 +300,14 @@ export default {
             }
 
 
-            /*
-             * =================================================
-             * DUPLICATE LOGIN ID
-             * =================================================
-             */
+            /* =============================================
+               CHECK LOGIN ID
+               ============================================= */
 
 
             const {
                 data: existingProfile,
-                error:
-                    existingProfileError
+                error: existingError
             } =
                 await context
                     .supabaseAdmin
@@ -347,10 +320,9 @@ export default {
                     .maybeSingle();
 
 
-            if (existingProfileError) {
+            if (existingError) {
                 console.error(
-                    "Login ID lookup failed:",
-                    existingProfileError
+                    existingError
                 );
 
                 return jsonError(
@@ -368,11 +340,9 @@ export default {
             }
 
 
-            /*
-             * =================================================
-             * CREATE AUTH USER
-             * =================================================
-             */
+            /* =============================================
+               CREATE AUTH USER
+               ============================================= */
 
 
             const authEmail =
@@ -403,12 +373,12 @@ export default {
                 !authResult.user
             ) {
                 console.error(
-                    "Auth user creation failed:",
+                    "Auth create failed:",
                     authError
                 );
 
                 return jsonError(
-                    "Това потребителско ID вече се използва или потребителят не можа да бъде създаден.",
+                    "Потребителят не можа да бъде създаден.",
                     400
                 );
             }
@@ -418,11 +388,9 @@ export default {
                 authResult.user.id;
 
 
-            /*
-             * =================================================
-             * ATOMIC APP RECORDS
-             * =================================================
-             */
+            /* =============================================
+               CREATE APP RECORDS
+               ============================================= */
 
 
             const {
@@ -452,16 +420,12 @@ export default {
 
 
             if (provisionError) {
+
                 console.error(
-                    "User provisioning failed:",
+                    "Provision failed:",
                     provisionError
                 );
 
-
-                /*
-                 * Compensating cleanup:
-                 * do not leave an orphan Auth user.
-                 */
 
                 const {
                     error: cleanupError
@@ -477,7 +441,7 @@ export default {
 
                 if (cleanupError) {
                     console.error(
-                        "Auth cleanup failed:",
+                        "Cleanup failed:",
                         cleanupError
                     );
                 }
