@@ -1,9 +1,18 @@
 import "./trips-section.css";
+import "./trips-editing.css";
 
 import {
+    addAdminOrderToTrip,
     loadAdminActiveTrips,
+    loadAdminAvailableOrders,
+    moveAdminFutureStop,
+    removeAdminFutureStop,
+    updateAdminStopLoad,
     type AdminActiveTrip,
-    type AdminActiveTripStop
+    type AdminActiveTripStop,
+    type AdminAvailableOrder,
+    type AdminTripInsertMode,
+    type AdminTripMoveDirection
 } from "../../../features/trips/admin-trip-service";
 
 import {
@@ -17,6 +26,11 @@ const MAX_TRUCK_TONS =
 
 let trips:
     AdminActiveTrip[] =
+    [];
+
+
+let availableOrders:
+    AdminAvailableOrder[] =
     [];
 
 
@@ -116,7 +130,8 @@ string {
 
                         <p>
                             Текуща композиция,
-                            маршрут и състояние на спирките.
+                            маршрут и редакция на
+                            разрешените спирки.
                         </p>
                     </div>
 
@@ -145,6 +160,12 @@ string {
 
             </section>
 
+
+            <dialog
+                id="k3TripActionDialog"
+                class="trip-action-dialog"
+            ></dialog>
+
         </section>
     `;
 }
@@ -160,6 +181,17 @@ HTMLElement | null {
 
     return document.querySelector(
         "#k3TripsSection"
+    );
+}
+
+
+function getDialog():
+HTMLDialogElement | null {
+
+    return document.querySelector<
+        HTMLDialogElement
+    >(
+        "#k3TripActionDialog"
     );
 }
 
@@ -221,6 +253,7 @@ function formatDate(
 function setMessage(
     message: string,
     type:
+        | "success"
         | "error"
         | null
 ): void {
@@ -247,6 +280,7 @@ function setMessage(
 
 
     if (type) {
+
         element.classList.add(
             `trips-message-${type}`
         );
@@ -270,6 +304,18 @@ function tripLoad(
 }
 
 
+function tripFreeTons(
+    trip: AdminActiveTrip
+): number {
+
+    return Math.max(
+        MAX_TRUCK_TONS -
+        tripLoad(trip),
+        0
+    );
+}
+
+
 function currentStop(
     trip: AdminActiveTrip
 ): AdminActiveTripStop | null {
@@ -282,6 +328,58 @@ function currentStop(
         ) ||
         null
     );
+}
+
+
+function findTrip(
+    tripId: string
+): AdminActiveTrip | null {
+
+    return (
+        trips.find(
+            trip =>
+                trip.id ===
+                    tripId
+        ) ||
+        null
+    );
+}
+
+
+function findStop(
+    stopId: string
+): {
+    trip: AdminActiveTrip;
+    stop: AdminActiveTripStop;
+    index: number;
+} | null {
+
+    for (
+        const trip
+        of trips
+    ) {
+
+        const index =
+            trip.stops.findIndex(
+                stop =>
+                    stop.id ===
+                        stopId
+            );
+
+
+        if (index >= 0) {
+
+            return {
+                trip,
+                stop:
+                    trip.stops[index],
+                index
+            };
+        }
+    }
+
+
+    return null;
 }
 
 
@@ -358,6 +456,7 @@ void {
 
 
     if (tripCount) {
+
         tripCount.textContent =
             String(
                 trips.length
@@ -387,7 +486,7 @@ void {
 
     if (stopsCount) {
 
-        const activeStops =
+        const count =
             trips.reduce(
                 (
                     total,
@@ -405,19 +504,165 @@ void {
 
         stopsCount.textContent =
             String(
-                activeStops
+                count
             );
     }
 }
 
 
 /* =========================================================
-   ROUTE
+   STOP ADMIN ACTIONS
+   ========================================================= */
+
+
+function renderStopActions(
+    trip: AdminActiveTrip,
+    stop: AdminActiveTripStop,
+    index: number
+): string {
+
+    if (
+        stop.status ===
+        "loaded"
+    ) {
+        return "";
+    }
+
+
+    if (
+        stop.status ===
+        "en_route"
+    ) {
+
+        return `
+            <div
+                class="trip-stop-admin-actions"
+            >
+
+                <button
+                    type="button"
+                    class="trip-stop-edit-load"
+                    data-trips-action="edit-load"
+                    data-stop-id="${escapeHtml(
+                        stop.id
+                    )}"
+                >
+                    ⚖️ Коригирай тонажа
+                </button>
+
+            </div>
+        `;
+    }
+
+
+    const previous =
+        trip.stops[
+            index - 1
+        ];
+
+
+    const next =
+        trip.stops[
+            index + 1
+        ];
+
+
+    const canMoveUp =
+        Boolean(
+            previous &&
+            previous.status ===
+                "waiting"
+        );
+
+
+    const canMoveDown =
+        Boolean(
+            next &&
+            next.status ===
+                "waiting"
+        );
+
+
+    return `
+        <div
+            class="trip-stop-admin-actions"
+        >
+
+            <button
+                type="button"
+                class="trip-stop-move-button"
+                data-trips-action="move-stop"
+                data-stop-id="${escapeHtml(
+                    stop.id
+                )}"
+                data-direction="up"
+                ${
+                    canMoveUp
+                        ? ""
+                        : "disabled"
+                }
+                title="Премести нагоре"
+            >
+                ↑
+            </button>
+
+
+            <button
+                type="button"
+                class="trip-stop-move-button"
+                data-trips-action="move-stop"
+                data-stop-id="${escapeHtml(
+                    stop.id
+                )}"
+                data-direction="down"
+                ${
+                    canMoveDown
+                        ? ""
+                        : "disabled"
+                }
+                title="Премести надолу"
+            >
+                ↓
+            </button>
+
+
+            <button
+                type="button"
+                class="trip-stop-edit-load"
+                data-trips-action="edit-load"
+                data-stop-id="${escapeHtml(
+                    stop.id
+                )}"
+            >
+                ⚖️ Тонаж
+            </button>
+
+
+            <button
+                type="button"
+                class="trip-stop-remove-button"
+                data-trips-action="remove-stop"
+                data-stop-id="${escapeHtml(
+                    stop.id
+                )}"
+            >
+                🗑️ Премахни
+            </button>
+
+        </div>
+    `;
+}
+
+
+/* =========================================================
+   ROUTE STOP
    ========================================================= */
 
 
 function renderStop(
-    stop: AdminActiveTripStop
+    trip: AdminActiveTrip,
+    stop: AdminActiveTripStop,
+    index: number
 ): string {
 
     return `
@@ -483,6 +728,7 @@ function renderStop(
                     class="trip-stop-location"
                 >
                     📍
+
                     <strong>
                         ${escapeHtml(
                             stop.siteName ||
@@ -584,6 +830,13 @@ function renderStop(
                         : ""
                 }
 
+
+                ${renderStopActions(
+                    trip,
+                    stop,
+                    index
+                )}
+
             </div>
 
         </article>
@@ -611,10 +864,8 @@ function renderTripCard(
 
 
     const free =
-        Math.max(
-            MAX_TRUCK_TONS -
-            load,
-            0
+        tripFreeTons(
+            trip
         );
 
 
@@ -907,8 +1158,9 @@ function renderTripCard(
                                 </strong>
 
                                 <p>
-                                    Изчаква се шофьорът
-                                    да приключи курса.
+                                    Може да бъде добавена
+                                    нова заявка или курсът
+                                    да бъде приключен от шофьора.
                                 </p>
                             </section>
                         `
@@ -924,6 +1176,7 @@ function renderTripCard(
                 <header
                     class="trip-route-header"
                 >
+
                     <div>
                         <h5>
                             📍 Маршрут
@@ -979,7 +1232,15 @@ function renderTripCard(
 
                             ? trip.stops
                                 .map(
-                                    renderStop
+                                    (
+                                        stop,
+                                        index
+                                    ) =>
+                                        renderStop(
+                                            trip,
+                                            stop,
+                                            index
+                                        )
                                 )
                                 .join("")
 
@@ -1000,14 +1261,36 @@ function renderTripCard(
             <footer
                 class="trip-card-footer"
             >
-                <span>
-                    👁️ Този екран е само за наблюдение.
-                </span>
 
-                <span>
-                    Редакциите на курса ще бъдат
-                    защитени в следващия backend блок.
-                </span>
+                <div
+                    class="trip-card-footer-info"
+                >
+                    <span>
+                        🔒 Натоварените спирки са заключени.
+                    </span>
+
+                    <span>
+                        ↕️ Само бъдещите могат да се местят или премахват.
+                    </span>
+                </div>
+
+
+                <button
+                    type="button"
+                    class="trip-add-order-button"
+                    data-trips-action="add-order"
+                    data-trip-id="${escapeHtml(
+                        trip.id
+                    )}"
+                    ${
+                        segment
+                            ? ""
+                            : "disabled"
+                    }
+                >
+                    ➕ Добави заявка
+                </button>
+
             </footer>
 
         </article>
@@ -1096,12 +1379,6 @@ Promise<void> {
             nextTrips;
 
 
-        setMessage(
-            "",
-            null
-        );
-
-
         renderTrips();
 
 
@@ -1173,8 +1450,1189 @@ void {
 
 
 /* =========================================================
+   DIALOG
+   ========================================================= */
+
+
+function closeDialog():
+void {
+
+    const dialog =
+        getDialog();
+
+
+    if (
+        dialog?.open
+    ) {
+        dialog.close();
+    }
+
+
+    if (dialog) {
+
+        dialog.innerHTML =
+            "";
+    }
+
+
+    availableOrders =
+        [];
+}
+
+
+/* =========================================================
+   EDIT TONS
+   ========================================================= */
+
+
+function openEditLoadDialog(
+    stopId: string
+): void {
+
+    const found =
+        findStop(
+            stopId
+        );
+
+
+    const dialog =
+        getDialog();
+
+
+    if (
+        !found ||
+        !dialog
+    ) {
+        return;
+    }
+
+
+    const {
+        stop
+    } =
+        found;
+
+
+    if (
+        stop.status ===
+        "loaded"
+    ) {
+
+        setMessage(
+            "Натоварена спирка не може да бъде редактирана.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    dialog.innerHTML = `
+        <form
+            id="k3TripEditLoadForm"
+            class="trip-action-form"
+            data-stop-id="${escapeHtml(
+                stop.id
+            )}"
+        >
+
+            <header
+                class="trip-action-dialog-header"
+            >
+
+                <div>
+                    <h3>
+                        ⚖️ Корекция на тонаж
+                    </h3>
+
+                    <p>
+                        ${escapeHtml(
+                            stop.companyName
+                        )}
+                        —
+                        ${escapeHtml(
+                            stop.siteName
+                        )}
+                    </p>
+                </div>
+
+
+                <button
+                    type="button"
+                    class="trip-dialog-close"
+                    data-trips-action="close-dialog"
+                    aria-label="Затвори"
+                >
+                    ✕
+                </button>
+
+            </header>
+
+
+            <div
+                class="trip-action-info"
+            >
+                <span>
+                    Текущо зачислен товар
+                </span>
+
+                <strong>
+                    ${escapeHtml(
+                        formatTons(
+                            stop.assignedTons
+                        )
+                    )}
+                    т.
+                </strong>
+            </div>
+
+
+            <label>
+                Нов тонаж
+
+                <input
+                    id="k3TripEditLoadTons"
+                    type="number"
+                    min="0.001"
+                    step="0.001"
+                    required
+                    inputmode="decimal"
+                    value="${escapeHtml(
+                        String(
+                            stop.assignedTons
+                        )
+                    )}"
+                />
+            </label>
+
+
+            <div
+                class="trip-action-warning"
+            >
+                🔒 Backend-ът ще провери
+                остатъка по заявката и
+                максималния капацитет 24 т.
+            </div>
+
+
+            <button
+                type="submit"
+                class="trip-action-primary"
+            >
+                💾 Запази тонажа
+            </button>
+
+        </form>
+    `;
+
+
+    if (!dialog.open) {
+        dialog.showModal();
+    }
+}
+
+
+async function submitEditLoad(
+    form: HTMLFormElement
+): Promise<void> {
+
+    const stopId =
+        form.dataset.stopId;
+
+
+    const input =
+        form.querySelector<
+            HTMLInputElement
+        >(
+            "#k3TripEditLoadTons"
+        );
+
+
+    const button =
+        form.querySelector<
+            HTMLButtonElement
+        >(
+            '[type="submit"]'
+        );
+
+
+    if (
+        !stopId ||
+        !input ||
+        !button
+    ) {
+        return;
+    }
+
+
+    const tons =
+        Number(
+            input.value
+        );
+
+
+    if (
+        !Number.isFinite(tons) ||
+        tons <= 0
+    ) {
+
+        setMessage(
+            "Въведете валиден тонаж.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    button.disabled =
+        true;
+
+
+    button.textContent =
+        "Запазване...";
+
+
+    try {
+
+        await updateAdminStopLoad(
+            stopId,
+            tons
+        );
+
+
+        closeDialog();
+
+
+        await refresh();
+
+
+        setMessage(
+            "✅ Тонажът е променен успешно.",
+            "success"
+        );
+
+
+    } catch (error) {
+
+        setMessage(
+            errorMessage(
+                error
+            ),
+            "error"
+        );
+
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "💾 Запази тонажа";
+    }
+}
+
+
+/* =========================================================
+   MOVE STOP
+   ========================================================= */
+
+
+async function moveStop(
+    button: HTMLButtonElement
+): Promise<void> {
+
+    const stopId =
+        button.dataset.stopId;
+
+
+    const direction =
+        button.dataset.direction;
+
+
+    if (
+        !stopId ||
+        (
+            direction !== "up" &&
+            direction !== "down"
+        )
+    ) {
+        return;
+    }
+
+
+    button.disabled =
+        true;
+
+
+    try {
+
+        await moveAdminFutureStop(
+            stopId,
+            direction as
+                AdminTripMoveDirection
+        );
+
+
+        await refresh();
+
+
+        setMessage(
+            "✅ Редът на бъдещите спирки е променен.",
+            "success"
+        );
+
+
+    } catch (error) {
+
+        setMessage(
+            errorMessage(
+                error
+            ),
+            "error"
+        );
+    }
+}
+
+
+/* =========================================================
+   REMOVE STOP
+   ========================================================= */
+
+
+async function removeStop(
+    button: HTMLButtonElement
+): Promise<void> {
+
+    const stopId =
+        button.dataset.stopId;
+
+
+    if (!stopId) {
+        return;
+    }
+
+
+    const found =
+        findStop(
+            stopId
+        );
+
+
+    if (!found) {
+        return;
+    }
+
+
+    if (
+        found.stop.status !==
+        "waiting"
+    ) {
+
+        setMessage(
+            "Само бъдеща спирка може да бъде премахната.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const confirmed =
+        window.confirm(
+            `Да премахнем ли "${found.stop.companyName}" от активния курс?\n\nЗачисляването към този камион ще бъде освободено.`
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    button.disabled =
+        true;
+
+
+    button.textContent =
+        "Премахване...";
+
+
+    try {
+
+        await removeAdminFutureStop(
+            stopId
+        );
+
+
+        await refresh();
+
+
+        setMessage(
+            "✅ Бъдещата спирка е премахната и зачисляването е освободено.",
+            "success"
+        );
+
+
+    } catch (error) {
+
+        setMessage(
+            errorMessage(
+                error
+            ),
+            "error"
+        );
+
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "🗑️ Премахни";
+    }
+}
+
+
+/* =========================================================
+   ADD ORDER
+   ========================================================= */
+
+
+function renderAvailableOrderOptions():
+string {
+
+    return `
+        <option value="">
+            -- Избери заявка --
+        </option>
+
+        ${
+            availableOrders
+                .map(
+                    order => `
+                        <option
+                            value="${escapeHtml(
+                                order.id
+                            )}"
+                        >
+                            #${escapeHtml(
+                                order.orderNumber
+                            )}
+                            —
+                            ${escapeHtml(
+                                order.companyName
+                            )}
+                            —
+                            ${escapeHtml(
+                                formatTons(
+                                    order.remainingTons
+                                )
+                            )}
+                            т. остатък
+                        </option>
+                    `
+                )
+                .join("")
+        }
+    `;
+}
+
+
+async function openAddOrderDialog(
+    tripId: string
+): Promise<void> {
+
+    const trip =
+        findTrip(
+            tripId
+        );
+
+
+    const dialog =
+        getDialog();
+
+
+    if (
+        !trip ||
+        !dialog
+    ) {
+        return;
+    }
+
+
+    dialog.dataset.tripId =
+        tripId;
+
+
+    dialog.innerHTML = `
+        <div
+            class="trip-action-loading"
+        >
+            Зареждане на свободните заявки...
+        </div>
+    `;
+
+
+    if (!dialog.open) {
+        dialog.showModal();
+    }
+
+
+    try {
+
+        availableOrders =
+            await loadAdminAvailableOrders(
+                tripId
+            );
+
+
+        if (
+            !dialog.open ||
+            dialog.dataset.tripId !==
+                tripId
+        ) {
+            return;
+        }
+
+
+        if (
+            availableOrders.length ===
+            0
+        ) {
+
+            dialog.innerHTML = `
+                <div
+                    class="trip-action-form"
+                >
+
+                    <header
+                        class="trip-action-dialog-header"
+                    >
+
+                        <div>
+                            <h3>
+                                ➕ Добави заявка
+                            </h3>
+
+                            <p>
+                                Курс
+                                #${escapeHtml(
+                                    trip.tripNumber
+                                )}
+                            </p>
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="trip-dialog-close"
+                            data-trips-action="close-dialog"
+                        >
+                            ✕
+                        </button>
+
+                    </header>
+
+
+                    <div
+                        class="trip-action-empty"
+                    >
+                        Няма свободни заявки,
+                        които могат да бъдат
+                        добавени към този курс.
+                    </div>
+
+                </div>
+            `;
+
+
+            return;
+        }
+
+
+        dialog.innerHTML = `
+            <form
+                id="k3TripAddOrderForm"
+                class="trip-action-form"
+                data-trip-id="${escapeHtml(
+                    tripId
+                )}"
+            >
+
+                <header
+                    class="trip-action-dialog-header"
+                >
+
+                    <div>
+                        <h3>
+                            ➕ Добави заявка
+                        </h3>
+
+                        <p>
+                            Курс
+                            #${escapeHtml(
+                                trip.tripNumber
+                            )}
+                            •
+                            ${escapeHtml(
+                                trip.activeSegment
+                                    ?.truckNumber ||
+                                "-"
+                            )}
+                        </p>
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="trip-dialog-close"
+                        data-trips-action="close-dialog"
+                        aria-label="Затвори"
+                    >
+                        ✕
+                    </button>
+
+                </header>
+
+
+                <div
+                    class="trip-action-info"
+                >
+                    <span>
+                        Свободен капацитет по курса
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(
+                            formatTons(
+                                tripFreeTons(
+                                    trip
+                                )
+                            )
+                        )}
+                        т.
+                    </strong>
+                </div>
+
+
+                <label>
+                    Заявка
+
+                    <select
+                        id="k3TripAddOrderSelect"
+                        required
+                    >
+                        ${renderAvailableOrderOptions()}
+                    </select>
+                </label>
+
+
+                <div
+                    id="k3TripAddOrderDetails"
+                    class="trip-add-order-details"
+                >
+                    Изберете заявка.
+                </div>
+
+
+                <label>
+                    Тонаж за този камион
+
+                    <input
+                        id="k3TripAddOrderTons"
+                        type="number"
+                        min="0.001"
+                        step="0.001"
+                        inputmode="decimal"
+                        required
+                        disabled
+                    />
+                </label>
+
+
+                <label>
+                    Позиция в маршрута
+
+                    <select
+                        id="k3TripAddOrderPosition"
+                        required
+                    >
+
+                        <option value="next">
+                            След текущата спирка
+                        </option>
+
+                        <option value="last">
+                            Последна спирка
+                        </option>
+
+                    </select>
+                </label>
+
+
+                <div
+                    class="trip-action-warning"
+                >
+                    🚛 Driver / Truck / Trailer
+                    не се избират оттук.
+                    Backend-ът използва реалната
+                    активна композиция на курса.
+                </div>
+
+
+                <button
+                    id="k3TripAddOrderSubmit"
+                    type="submit"
+                    class="trip-action-primary"
+                    disabled
+                >
+                    ➕ Добави към курса
+                </button>
+
+            </form>
+        `;
+
+
+    } catch (error) {
+
+        dialog.innerHTML = `
+            <div
+                class="trip-action-form"
+            >
+
+                <header
+                    class="trip-action-dialog-header"
+                >
+
+                    <h3>
+                        ➕ Добави заявка
+                    </h3>
+
+
+                    <button
+                        type="button"
+                        class="trip-dialog-close"
+                        data-trips-action="close-dialog"
+                    >
+                        ✕
+                    </button>
+
+                </header>
+
+
+                <div
+                    class="trip-action-error"
+                >
+                    ${escapeHtml(
+                        errorMessage(
+                            error
+                        )
+                    )}
+                </div>
+
+            </div>
+        `;
+    }
+}
+
+
+function updateAddOrderForm():
+void {
+
+    const dialog =
+        getDialog();
+
+
+    if (!dialog) {
+        return;
+    }
+
+
+    const tripId =
+        dialog.dataset.tripId;
+
+
+    if (!tripId) {
+        return;
+    }
+
+
+    const trip =
+        findTrip(
+            tripId
+        );
+
+
+    const select =
+        dialog.querySelector<
+            HTMLSelectElement
+        >(
+            "#k3TripAddOrderSelect"
+        );
+
+
+    const input =
+        dialog.querySelector<
+            HTMLInputElement
+        >(
+            "#k3TripAddOrderTons"
+        );
+
+
+    const details =
+        dialog.querySelector<
+            HTMLElement
+        >(
+            "#k3TripAddOrderDetails"
+        );
+
+
+    const submit =
+        dialog.querySelector<
+            HTMLButtonElement
+        >(
+            "#k3TripAddOrderSubmit"
+        );
+
+
+    if (
+        !trip ||
+        !select ||
+        !input ||
+        !details ||
+        !submit
+    ) {
+        return;
+    }
+
+
+    const order =
+        availableOrders.find(
+            item =>
+                item.id ===
+                    select.value
+        );
+
+
+    if (!order) {
+
+        input.value =
+            "";
+
+        input.disabled =
+            true;
+
+        submit.disabled =
+            true;
+
+        details.textContent =
+            "Изберете заявка.";
+
+        return;
+    }
+
+
+    const maxTons =
+        Math.max(
+            Math.min(
+                order.remainingTons,
+                tripFreeTons(
+                    trip
+                )
+            ),
+            0
+        );
+
+
+    details.innerHTML = `
+        <strong>
+            ${escapeHtml(
+                order.companyName
+            )}
+        </strong>
+
+        <span>
+            📍
+            ${escapeHtml(
+                order.siteName
+            )}
+            —
+            ${escapeHtml(
+                order.address
+            )}
+        </span>
+
+        <span>
+            Заявени:
+            ${escapeHtml(
+                formatTons(
+                    order.requestedTons
+                )
+            )}
+            т.
+        </span>
+
+        <span>
+            Свободен остатък:
+            ${escapeHtml(
+                formatTons(
+                    order.remainingTons
+                )
+            )}
+            т.
+        </span>
+
+        ${
+            order.note
+
+                ? `
+                    <span>
+                        📝
+                        ${escapeHtml(
+                            order.note
+                        )}
+                    </span>
+                `
+
+                : ""
+        }
+    `;
+
+
+    if (
+        maxTons <= 0
+    ) {
+
+        input.value =
+            "";
+
+        input.disabled =
+            true;
+
+        submit.disabled =
+            true;
+
+        return;
+    }
+
+
+    input.disabled =
+        false;
+
+
+    input.max =
+        String(
+            maxTons
+        );
+
+
+    input.value =
+        formatTons(
+            maxTons
+        );
+
+
+    submit.disabled =
+        false;
+}
+
+
+async function submitAddOrder(
+    form: HTMLFormElement
+): Promise<void> {
+
+    const tripId =
+        form.dataset.tripId;
+
+
+    const orderSelect =
+        form.querySelector<
+            HTMLSelectElement
+        >(
+            "#k3TripAddOrderSelect"
+        );
+
+
+    const tonsInput =
+        form.querySelector<
+            HTMLInputElement
+        >(
+            "#k3TripAddOrderTons"
+        );
+
+
+    const positionSelect =
+        form.querySelector<
+            HTMLSelectElement
+        >(
+            "#k3TripAddOrderPosition"
+        );
+
+
+    const submit =
+        form.querySelector<
+            HTMLButtonElement
+        >(
+            "#k3TripAddOrderSubmit"
+        );
+
+
+    if (
+        !tripId ||
+        !orderSelect ||
+        !tonsInput ||
+        !positionSelect ||
+        !submit
+    ) {
+        return;
+    }
+
+
+    if (!orderSelect.value) {
+
+        setMessage(
+            "Изберете заявка.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const tons =
+        Number(
+            tonsInput.value
+        );
+
+
+    if (
+        !Number.isFinite(tons) ||
+        tons <= 0
+    ) {
+
+        setMessage(
+            "Въведете валиден тонаж.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const mode =
+        positionSelect.value;
+
+
+    if (
+        mode !== "next" &&
+        mode !== "last"
+    ) {
+        return;
+    }
+
+
+    submit.disabled =
+        true;
+
+
+    submit.textContent =
+        "Добавяне...";
+
+
+    try {
+
+        await addAdminOrderToTrip(
+            tripId,
+            orderSelect.value,
+            tons,
+            mode as
+                AdminTripInsertMode
+        );
+
+
+        closeDialog();
+
+
+        await refresh();
+
+
+        setMessage(
+            "✅ Заявката е добавена към активния курс.",
+            "success"
+        );
+
+
+    } catch (error) {
+
+        setMessage(
+            errorMessage(
+                error
+            ),
+            "error"
+        );
+
+
+        submit.disabled =
+            false;
+
+
+        submit.textContent =
+            "➕ Добави към курса";
+    }
+}
+
+
+/* =========================================================
    EVENTS
    ========================================================= */
+
+
+async function handleSubmit(
+    event: Event
+): Promise<void> {
+
+    const form =
+        event.target;
+
+
+    if (
+        !(form instanceof
+            HTMLFormElement)
+    ) {
+        return;
+    }
+
+
+    if (
+        form.id ===
+        "k3TripEditLoadForm"
+    ) {
+
+        event.preventDefault();
+
+
+        await submitEditLoad(
+            form
+        );
+
+
+        return;
+    }
+
+
+    if (
+        form.id ===
+        "k3TripAddOrderForm"
+    ) {
+
+        event.preventDefault();
+
+
+        await submitAddOrder(
+            form
+        );
+    }
+}
 
 
 async function handleClick(
@@ -1211,7 +2669,8 @@ async function handleClick(
 
 
     if (
-        action === "refresh"
+        action ===
+        "refresh"
     ) {
 
         button.disabled =
@@ -1223,6 +2682,108 @@ async function handleClick(
 
         button.disabled =
             false;
+
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "edit-load"
+    ) {
+
+        const stopId =
+            button.dataset.stopId;
+
+
+        if (stopId) {
+
+            openEditLoadDialog(
+                stopId
+            );
+        }
+
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "move-stop"
+    ) {
+
+        await moveStop(
+            button
+        );
+
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "remove-stop"
+    ) {
+
+        await removeStop(
+            button
+        );
+
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "add-order"
+    ) {
+
+        const tripId =
+            button.dataset.tripId;
+
+
+        if (tripId) {
+
+            await openAddOrderDialog(
+                tripId
+            );
+        }
+
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "close-dialog"
+    ) {
+
+        closeDialog();
+    }
+}
+
+
+function handleChange(
+    event: Event
+): void {
+
+    const target =
+        event.target;
+
+
+    if (
+        target instanceof
+            HTMLSelectElement &&
+        target.id ===
+            "k3TripAddOrderSelect"
+    ) {
+
+        updateAddOrderForm();
     }
 }
 
@@ -1251,6 +2812,22 @@ Promise<void> {
                 event
             );
         }
+    );
+
+
+    root.addEventListener(
+        "submit",
+        event => {
+            void handleSubmit(
+                event
+            );
+        }
+    );
+
+
+    root.addEventListener(
+        "change",
+        handleChange
     );
 
 
