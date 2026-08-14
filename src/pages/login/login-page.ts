@@ -1,6 +1,8 @@
 import "./login-page.css";
 
-import { login } from "../../features/auth/login";
+import {
+    login
+} from "../../features/auth/login";
 
 import {
     getRememberedLoginId
@@ -12,7 +14,10 @@ export function renderLoginPage(): string {
             <div class="login-container">
 
                 <header class="login-brand">
-                    <div class="login-brand-icon" aria-hidden="true">
+                    <div
+                        class="login-brand-icon"
+                        aria-hidden="true"
+                    >
                         <svg
                             viewBox="0 0 360 220"
                             role="img"
@@ -50,6 +55,7 @@ export function renderLoginPage(): string {
                     </div>
 
                     <h1>K3 Logistics</h1>
+
                     <p>Диспечерска система</p>
                 </header>
 
@@ -213,15 +219,22 @@ export function initializeLoginPage(): void {
             event.preventDefault();
 
             loginMessage.textContent = "";
+
             loginButton.disabled = true;
             loginButton.textContent = "Влизане...";
 
             try {
-                const result = await login({
-                    loginId: usernameInput.value,
-                    password: passwordInput.value,
-                    rememberMe: rememberMeInput.checked
-                });
+                const result =
+                    await login({
+                        loginId:
+                            usernameInput.value,
+
+                        password:
+                            passwordInput.value,
+
+                        rememberMe:
+                            rememberMeInput.checked
+                    });
 
                 if (!result.success) {
                     loginMessage.textContent =
@@ -230,8 +243,16 @@ export function initializeLoginPage(): void {
                     return;
                 }
 
-                loginMessage.textContent =
-                    "Успешен вход.";
+                /*
+                 * Нищо друго не правим тук.
+                 *
+                 * Central Router слуша SIGNED_IN
+                 * и автоматично:
+                 *
+                 * 1. проверява сесията
+                 * 2. взима ролята
+                 * 3. отваря правилния портал
+                 */
             } catch {
                 loginMessage.textContent =
                     "Възникна грешка при вход. Опитайте отново.";
