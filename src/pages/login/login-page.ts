@@ -10,9 +10,44 @@ export function renderLoginPage(): string {
             <div class="login-container">
 
                 <header class="login-brand">
-                    <div class="login-brand-icon">🚛</div>
+                    <div class="login-brand-icon" aria-hidden="true">
+                        <svg
+                            viewBox="0 0 360 220"
+                            role="img"
+                            aria-label="K3 logo"
+                            style="
+                                display: block;
+                                width: 220px;
+                                max-width: 100%;
+                                height: auto;
+                                margin: 0 auto;
+                            "
+                        >
+                            <rect
+                                x="8"
+                                y="8"
+                                width="344"
+                                height="204"
+                                rx="6"
+                                fill="#f97316"
+                                stroke="#e2e8f0"
+                                stroke-width="4"
+                            />
 
-                    <h1>CM Logistics</h1>
+                            <text
+                                x="62"
+                                y="156"
+                                fill="#111827"
+                                font-size="142"
+                                font-family="Arial, Helvetica, sans-serif"
+                                font-weight="700"
+                            >
+                                K3
+                            </text>
+                        </svg>
+                    </div>
+
+                    <h1>K3 Logistics</h1>
 
                     <p>Диспечерска система</p>
                 </header>
