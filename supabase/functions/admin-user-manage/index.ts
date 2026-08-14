@@ -10,7 +10,8 @@ const AUTH_EMAIL_DOMAIN =
 const VALID_ROLES = new Set([
     "admin",
     "dispatcher",
-    "driver"
+    "driver",
+    "client"
 ]);
 
 
@@ -51,6 +52,16 @@ function loginValue(
 }
 
 
+function nullableTextValue(
+    value: unknown
+): string | null {
+    const valueText =
+        textValue(value);
+
+    return valueText || null;
+}
+
+
 function isRecord(
     value: unknown
 ): value is JsonRecord {
@@ -58,6 +69,16 @@ function isRecord(
         typeof value === "object" &&
         value !== null &&
         !Array.isArray(value)
+    );
+}
+
+
+function isUuid(
+    value: string
+): boolean {
+    return (
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+            .test(value)
     );
 }
 
@@ -188,7 +209,7 @@ export default {
 
 
             // =================================================
-            // READ BODY
+            // REQUEST BODY
             // =================================================
 
 
@@ -225,6 +246,16 @@ export default {
                 );
 
 
+            if (
+                action !== "create"
+            ) {
+                return jsonError(
+                    "Неподдържана операция.",
+                    400
+                );
+            }
+
+
             const loginId =
                 loginValue(
                     parsedBody.loginId
@@ -238,7 +269,7 @@ export default {
 
 
             const phone =
-                textValue(
+                nullableTextValue(
                     parsedBody.phone
                 );
 
@@ -257,19 +288,15 @@ export default {
 
 
             const employeeCode =
-                textValue(
+                nullableTextValue(
                     parsedBody.employeeCode
-                ) || null;
-
-
-            if (
-                action !== "create"
-            ) {
-                return jsonError(
-                    "Неподдържана операция.",
-                    400
                 );
-            }
+
+
+            const companyId =
+                nullableTextValue(
+                    parsedBody.companyId
+                );
 
 
             // =================================================
@@ -308,23 +335,13 @@ export default {
             }
 
 
-            /*
-             * Client creation intentionally stays out
-             * of this function for now.
-             *
-             * A client must also be attached to a real
-             * client company. We will build that workflow
-             * together with the Client module instead of
-             * creating incomplete client accounts.
-             */
-
             if (
                 !VALID_ROLES.has(
                     roleCode
                 )
             ) {
                 return jsonError(
-                    "Тази роля все още не може да бъде създавана от този екран.",
+                    "Невалидна роля.",
                     400
                 );
             }
@@ -341,8 +358,31 @@ export default {
             }
 
 
+            if (
+                roleCode === "client"
+            ) {
+
+                if (
+                    !companyId ||
+                    !isUuid(companyId)
+                ) {
+                    return jsonError(
+                        "Изберете валидна клиентска фирма.",
+                        400
+                    );
+                }
+
+            } else if (companyId) {
+
+                return jsonError(
+                    "Фирма може да бъде зададена само на клиент.",
+                    400
+                );
+            }
+
+
             // =================================================
-            // CHECK LOGIN ID
+            // DUPLICATE LOGIN
             // =================================================
 
 
@@ -363,7 +403,7 @@ export default {
 
             if (existingError) {
                 console.error(
-                    "Login ID lookup failed:",
+                    "Login lookup failed:",
                     existingError
                 );
 
@@ -379,6 +419,48 @@ export default {
                     "Това потребителско ID вече съществува.",
                     409
                 );
+            }
+
+
+            // =================================================
+            // VALIDATE CLIENT COMPANY
+            // =================================================
+
+
+            if (
+                roleCode === "client" &&
+                companyId
+            ) {
+
+                const {
+                    data: company,
+                    error: companyError
+                } =
+                    await context
+                        .supabaseAdmin
+                        .from(
+                            "client_companies"
+                        )
+                        .select(
+                            "id, is_active"
+                        )
+                        .eq(
+                            "id",
+                            companyId
+                        )
+                        .maybeSingle();
+
+
+                if (
+                    companyError ||
+                    !company ||
+                    !company.is_active
+                ) {
+                    return jsonError(
+                        "Клиентската фирма не е намерена или е неактивна.",
+                        400
+                    );
+                }
             }
 
 
@@ -453,13 +535,16 @@ export default {
                                 displayName,
 
                             p_phone:
-                                phone || null,
+                                phone,
 
                             p_role_code:
                                 roleCode,
 
                             p_employee_code:
-                                employeeCode
+                                employeeCode,
+
+                            p_company_id:
+                                companyId
                         }
                     );
 
@@ -471,6 +556,8 @@ export default {
                     provisionError
                 );
 
+
+                // Do not leave orphan Auth users.
 
                 const {
                     error: cleanupError
@@ -516,12 +603,13 @@ export default {
 
                         displayName,
 
-                        phone:
-                            phone || null,
+                        phone,
 
                         roleCode,
 
-                        employeeCode
+                        employeeCode,
+
+                        companyId
                     }
                 },
                 {
