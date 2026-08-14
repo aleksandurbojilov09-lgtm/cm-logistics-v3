@@ -1,0 +1,361 @@
+.admin-page {
+    min-height: 100vh;
+    background: var(--cm-color-background);
+    color: var(--cm-color-text);
+}
+
+.admin-layout {
+    min-height: 100vh;
+    display: flex;
+}
+
+
+/* ============================================
+   DESKTOP SIDEBAR
+   ============================================ */
+
+.admin-sidebar {
+    display: none;
+}
+
+.admin-brand {
+    margin-bottom: 32px;
+}
+
+.admin-brand-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 82px;
+    height: 54px;
+    padding: 0 14px;
+
+    border-radius: 10px;
+
+    background: #f97316;
+    color: #111827;
+
+    font-size: 34px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.admin-brand h1 {
+    margin: 12px 0 0;
+
+    font-size: 24px;
+    font-weight: 900;
+}
+
+.admin-brand p {
+    margin: 4px 0 0;
+
+    color: var(--cm-color-text-muted);
+    font-size: 14px;
+}
+
+.admin-nav {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-nav-button {
+    width: 100%;
+    min-height: 48px;
+
+    padding: 12px 16px;
+
+    border: 0;
+    border-radius: 12px;
+
+    background: transparent;
+    color: var(--cm-color-text);
+
+    text-align: left;
+    font-weight: 600;
+
+    transition:
+        background var(--cm-motion-fast),
+        color var(--cm-motion-fast);
+}
+
+.admin-nav-button:hover {
+    background: var(--cm-color-surface-soft);
+}
+
+.admin-nav-button-active {
+    background: var(--cm-color-primary);
+}
+
+.admin-nav-button-active:hover {
+    background: var(--cm-color-primary-hover);
+}
+
+.admin-sidebar-footer {
+    padding-top: 24px;
+
+    border-top: 1px solid var(--cm-color-border);
+}
+
+.admin-logout-button {
+    width: 100%;
+    min-height: 48px;
+
+    padding: 12px 16px;
+
+    border: 1px solid #7f1d1d;
+    border-radius: 12px;
+
+    background: #450a0a;
+    color: #fca5a5;
+
+    text-align: left;
+    font-weight: 600;
+}
+
+.admin-logout-button:hover {
+    background: #7f1d1d;
+}
+
+
+/* ============================================
+   MAIN
+   ============================================ */
+
+.admin-main {
+    flex: 1;
+    min-width: 0;
+
+    padding:
+        16px
+        16px
+        100px;
+}
+
+
+/* ============================================
+   HEADER
+   ============================================ */
+
+.admin-header {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    margin-bottom: 32px;
+}
+
+.admin-header-text h2 {
+    margin: 0;
+
+    font-size: 26px;
+    font-weight: 900;
+}
+
+.admin-header-text p {
+    margin: 4px 0 0;
+
+    color: var(--cm-color-text-muted);
+}
+
+.admin-user-card {
+    min-width: 180px;
+
+    padding: 12px 16px;
+
+    border: 1px solid var(--cm-color-border);
+    border-radius: 12px;
+
+    background: var(--cm-color-surface);
+}
+
+.admin-user-card-label {
+    color: var(--cm-color-text-soft);
+    font-size: 12px;
+}
+
+.admin-user-card-name {
+    margin-top: 4px;
+
+    font-weight: 700;
+}
+
+
+/* ============================================
+   DASHBOARD
+   ============================================ */
+
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+
+    margin-bottom: 24px;
+}
+
+.admin-stat-card {
+    min-width: 0;
+
+    padding: 20px;
+
+    border: 1px solid var(--cm-color-border);
+    border-radius: 16px;
+
+    background: var(--cm-color-surface);
+}
+
+.admin-stat-label {
+    color: var(--cm-color-text-muted);
+    font-size: 14px;
+}
+
+.admin-stat-value {
+    margin-top: 8px;
+
+    font-size: 30px;
+    font-weight: 900;
+}
+
+.admin-content-card {
+    overflow: hidden;
+
+    border: 1px solid var(--cm-color-border);
+    border-radius: 16px;
+
+    background: var(--cm-color-surface);
+}
+
+.admin-content-card-header {
+    padding: 20px;
+
+    border-bottom: 1px solid var(--cm-color-border);
+}
+
+.admin-content-card-header h3 {
+    margin: 0;
+
+    font-size: 20px;
+}
+
+.admin-content-card-header p {
+    margin: 4px 0 0;
+
+    color: var(--cm-color-text-muted);
+    font-size: 14px;
+}
+
+.admin-placeholder {
+    padding: 48px 20px;
+
+    color: var(--cm-color-text-soft);
+    text-align: center;
+}
+
+
+/* ============================================
+   MOBILE NAVIGATION
+   ============================================ */
+
+.admin-mobile-nav {
+    position: fixed;
+    z-index: 9000;
+
+    right: 0;
+    bottom: 0;
+    left: 0;
+
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+
+    padding:
+        8px
+        6px
+        max(8px, env(safe-area-inset-bottom));
+
+    border-top: 1px solid var(--cm-color-border);
+
+    background: rgba(15, 23, 42, 0.96);
+    backdrop-filter: blur(12px);
+}
+
+.admin-mobile-nav-button {
+    min-width: 0;
+    min-height: 58px;
+
+    padding: 6px 2px;
+
+    border: 0;
+    border-radius: 12px;
+
+    background: transparent;
+    color: var(--cm-color-text-muted);
+
+    font-size: 11px;
+    font-weight: 700;
+
+    text-align: center;
+}
+
+.admin-mobile-nav-icon {
+    display: block;
+
+    margin-bottom: 3px;
+
+    font-size: 20px;
+    line-height: 1;
+}
+
+.admin-mobile-nav-button-active {
+    color: #60a5fa;
+}
+
+
+/* ============================================
+   TABLET / DESKTOP
+   ============================================ */
+
+@media (min-width: 640px) {
+    .admin-header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+@media (min-width: 768px) {
+    .admin-sidebar {
+        position: sticky;
+        top: 0;
+
+        display: flex;
+        flex: 0 0 288px;
+        flex-direction: column;
+
+        width: 288px;
+        height: 100vh;
+
+        padding: 20px;
+
+        border-right: 1px solid var(--cm-color-border);
+
+        background: var(--cm-color-surface);
+    }
+
+    .admin-main {
+        padding: 32px;
+    }
+
+    .admin-mobile-nav {
+        display: none;
+    }
+}
+
+@media (min-width: 1280px) {
+    .admin-stats {
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+    }
+}
