@@ -1,0 +1,2 @@
+[functions.admin-user-manage]
+verify_jwt = true
