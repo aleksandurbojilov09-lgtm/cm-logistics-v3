@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-
     paths:
       - "supabase/functions/**"
       - "supabase/config.toml"
@@ -18,6 +17,7 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -35,7 +35,4 @@ jobs:
           version: latest
 
       - name: Deploy Edge Functions
-        run: |
-          supabase functions deploy \
-            --project-ref "$SUPABASE_PROJECT_ID" \
-            --use-api
+        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
