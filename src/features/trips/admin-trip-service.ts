@@ -9,6 +9,16 @@ export type AdminTripStopStatus =
     | "loaded";
 
 
+export type AdminTripMoveDirection =
+    | "up"
+    | "down";
+
+
+export type AdminTripInsertMode =
+    | "next"
+    | "last";
+
+
 export type AdminActiveTripStop = {
     id: string;
 
@@ -97,8 +107,33 @@ export type AdminActiveTrip = {
 };
 
 
+export type AdminAvailableOrder = {
+    id: string;
+
+    orderNumber: string;
+
+    companyId: string;
+    companyName: string;
+
+    siteId: string;
+    siteName: string;
+
+    address: string;
+
+    requestedTons: number;
+    remainingTons: number;
+
+    note: string | null;
+};
+
+
 type JsonRecord =
     Record<string, unknown>;
+
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
 
 
 function isRecord(
@@ -183,6 +218,42 @@ function nullableNumber(
         ? parsed
         : null;
 }
+
+
+function tonsToKg(
+    tons: number
+): number {
+
+    if (
+        !Number.isFinite(tons) ||
+        tons <= 0
+    ) {
+        throw new Error(
+            "Въведете валиден тонаж."
+        );
+    }
+
+
+    const kg =
+        Math.round(
+            tons * 1000
+        );
+
+
+    if (kg <= 0) {
+        throw new Error(
+            "Тонажът трябва да бъде по-голям от 0."
+        );
+    }
+
+
+    return kg;
+}
+
+
+/* =========================================================
+   MAPPING
+   ========================================================= */
 
 
 function mapStop(
@@ -477,6 +548,82 @@ function mapTrip(
 }
 
 
+function mapAvailableOrder(
+    value: unknown
+): AdminAvailableOrder | null {
+
+    if (!isRecord(value)) {
+        return null;
+    }
+
+
+    const id =
+        textValue(
+            value.id
+        );
+
+
+    if (!id) {
+        return null;
+    }
+
+
+    return {
+        id,
+
+        orderNumber:
+            textValue(
+                value.orderNumber
+            ),
+
+        companyId:
+            textValue(
+                value.companyId
+            ),
+
+        companyName:
+            textValue(
+                value.companyName
+            ),
+
+        siteId:
+            textValue(
+                value.siteId
+            ),
+
+        siteName:
+            textValue(
+                value.siteName
+            ),
+
+        address:
+            textValue(
+                value.address
+            ),
+
+        requestedTons:
+            numberValue(
+                value.requestedTons
+            ),
+
+        remainingTons:
+            numberValue(
+                value.remainingTons
+            ),
+
+        note:
+            nullableText(
+                value.note
+            )
+    };
+}
+
+
+/* =========================================================
+   READ ACTIVE TRIPS
+   ========================================================= */
+
+
 export async function
 loadAdminActiveTrips():
 Promise<AdminActiveTrip[]> {
@@ -513,4 +660,245 @@ Promise<AdminActiveTrip[]> {
             ): trip is AdminActiveTrip =>
                 trip !== null
         );
+}
+
+
+/* =========================================================
+   AVAILABLE ORDERS
+   ========================================================= */
+
+
+export async function
+loadAdminAvailableOrders(
+    tripId: string
+): Promise<AdminAvailableOrder[]> {
+
+    if (!tripId) {
+        throw new Error(
+            "Курсът не е избран."
+        );
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await supabase.rpc(
+            "trips_admin_get_available_orders",
+            {
+                p_trip_id:
+                    tripId
+            }
+        );
+
+
+    if (error) {
+        throw new Error(
+            error.message ||
+            "Свободните заявки не можаха да бъдат заредени."
+        );
+    }
+
+
+    if (!Array.isArray(data)) {
+        return [];
+    }
+
+
+    return data
+        .map(
+            mapAvailableOrder
+        )
+        .filter(
+            (
+                order
+            ): order is AdminAvailableOrder =>
+                order !== null
+        );
+}
+
+
+/* =========================================================
+   MOVE FUTURE STOP
+   ========================================================= */
+
+
+export async function
+moveAdminFutureStop(
+    stopId: string,
+    direction:
+        AdminTripMoveDirection
+): Promise<void> {
+
+    if (!stopId) {
+        throw new Error(
+            "Спирката не е избрана."
+        );
+    }
+
+
+    const {
+        error
+    } =
+        await supabase.rpc(
+            "trips_admin_move_future_stop",
+            {
+                p_stop_id:
+                    stopId,
+
+                p_direction:
+                    direction
+            }
+        );
+
+
+    if (error) {
+        throw new Error(
+            error.message ||
+            "Спирката не можа да бъде преместена."
+        );
+    }
+}
+
+
+/* =========================================================
+   UPDATE TONS
+   ========================================================= */
+
+
+export async function
+updateAdminStopLoad(
+    stopId: string,
+    assignedTons: number
+): Promise<void> {
+
+    if (!stopId) {
+        throw new Error(
+            "Спирката не е избрана."
+        );
+    }
+
+
+    const {
+        error
+    } =
+        await supabase.rpc(
+            "trips_admin_update_stop_load",
+            {
+                p_stop_id:
+                    stopId,
+
+                p_assigned_kg:
+                    tonsToKg(
+                        assignedTons
+                    )
+            }
+        );
+
+
+    if (error) {
+        throw new Error(
+            error.message ||
+            "Тонажът не можа да бъде променен."
+        );
+    }
+}
+
+
+/* =========================================================
+   REMOVE FUTURE STOP
+   ========================================================= */
+
+
+export async function
+removeAdminFutureStop(
+    stopId: string
+): Promise<void> {
+
+    if (!stopId) {
+        throw new Error(
+            "Спирката не е избрана."
+        );
+    }
+
+
+    const {
+        error
+    } =
+        await supabase.rpc(
+            "trips_admin_remove_future_stop",
+            {
+                p_stop_id:
+                    stopId
+            }
+        );
+
+
+    if (error) {
+        throw new Error(
+            error.message ||
+            "Спирката не можа да бъде премахната."
+        );
+    }
+}
+
+
+/* =========================================================
+   ADD ORDER TO ACTIVE TRIP
+   ========================================================= */
+
+
+export async function
+addAdminOrderToTrip(
+    tripId: string,
+    orderId: string,
+    assignedTons: number,
+    insertMode:
+        AdminTripInsertMode
+): Promise<void> {
+
+    if (!tripId) {
+        throw new Error(
+            "Курсът не е избран."
+        );
+    }
+
+
+    if (!orderId) {
+        throw new Error(
+            "Заявката не е избрана."
+        );
+    }
+
+
+    const {
+        error
+    } =
+        await supabase.rpc(
+            "trips_admin_add_order",
+            {
+                p_trip_id:
+                    tripId,
+
+                p_order_id:
+                    orderId,
+
+                p_assigned_kg:
+                    tonsToKg(
+                        assignedTons
+                    ),
+
+                p_insert_mode:
+                    insertMode
+            }
+        );
+
+
+    if (error) {
+        throw new Error(
+            error.message ||
+            "Заявката не можа да бъде добавена към курса."
+        );
+    }
 }
