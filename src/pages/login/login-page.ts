@@ -1,5 +1,7 @@
 import "./login-page.css";
 
+import { login } from "../../features/auth/login";
+
 import {
     getRememberedLoginId
 } from "../../shared/lib/login-preferences";
@@ -48,7 +50,6 @@ export function renderLoginPage(): string {
                     </div>
 
                     <h1>K3 Logistics</h1>
-
                     <p>Диспечерска система</p>
                 </header>
 
@@ -87,6 +88,7 @@ export function renderLoginPage(): string {
                             <form
                                 id="loginForm"
                                 class="login-form"
+                                autocomplete="on"
                             >
                                 <div class="login-field">
                                     <label for="loginUsername">
@@ -153,9 +155,19 @@ export function renderLoginPage(): string {
 }
 
 export function initializeLoginPage(): void {
+    const form =
+        document.querySelector<HTMLFormElement>(
+            "#loginForm"
+        );
+
     const usernameInput =
         document.querySelector<HTMLInputElement>(
             "#loginUsername"
+        );
+
+    const passwordInput =
+        document.querySelector<HTMLInputElement>(
+            "#loginPassword"
         );
 
     const rememberMeInput =
@@ -163,20 +175,70 @@ export function initializeLoginPage(): void {
             "#rememberMe"
         );
 
-    if (!usernameInput || !rememberMeInput) {
+    const loginButton =
+        document.querySelector<HTMLButtonElement>(
+            "#loginButton"
+        );
+
+    const loginMessage =
+        document.querySelector<HTMLDivElement>(
+            "#loginMessage"
+        );
+
+    if (
+        !form ||
+        !usernameInput ||
+        !passwordInput ||
+        !rememberMeInput ||
+        !loginButton ||
+        !loginMessage
+    ) {
         return;
     }
 
     const rememberedLoginId =
         getRememberedLoginId();
 
-    if (!rememberedLoginId) {
-        return;
+    if (rememberedLoginId) {
+        usernameInput.value =
+            rememberedLoginId;
+
+        rememberMeInput.checked =
+            true;
     }
 
-    usernameInput.value =
-        rememberedLoginId;
+    form.addEventListener(
+        "submit",
+        async (event) => {
+            event.preventDefault();
 
-    rememberMeInput.checked =
-        true;
+            loginMessage.textContent = "";
+            loginButton.disabled = true;
+            loginButton.textContent = "Влизане...";
+
+            try {
+                const result = await login({
+                    loginId: usernameInput.value,
+                    password: passwordInput.value,
+                    rememberMe: rememberMeInput.checked
+                });
+
+                if (!result.success) {
+                    loginMessage.textContent =
+                        result.message;
+
+                    return;
+                }
+
+                loginMessage.textContent =
+                    "Успешен вход.";
+            } catch {
+                loginMessage.textContent =
+                    "Възникна грешка при вход. Опитайте отново.";
+            } finally {
+                loginButton.disabled = false;
+                loginButton.textContent = "🔑 Вход";
+            }
+        }
+    );
 }
