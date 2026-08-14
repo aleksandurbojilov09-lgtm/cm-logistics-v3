@@ -1,2 +1,4 @@
+project_id = "cm-logistics-v3"
+
 [functions.admin-user-manage]
 verify_jwt = true
