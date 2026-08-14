@@ -1,0 +1,737 @@
+/* =========================================================
+   K3 LOGISTICS V3
+   ADMIN ORDERS + CLIENTS
+   ========================================================= */
+
+
+.orders-section {
+    width: 100%;
+}
+
+
+.orders-panel {
+    margin-bottom: 24px;
+
+    overflow: hidden;
+
+    border:
+        1px solid
+        var(--cm-color-border);
+
+    border-radius: 16px;
+
+    background:
+        var(--cm-color-surface);
+}
+
+
+.orders-panel-header {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 16px;
+
+    padding: 20px;
+
+    border-bottom:
+        1px solid
+        var(--cm-color-border);
+}
+
+
+.orders-panel-header h3 {
+    margin: 0;
+
+    font-size: 20px;
+
+    font-weight: 800;
+}
+
+
+.orders-panel-header p {
+    margin: 5px 0 0;
+
+    color:
+        var(--cm-color-text-muted);
+
+    font-size: 13px;
+}
+
+
+.orders-count {
+    min-width: 40px;
+
+    padding: 7px 11px;
+
+    border-radius: 9999px;
+
+    background: #1e293b;
+
+    color: #ffffff;
+
+    text-align: center;
+
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   PAGE MESSAGE
+   ========================================================= */
+
+
+.orders-page-message {
+    display: none;
+
+    margin-bottom: 16px;
+
+    padding: 13px 15px;
+
+    border-radius: 12px;
+
+    font-size: 13px;
+}
+
+
+.orders-page-message-success {
+    display: block;
+
+    border: 1px solid #166534;
+
+    background:
+        rgba(
+            20,
+            83,
+            45,
+            0.38
+        );
+
+    color: #86efac;
+}
+
+
+.orders-page-message-error {
+    display: block;
+
+    border: 1px solid #991b1b;
+
+    background: #450a0a;
+
+    color: #fecaca;
+}
+
+
+/* =========================================================
+   ORDERS
+   ========================================================= */
+
+
+.orders-list {
+    display: grid;
+
+    grid-template-columns: 1fr;
+
+    gap: 14px;
+
+    padding: 16px;
+}
+
+
+.orders-loading,
+.orders-empty {
+    padding: 42px 18px;
+
+    color:
+        var(--cm-color-text-muted);
+
+    text-align: center;
+}
+
+
+.order-card {
+    padding: 16px;
+
+    border:
+        1px solid
+        var(--cm-color-border);
+
+    border-radius: 14px;
+
+    background: #020617;
+}
+
+
+.order-card-header {
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    justify-content:
+        space-between;
+
+    gap: 10px;
+}
+
+
+.order-card-header > div:first-child {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+
+.order-card-header strong {
+    font-size: 16px;
+}
+
+
+.order-card-header span {
+    color:
+        var(--cm-color-text-muted);
+
+    font-size: 11px;
+}
+
+
+.order-status {
+    padding: 6px 10px;
+
+    border-radius: 9999px;
+
+    background: #1e293b;
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+
+.order-status-pending {
+    color: #fcd34d;
+}
+
+
+.order-status-partial {
+    color: #fb923c;
+}
+
+
+.order-status-assigned {
+    color: #4ade80;
+}
+
+
+.order-status-in_progress {
+    color: #60a5fa;
+}
+
+
+.order-card-grid {
+    display: grid;
+
+    grid-template-columns: 1fr;
+
+    gap: 10px;
+
+    margin-top: 14px;
+}
+
+
+.order-info {
+    padding: 12px;
+
+    border:
+        1px solid
+        var(--cm-color-border);
+
+    border-radius: 10px;
+
+    background: #0f172a;
+}
+
+
+.order-info > span {
+    display: block;
+
+    color:
+        var(--cm-color-text-muted);
+
+    font-size: 11px;
+}
+
+
+.order-info > strong {
+    display: block;
+
+    margin-top: 5px;
+
+    overflow-wrap: anywhere;
+}
+
+
+.order-info > small {
+    display: block;
+
+    margin-top: 4px;
+
+    color:
+        var(--cm-color-text-muted);
+}
+
+
+.order-note {
+    margin-top: 12px;
+
+    padding: 11px 12px;
+
+    border-radius: 10px;
+
+    background: #0f172a;
+
+    color: #cbd5e1;
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   CLIENT MANAGEMENT
+   ========================================================= */
+
+
+.client-management {
+    padding: 16px;
+}
+
+
+.client-management-forms {
+    display: grid;
+
+    grid-template-columns: 1fr;
+
+    gap: 16px;
+}
+
+
+.client-form-card {
+    padding: 17px;
+
+    border:
+        1px solid
+        var(--cm-color-border);
+
+    border-radius: 14px;
+
+    background: #020617;
+}
+
+
+.client-form-card h4 {
+    margin: 0 0 17px;
+
+    font-size: 16px;
+}
+
+
+.client-form {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 14px;
+}
+
+
+.client-form label {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+
+    color: #cbd5e1;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
+.client-form input,
+.client-form select {
+    width: 100%;
+
+    min-height: 46px;
+
+    padding: 10px 12px;
+
+    border: 1px solid #475569;
+
+    border-radius: 10px;
+
+    outline: none;
+
+    background: #1e293b;
+
+    color: #ffffff;
+
+    font: inherit;
+}
+
+
+.client-form input:focus,
+.client-form select:focus {
+    border-color: #3b82f6;
+}
+
+
+.client-coordinates {
+    display: grid;
+
+    grid-template-columns: 1fr;
+
+    gap: 10px;
+}
+
+
+.client-password-row {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        46px;
+
+    gap: 8px;
+}
+
+
+.client-password-toggle {
+    min-height: 46px;
+
+    border: 1px solid #475569;
+
+    border-radius: 10px;
+
+    background: #1e293b;
+
+    color: #ffffff;
+}
+
+
+.client-submit {
+    min-height: 48px;
+
+    margin-top: 3px;
+
+    padding: 11px 14px;
+
+    border: 0;
+
+    border-radius: 11px;
+
+    color: #ffffff;
+
+    cursor: pointer;
+
+    font-weight: 800;
+}
+
+
+.client-submit:disabled {
+    opacity: 0.45;
+
+    cursor: not-allowed;
+}
+
+
+.client-submit-blue {
+    background: #2563eb;
+}
+
+
+.client-submit-green {
+    background: #047857;
+}
+
+
+.client-submit-orange {
+    background: #c2410c;
+}
+
+
+/* =========================================================
+   CLIENT DIRECTORY
+   ========================================================= */
+
+
+.client-directory {
+    margin-top: 24px;
+
+    padding-top: 20px;
+
+    border-top:
+        1px solid
+        var(--cm-color-border);
+}
+
+
+.client-directory-header {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    margin-bottom: 14px;
+}
+
+
+.client-directory-header h4 {
+    margin: 0;
+}
+
+
+.client-directory-header span {
+    color:
+        var(--cm-color-text-muted);
+
+    font-size: 12px;
+}
+
+
+.client-company-list {
+    display: grid;
+
+    grid-template-columns: 1fr;
+
+    gap: 14px;
+}
+
+
+.client-company-card {
+    overflow: hidden;
+
+    border:
+        1px solid #334155;
+
+    border-radius: 14px;
+
+    background: #020617;
+}
+
+
+.client-company-header {
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    justify-content:
+        space-between;
+
+    gap: 10px;
+
+    padding: 15px;
+
+    border-bottom:
+        1px solid
+        var(--cm-color-border);
+}
+
+
+.client-company-header > div {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+
+.client-company-header strong {
+    font-size: 16px;
+}
+
+
+.client-company-header span {
+    color:
+        var(--cm-color-text-muted);
+
+    font-size: 12px;
+}
+
+
+.client-active-badge {
+    color: #4ade80 !important;
+
+    font-weight: 700;
+}
+
+
+.client-company-columns {
+    display: grid;
+
+    grid-template-columns: 1fr;
+
+    gap: 18px;
+
+    padding: 15px;
+}
+
+
+.client-company-columns h5 {
+    margin: 0 0 9px;
+
+    color: #cbd5e1;
+
+    font-size: 12px;
+}
+
+
+.client-directory-item {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+
+    margin-top: 7px;
+
+    padding: 10px;
+
+    border:
+        1px solid
+        var(--cm-color-border);
+
+    border-radius: 9px;
+
+    background: #0f172a;
+}
+
+
+.client-directory-item strong {
+    font-size: 13px;
+}
+
+
+.client-directory-item span,
+.client-directory-item small {
+    color:
+        var(--cm-color-text-muted);
+
+    font-size: 11px;
+}
+
+
+.client-directory-empty {
+    padding: 12px;
+
+    border:
+        1px dashed #334155;
+
+    border-radius: 9px;
+
+    color:
+        var(--cm-color-text-muted);
+
+    font-size: 12px;
+
+    text-align: center;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+
+@media (min-width: 600px) {
+
+    .order-card-header {
+        flex-direction: row;
+
+        align-items: flex-start;
+    }
+
+
+    .order-card-grid {
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(0, 1fr)
+            );
+    }
+
+
+    .client-coordinates {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+
+    .client-company-header {
+        flex-direction: row;
+
+        align-items: flex-start;
+    }
+
+
+    .client-company-columns {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+}
+
+
+@media (min-width: 1050px) {
+
+    .client-management-forms {
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(0, 1fr)
+            );
+
+        align-items: start;
+    }
+
+}
+
+
+@media (min-width: 1350px) {
+
+    .orders-list {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+
+    .client-company-list {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+}
