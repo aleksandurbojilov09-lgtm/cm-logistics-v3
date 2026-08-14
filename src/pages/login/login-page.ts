@@ -1,57 +1,112 @@
 export function renderLoginPage(): string {
     return `
         <main class="login-page">
-            <section class="login-card">
-                <header class="login-header">
+            <div class="login-container">
+
+                <header class="login-brand">
+                    <div class="login-brand-icon">🚛</div>
+
                     <h1>CM Logistics</h1>
-                    <p>Вход в системата</p>
+
+                    <p>Диспечерска система</p>
                 </header>
 
-                <form id="loginForm" class="login-form">
-                    <label for="loginId">
-                        Потребител
-                    </label>
+                <div class="login-card">
 
-                    <input
-                        id="loginId"
-                        name="username"
-                        type="text"
-                        autocomplete="username"
-                        required
-                    />
+                    <div class="login-tabs">
+                        <button
+                            id="loginTab"
+                            class="login-tab login-tab-active"
+                            type="button"
+                        >
+                            🔑 Вход
+                        </button>
 
-                    <label for="loginPassword">
-                        Парола
-                    </label>
+                        <button
+                            id="registerTab"
+                            class="login-tab"
+                            type="button"
+                        >
+                            🏢 Регистрация на фирма
+                        </button>
+                    </div>
 
-                    <input
-                        id="loginPassword"
-                        name="password"
-                        type="password"
-                        autocomplete="current-password"
-                        required
-                    />
+                    <section
+                        id="loginSection"
+                        class="login-section"
+                    >
+                        <div class="login-form-container">
 
-                    <label class="remember-me">
-                        <input
-                            id="rememberMe"
-                            type="checkbox"
-                        />
+                            <h2>Вход в системата</h2>
 
-                        <span>Запомни ме</span>
-                    </label>
+                            <p class="login-description">
+                                За администратор, диспечери, шофьори и клиенти
+                            </p>
 
-                    <button type="submit">
-                        Вход
-                    </button>
-                </form>
+                            <form
+                                id="loginForm"
+                                class="login-form"
+                            >
+                                <div class="login-field">
+                                    <label for="loginUsername">
+                                        Потребителско ID
+                                    </label>
 
-                <p
-                    id="loginMessage"
-                    class="login-message"
-                    aria-live="polite"
-                ></p>
-            </section>
+                                    <input
+                                        id="loginUsername"
+                                        name="username"
+                                        type="text"
+                                        autocomplete="username"
+                                        placeholder="Въведете ID"
+                                        required
+                                    />
+                                </div>
+
+                                <div class="login-field">
+                                    <label for="loginPassword">
+                                        Парола
+                                    </label>
+
+                                    <input
+                                        id="loginPassword"
+                                        name="password"
+                                        type="password"
+                                        autocomplete="current-password"
+                                        placeholder="Въведете парола"
+                                        required
+                                    />
+                                </div>
+
+                                <label class="remember-me">
+                                    <input
+                                        id="rememberMe"
+                                        type="checkbox"
+                                    />
+
+                                    <span>Запомни ме</span>
+                                </label>
+
+                                <div
+                                    id="loginMessage"
+                                    class="login-message"
+                                    aria-live="polite"
+                                ></div>
+
+                                <button
+                                    id="loginButton"
+                                    class="login-button"
+                                    type="submit"
+                                >
+                                    🔑 Вход
+                                </button>
+                            </form>
+
+                        </div>
+                    </section>
+
+                </div>
+
+            </div>
         </main>
     `;
 }
