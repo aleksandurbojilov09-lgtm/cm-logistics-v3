@@ -1,0 +1,556 @@
+/* =========================================================
+   K3 LOGISTICS V3
+   DRIVER ETA + DISCREPANCIES
+   ========================================================= */
+
+
+/* =========================================================
+   ETA
+   ========================================================= */
+
+
+.driver-eta-button {
+    width: 100%;
+
+    min-height: 48px;
+
+    margin-top: 14px;
+
+    padding: 10px 14px;
+
+    border: 1px solid #d97706;
+
+    border-radius: 11px;
+
+    background:
+        rgba(
+            180,
+            83,
+            9,
+            0.35
+        );
+
+    color: #fde68a;
+
+    cursor: pointer;
+
+    font-weight: 900;
+}
+
+
+.driver-eta-button:hover:not(:disabled) {
+    background:
+        rgba(
+            217,
+            119,
+            6,
+            0.45
+        );
+}
+
+
+.driver-eta-button:disabled {
+    opacity: 0.65;
+
+    cursor: not-allowed;
+}
+
+
+.driver-confirmation-status {
+    margin-top: 10px;
+
+    padding: 10px 12px;
+
+    border-radius: 10px;
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+
+.driver-confirmation-idle {
+    border: 1px solid #475569;
+
+    background: #1e293b;
+
+    color: #94a3b8;
+}
+
+
+.driver-confirmation-waiting {
+    border: 1px solid #92400e;
+
+    background:
+        rgba(
+            120,
+            53,
+            15,
+            0.28
+        );
+
+    color: #fcd34d;
+}
+
+
+.driver-confirmation-confirmed {
+    border: 1px solid #166534;
+
+    background:
+        rgba(
+            20,
+            83,
+            45,
+            0.3
+        );
+
+    color: #86efac;
+}
+
+
+/* =========================================================
+   ACTIVE ACTIONS
+   ========================================================= */
+
+
+.driver-current-actions-four {
+    grid-template-columns: 1fr;
+}
+
+
+.driver-current-actions-four
+.driver-eta-button {
+    margin-top: 0;
+}
+
+
+.driver-discrepancy-button {
+    min-height: 48px;
+
+    padding: 10px 13px;
+
+    border: 1px solid #d97706;
+
+    border-radius: 11px;
+
+    background:
+        rgba(
+            146,
+            64,
+            14,
+            0.35
+        );
+
+    color: #fde68a;
+
+    cursor: pointer;
+
+    font-weight: 900;
+}
+
+
+.driver-discrepancy-button:hover:not(:disabled) {
+    background:
+        rgba(
+            180,
+            83,
+            9,
+            0.45
+        );
+}
+
+
+.driver-discrepancy-button:disabled {
+    opacity: 0.6;
+
+    cursor: not-allowed;
+}
+
+
+/* =========================================================
+   DISCREPANCY STATUS
+   ========================================================= */
+
+
+.driver-discrepancy-status {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 4px;
+
+    margin-top: 10px;
+
+    padding: 11px 12px;
+
+    border: 1px solid #b45309;
+
+    border-radius: 10px;
+
+    background:
+        rgba(
+            120,
+            53,
+            15,
+            0.25
+        );
+
+    color: #fde68a;
+}
+
+
+.driver-discrepancy-status strong {
+    font-size: 12px;
+}
+
+
+.driver-discrepancy-status span {
+    font-size: 11px;
+}
+
+
+.driver-discrepancy-status small {
+    color: #fbbf24;
+
+    font-size: 10px;
+}
+
+
+.driver-discrepancy-reviewed {
+    border-color: #166534;
+
+    background:
+        rgba(
+            20,
+            83,
+            45,
+            0.25
+        );
+
+    color: #86efac;
+}
+
+
+.driver-discrepancy-reviewed small {
+    color: #86efac;
+}
+
+
+/* =========================================================
+   MODAL
+   ========================================================= */
+
+
+.driver-discrepancy-dialog {
+    width:
+        min(
+            540px,
+            calc(
+                100vw - 28px
+            )
+        );
+
+    max-height:
+        calc(
+            100vh - 40px
+        );
+
+    padding: 0;
+
+    overflow: auto;
+
+    border: 1px solid #92400e;
+
+    border-radius: 17px;
+
+    background: #0f172a;
+
+    color: #ffffff;
+}
+
+
+.driver-discrepancy-dialog::backdrop {
+    background:
+        rgba(
+            2,
+            6,
+            23,
+            0.86
+        );
+
+    backdrop-filter:
+        blur(4px);
+}
+
+
+.driver-discrepancy-form {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 16px;
+
+    padding: 18px;
+}
+
+
+.driver-discrepancy-header {
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+    gap: 15px;
+}
+
+
+.driver-discrepancy-header h2 {
+    margin: 0;
+
+    color: #fbbf24;
+
+    font-size: 21px;
+}
+
+
+.driver-discrepancy-header p {
+    margin: 5px 0 0;
+
+    color: #cbd5e1;
+
+    font-size: 13px;
+}
+
+
+.driver-dialog-close {
+    display: grid;
+
+    width: 40px;
+
+    height: 40px;
+
+    flex: 0 0 auto;
+
+    place-items: center;
+
+    border: 1px solid #475569;
+
+    border-radius: 10px;
+
+    background: #1e293b;
+
+    color: #ffffff;
+
+    cursor: pointer;
+}
+
+
+.driver-discrepancy-assigned {
+    padding: 14px;
+
+    border: 1px solid #334155;
+
+    border-radius: 11px;
+
+    background: #020617;
+}
+
+
+.driver-discrepancy-assigned span {
+    display: block;
+
+    color: #64748b;
+
+    font-size: 11px;
+}
+
+
+.driver-discrepancy-assigned strong {
+    display: block;
+
+    margin-top: 5px;
+
+    font-size: 22px;
+}
+
+
+.driver-discrepancy-form label {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+
+    color: #cbd5e1;
+
+    font-size: 12px;
+
+    font-weight: 700;
+}
+
+
+.driver-discrepancy-form label small {
+    color: #64748b;
+
+    font-weight: 400;
+}
+
+
+.driver-discrepancy-form input,
+.driver-discrepancy-form textarea {
+    width: 100%;
+
+    padding: 11px 13px;
+
+    border: 1px solid #92400e;
+
+    border-radius: 11px;
+
+    outline: none;
+
+    background: #1e293b;
+
+    color: #ffffff;
+
+    font: inherit;
+}
+
+
+.driver-discrepancy-form input {
+    min-height: 50px;
+
+    font-size: 18px;
+
+    font-weight: 800;
+}
+
+
+.driver-discrepancy-form textarea {
+    resize: vertical;
+
+    border-color: #475569;
+}
+
+
+.driver-discrepancy-form input:focus,
+.driver-discrepancy-form textarea:focus {
+    border-color: #f59e0b;
+}
+
+
+/* =========================================================
+   DIFFERENCE
+   ========================================================= */
+
+
+.driver-difference-preview {
+    padding: 11px 12px;
+
+    border-radius: 10px;
+
+    font-size: 13px;
+
+    font-weight: 800;
+}
+
+
+.driver-difference-zero {
+    border: 1px solid #475569;
+
+    background: #1e293b;
+
+    color: #cbd5e1;
+}
+
+
+.driver-difference-alert {
+    border: 1px solid #b45309;
+
+    background:
+        rgba(
+            120,
+            53,
+            15,
+            0.3
+        );
+
+    color: #fcd34d;
+}
+
+
+.driver-difference-error {
+    border: 1px solid #991b1b;
+
+    background: #450a0a;
+
+    color: #fecaca;
+}
+
+
+.driver-discrepancy-submit {
+    min-height: 50px;
+
+    padding: 11px 15px;
+
+    border: 0;
+
+    border-radius: 11px;
+
+    background: #d97706;
+
+    color: #ffffff;
+
+    cursor: pointer;
+
+    font-weight: 900;
+}
+
+
+.driver-discrepancy-submit:hover:not(:disabled) {
+    background: #f59e0b;
+}
+
+
+.driver-discrepancy-submit:disabled {
+    opacity: 0.5;
+
+    cursor: not-allowed;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+
+@media (min-width: 620px) {
+
+    .driver-current-actions-four {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+    }
+
+}
+
+
+@media (min-width: 1100px) {
+
+    .driver-current-actions-four {
+        grid-template-columns:
+            repeat(
+                4,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+    }
+
+}
