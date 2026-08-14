@@ -1,4 +1,5 @@
 import "./driver-page.css";
+import "./driver-interactions.css";
 
 import {
     finishDriverTrip,
@@ -8,6 +9,14 @@ import {
     type DriverStop,
     type DriverTripState
 } from "../../features/trips/driver-trip-service";
+
+import {
+    loadDriverInteractions,
+    reportDriverDiscrepancy,
+    sendDriverEtaBeforeStart,
+    sendDriverEtaCurrent,
+    type DriverInteraction
+} from "../../features/trips/driver-interaction-service";
 
 import {
     logoutCurrentSession
@@ -34,6 +43,11 @@ let state:
     null;
 
 
+let interactions:
+    DriverInteraction[] =
+    [];
+
+
 let map:
     LeafletMap | null =
     null;
@@ -51,6 +65,11 @@ let leaflet:
 
 let refreshVersion =
     0;
+
+
+let interactionTimer:
+    number | null =
+    null;
 
 
 /* =========================================================
@@ -267,6 +286,108 @@ string {
 
             </main>
 
+
+            <dialog
+                id="k3DriverDiscrepancyDialog"
+                class="driver-discrepancy-dialog"
+            >
+
+                <form
+                    id="k3DriverDiscrepancyForm"
+                    class="driver-discrepancy-form"
+                >
+
+                    <header
+                        class="driver-discrepancy-header"
+                    >
+
+                        <div>
+                            <h2>
+                                ⚠️ Несъответствие
+                            </h2>
+
+                            <p
+                                id="k3DriverDiscrepancyCompany"
+                            >
+                                -
+                            </p>
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="driver-dialog-close"
+                            data-driver-action="close-discrepancy"
+                            aria-label="Затвори"
+                        >
+                            ✕
+                        </button>
+
+                    </header>
+
+
+                    <div
+                        class="driver-discrepancy-assigned"
+                    >
+                        <span>
+                            Зачислен товар
+                        </span>
+
+                        <strong
+                            id="k3DriverDiscrepancyAssigned"
+                        >
+                            -
+                        </strong>
+                    </div>
+
+
+                    <label>
+                        Реално натоварени тонове
+
+                        <input
+                            id="k3DriverActualLoadedTons"
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            required
+                            inputmode="decimal"
+                        />
+                    </label>
+
+
+                    <label>
+                        Бележка
+
+                        <small>
+                            (по желание)
+                        </small>
+
+                        <textarea
+                            id="k3DriverDiscrepancyNote"
+                            rows="4"
+                            placeholder="Напр. зачислени са 12 т., но реално са 9.5 т."
+                        ></textarea>
+                    </label>
+
+
+                    <div
+                        id="k3DriverDifferencePreview"
+                        class="driver-difference-preview"
+                    ></div>
+
+
+                    <button
+                        id="k3DriverDiscrepancySubmit"
+                        type="submit"
+                        class="driver-discrepancy-submit"
+                    >
+                        ⚠️ Изпрати сигнал
+                    </button>
+
+                </form>
+
+            </dialog>
+
         </div>
     `;
 }
@@ -422,6 +543,179 @@ function navigationUrl(
         stop.latitude,
         stop.longitude
     );
+}
+
+
+function interactionByAssignment(
+    assignmentId:
+        string | null
+): DriverInteraction | null {
+
+    if (!assignmentId) {
+        return null;
+    }
+
+
+    return (
+        interactions.find(
+            item =>
+                item.assignmentId ===
+                    assignmentId
+        ) ||
+        null
+    );
+}
+
+
+function interactionByStop(
+    stopId:
+        string | null
+): DriverInteraction | null {
+
+    if (!stopId) {
+        return null;
+    }
+
+
+    return (
+        interactions.find(
+            item =>
+                item.stopId ===
+                    stopId
+        ) ||
+        null
+    );
+}
+
+
+function etaStatusHtml(
+    interaction:
+        DriverInteraction | null
+): string {
+
+    if (
+        !interaction?.etaSentAt
+    ) {
+        return `
+            <div
+                class="
+                    driver-confirmation-status
+                    driver-confirmation-idle
+                "
+            >
+                🔔 Известието още не е изпратено.
+            </div>
+        `;
+    }
+
+
+    if (
+        interaction.etaConfirmed
+    ) {
+        return `
+            <div
+                class="
+                    driver-confirmation-status
+                    driver-confirmation-confirmed
+                "
+            >
+                ✅ Клиентът потвърди известието.
+            </div>
+        `;
+    }
+
+
+    return `
+        <div
+            class="
+                driver-confirmation-status
+                driver-confirmation-waiting
+            "
+        >
+            ⏳ Известието е изпратено.
+            Изчаква потвърждение от клиента.
+        </div>
+    `;
+}
+
+
+function discrepancyStatusHtml(
+    interaction:
+        DriverInteraction | null
+): string {
+
+    if (
+        !interaction?.discrepancyId
+    ) {
+        return "";
+    }
+
+
+    const actual =
+        interaction.actualLoadedTons ??
+        0;
+
+
+    const difference =
+        interaction.differenceTons ??
+        0;
+
+
+    const sign =
+        difference > 0
+            ? "+"
+            : "";
+
+
+    const reviewed =
+        interaction.discrepancyStatus ===
+        "reviewed";
+
+
+    return `
+        <div
+            class="
+                driver-discrepancy-status
+                ${
+                    reviewed
+                        ? "driver-discrepancy-reviewed"
+                        : ""
+                }
+            "
+        >
+
+            <strong>
+                ⚠️ Несъответствието е изпратено
+            </strong>
+
+            <span>
+                Реално:
+                ${escapeHtml(
+                    formatTons(
+                        actual
+                    )
+                )}
+                т.
+                •
+                Разлика:
+                ${escapeHtml(
+                    `${sign}${formatTons(
+                        difference
+                    )}`
+                )}
+                т.
+            </span>
+
+            <small>
+                ${
+                    reviewed
+                        ? "✅ Прегледано от администрацията"
+                        : "⏳ Очаква преглед"
+                }
+            </small>
+
+        </div>
+    `;
 }
 
 
@@ -619,23 +913,43 @@ void {
     if (!state.hasActiveTrip) {
 
         const firstStop =
-            state.assignedStops[0];
+            state.assignedStops[0] ||
+            null;
+
+
+        const firstInteraction =
+            firstStop
+
+                ? interactionByAssignment(
+                    firstStop.assignmentId
+                )
+
+                : null;
+
+
+        const etaAlreadySent =
+            Boolean(
+                firstInteraction
+                    ?.etaSentAt
+            );
 
 
         container.innerHTML = `
             <header
                 class="driver-panel-header"
             >
+
                 <div>
                     <h2>
                         🚛 Старт на курс
                     </h2>
 
                     <p>
-                        Въведи километража
-                        преди потегляне.
+                        Преди потегляне можеш
+                        да уведомиш само първата фирма.
                     </p>
                 </div>
+
 
                 <span
                     class="
@@ -645,6 +959,7 @@ void {
                 >
                     ⏳ Изчаква
                 </span>
+
             </header>
 
 
@@ -655,6 +970,7 @@ void {
                         <div
                             class="driver-first-stop"
                         >
+
                             <span>
                                 Първа спирка
                             </span>
@@ -685,6 +1001,39 @@ void {
                                 )}
                                 т.
                             </div>
+
+
+                            <button
+                                type="button"
+                                class="driver-eta-button"
+                                data-driver-action="eta-before-start"
+                                data-assignment-id="${escapeHtml(
+                                    firstStop.assignmentId ||
+                                    ""
+                                )}"
+                                ${
+                                    !firstStop.assignmentId ||
+                                    etaAlreadySent
+
+                                        ? "disabled"
+
+                                        : ""
+                                }
+                            >
+                                ${
+                                    etaAlreadySent
+
+                                        ? "🔔 Известието е изпратено"
+
+                                        : "🔔 Пристигам след около 1 час"
+                                }
+                            </button>
+
+
+                            ${etaStatusHtml(
+                                firstInteraction
+                            )}
+
                         </div>
                     `
 
@@ -778,6 +1127,30 @@ void {
         allStopsLoaded();
 
 
+    const activeInteraction =
+        active
+
+            ? interactionByStop(
+                active.id
+            )
+
+            : null;
+
+
+    const etaAlreadySent =
+        Boolean(
+            activeInteraction
+                ?.etaSentAt
+        );
+
+
+    const discrepancyAlreadySent =
+        Boolean(
+            activeInteraction
+                ?.discrepancyId
+        );
+
+
     container.innerHTML = `
         <header
             class="driver-panel-header"
@@ -794,12 +1167,14 @@ void {
                 <p>
                     ${
                         trip.activeSegment
+
                             ? `Начален км: ${escapeHtml(
                                 String(
                                     trip.activeSegment
                                         .startKm
                                 )
                             )}`
+
                             : ""
                     }
                 </p>
@@ -864,7 +1239,10 @@ void {
 
 
                         <div
-                            class="driver-current-actions"
+                            class="
+                                driver-current-actions
+                                driver-current-actions-four
+                            "
                         >
 
                             ${
@@ -891,16 +1269,71 @@ void {
 
                             <button
                                 type="button"
+                                class="driver-eta-button"
+                                data-driver-action="eta-current"
+                                data-stop-id="${escapeHtml(
+                                    active.id ||
+                                    ""
+                                )}"
+                                ${
+                                    etaAlreadySent
+                                        ? "disabled"
+                                        : ""
+                                }
+                            >
+                                ${
+                                    etaAlreadySent
+                                        ? "🔔 Изпратено"
+                                        : "🔔 ~1 час"
+                                }
+                            </button>
+
+
+                            <button
+                                type="button"
+                                class="driver-discrepancy-button"
+                                data-driver-action="open-discrepancy"
+                                data-stop-id="${escapeHtml(
+                                    active.id ||
+                                    ""
+                                )}"
+                                ${
+                                    discrepancyAlreadySent
+                                        ? "disabled"
+                                        : ""
+                                }
+                            >
+                                ${
+                                    discrepancyAlreadySent
+                                        ? "⚠️ Изпратено"
+                                        : "⚠️ Несъответствие"
+                                }
+                            </button>
+
+
+                            <button
+                                type="button"
                                 class="driver-loaded-button"
                                 data-driver-action="loaded"
                                 data-stop-id="${escapeHtml(
-                                    active.id || ""
+                                    active.id ||
+                                    ""
                                 )}"
                             >
                                 ✅ Натоварих
                             </button>
 
                         </div>
+
+
+                        ${etaStatusHtml(
+                            activeInteraction
+                        )}
+
+
+                        ${discrepancyStatusHtml(
+                            activeInteraction
+                        )}
 
                     </div>
                 `
@@ -921,9 +1354,8 @@ void {
                         </strong>
 
                         <p>
-                            Продължи до крайната
-                            точка и въведи крайния
-                            километраж.
+                            Продължи до крайната точка
+                            и въведи крайния километраж.
                         </p>
                     </div>
 
@@ -973,7 +1405,7 @@ void {
 
 
 /* =========================================================
-   STOPS LIST
+   STOPS
    ========================================================= */
 
 
@@ -1054,6 +1486,7 @@ void {
                                 <div
                                     class="driver-stop-heading"
                                 >
+
                                     <div>
                                         <strong>
                                             ${escapeHtml(
@@ -1082,6 +1515,7 @@ void {
                                         )}
                                         т.
                                     </strong>
+
                                 </div>
 
 
@@ -1168,7 +1602,10 @@ void {
                                                 )}"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                class="driver-navigation-button driver-navigation-small"
+                                                class="
+                                                    driver-navigation-button
+                                                    driver-navigation-small
+                                                "
                                             >
                                                 🧭 Навигирай с Google Maps
                                             </a>
@@ -1221,7 +1658,7 @@ function markerClass(
 
     if (
         stop.status ===
-        "assigned" &&
+            "assigned" &&
         index === 0
     ) {
         return "driver-map-marker-first";
@@ -1257,6 +1694,7 @@ Promise<void> {
 
         if (map) {
             map.remove();
+
             map =
                 null;
         }
@@ -1555,8 +1993,14 @@ Promise<void> {
 
     try {
 
-        const nextState =
-            await loadDriverTripState();
+        const [
+            nextState,
+            nextInteractions
+        ] =
+            await Promise.all([
+                loadDriverTripState(),
+                loadDriverInteractions()
+            ]);
 
 
         if (
@@ -1582,6 +2026,10 @@ Promise<void> {
             nextState;
 
 
+        interactions =
+            nextInteractions;
+
+
         renderSummary();
 
         renderTripControl();
@@ -1603,8 +2051,79 @@ Promise<void> {
 }
 
 
+async function refreshInteractionsOnly():
+Promise<void> {
+
+    const root =
+        document.querySelector(
+            "#k3DriverPortal"
+        );
+
+
+    if (!root?.isConnected) {
+
+        stopInteractionPolling();
+
+        return;
+    }
+
+
+    try {
+
+        interactions =
+            await loadDriverInteractions();
+
+
+        renderTripControl();
+
+
+    } catch (error) {
+
+        console.warn(
+            "K3 Driver interaction refresh failed.",
+            error
+        );
+    }
+}
+
+
+function startInteractionPolling():
+void {
+
+    stopInteractionPolling();
+
+
+    interactionTimer =
+        window.setInterval(
+            () => {
+                void refreshInteractionsOnly();
+            },
+            5000
+        );
+}
+
+
+function stopInteractionPolling():
+void {
+
+    if (
+        interactionTimer !==
+        null
+    ) {
+
+        window.clearInterval(
+            interactionTimer
+        );
+
+
+        interactionTimer =
+            null;
+    }
+}
+
+
 /* =========================================================
-   START
+   START TRIP
    ========================================================= */
 
 
@@ -1636,14 +2155,9 @@ async function submitStart(
     }
 
 
-    const startKm =
-        Number(
-            input.value
-        );
-
-
     button.disabled =
         true;
+
 
     button.textContent =
         "Стартиране...";
@@ -1652,7 +2166,9 @@ async function submitStart(
     try {
 
         await startDriverTrip(
-            startKm
+            Number(
+                input.value
+            )
         );
 
 
@@ -1677,6 +2193,7 @@ async function submitStart(
 
         button.disabled =
             false;
+
 
         button.textContent =
             "🚛 Започни курс";
@@ -1704,6 +2221,7 @@ async function markLoaded(
 
     button.disabled =
         true;
+
 
     button.textContent =
         "Записване...";
@@ -1744,6 +2262,7 @@ async function markLoaded(
         button.disabled =
             false;
 
+
         button.textContent =
             "✅ Натоварих";
     }
@@ -1783,14 +2302,9 @@ async function submitFinish(
     }
 
 
-    const endKm =
-        Number(
-            input.value
-        );
-
-
     button.disabled =
         true;
+
 
     button.textContent =
         "Приключване...";
@@ -1799,7 +2313,9 @@ async function submitFinish(
     try {
 
         await finishDriverTrip(
-            endKm
+            Number(
+                input.value
+            )
         );
 
 
@@ -1825,8 +2341,492 @@ async function submitFinish(
         button.disabled =
             false;
 
+
         button.textContent =
             "🏁 Завърши курс";
+    }
+}
+
+
+/* =========================================================
+   ETA
+   ========================================================= */
+
+
+async function sendPreStartEta(
+    button: HTMLButtonElement
+): Promise<void> {
+
+    const assignmentId =
+        button.dataset.assignmentId;
+
+
+    if (!assignmentId) {
+        return;
+    }
+
+
+    button.disabled =
+        true;
+
+
+    button.textContent =
+        "Изпращане...";
+
+
+    try {
+
+        await sendDriverEtaBeforeStart(
+            assignmentId
+        );
+
+
+        await refreshInteractionsOnly();
+
+
+        setMessage(
+            "🔔 Клиентът е уведомен: пристигате след около 1 час.",
+            "success"
+        );
+
+
+    } catch (error) {
+
+        setMessage(
+            errorMessage(
+                error
+            ),
+            "error"
+        );
+
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "🔔 Пристигам след около 1 час";
+    }
+}
+
+
+async function sendCurrentEta(
+    button: HTMLButtonElement
+): Promise<void> {
+
+    const stopId =
+        button.dataset.stopId;
+
+
+    if (!stopId) {
+        return;
+    }
+
+
+    button.disabled =
+        true;
+
+
+    button.textContent =
+        "Изпращане...";
+
+
+    try {
+
+        await sendDriverEtaCurrent(
+            stopId
+        );
+
+
+        await refreshInteractionsOnly();
+
+
+        setMessage(
+            "🔔 Клиентът е уведомен: пристигате след около 1 час.",
+            "success"
+        );
+
+
+    } catch (error) {
+
+        setMessage(
+            errorMessage(
+                error
+            ),
+            "error"
+        );
+
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "🔔 ~1 час";
+    }
+}
+
+
+/* =========================================================
+   DISCREPANCY
+   ========================================================= */
+
+
+function openDiscrepancyDialog(
+    stopId: string
+): void {
+
+    const stop =
+        currentStop();
+
+
+    if (
+        !stop ||
+        stop.id !==
+            stopId
+    ) {
+        return;
+    }
+
+
+    const interaction =
+        interactionByStop(
+            stopId
+        );
+
+
+    if (
+        interaction?.discrepancyId
+    ) {
+
+        setMessage(
+            "За тази спирка вече има подадено несъответствие.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const dialog =
+        document.querySelector<
+            HTMLDialogElement
+        >(
+            "#k3DriverDiscrepancyDialog"
+        );
+
+
+    const form =
+        document.querySelector<
+            HTMLFormElement
+        >(
+            "#k3DriverDiscrepancyForm"
+        );
+
+
+    const company =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3DriverDiscrepancyCompany"
+        );
+
+
+    const assigned =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3DriverDiscrepancyAssigned"
+        );
+
+
+    const actual =
+        document.querySelector<
+            HTMLInputElement
+        >(
+            "#k3DriverActualLoadedTons"
+        );
+
+
+    const note =
+        document.querySelector<
+            HTMLTextAreaElement
+        >(
+            "#k3DriverDiscrepancyNote"
+        );
+
+
+    if (
+        !dialog ||
+        !form ||
+        !company ||
+        !assigned ||
+        !actual ||
+        !note
+    ) {
+        return;
+    }
+
+
+    form.dataset.stopId =
+        stopId;
+
+
+    form.dataset.assignedTons =
+        String(
+            stop.assignedTons
+        );
+
+
+    company.textContent =
+        `${stop.companyName} — ${stop.siteName}`;
+
+
+    assigned.textContent =
+        `${formatTons(
+            stop.assignedTons
+        )} т.`;
+
+
+    actual.value =
+        String(
+            stop.assignedTons
+        );
+
+
+    note.value =
+        "";
+
+
+    updateDifferencePreview();
+
+
+    if (!dialog.open) {
+        dialog.showModal();
+    }
+}
+
+
+function closeDiscrepancyDialog():
+void {
+
+    const dialog =
+        document.querySelector<
+            HTMLDialogElement
+        >(
+            "#k3DriverDiscrepancyDialog"
+        );
+
+
+    if (
+        dialog?.open
+    ) {
+        dialog.close();
+    }
+}
+
+
+function updateDifferencePreview():
+void {
+
+    const form =
+        document.querySelector<
+            HTMLFormElement
+        >(
+            "#k3DriverDiscrepancyForm"
+        );
+
+
+    const input =
+        document.querySelector<
+            HTMLInputElement
+        >(
+            "#k3DriverActualLoadedTons"
+        );
+
+
+    const preview =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3DriverDifferencePreview"
+        );
+
+
+    if (
+        !form ||
+        !input ||
+        !preview
+    ) {
+        return;
+    }
+
+
+    const assigned =
+        Number(
+            form.dataset.assignedTons ||
+            0
+        );
+
+
+    const actual =
+        Number(
+            input.value
+        );
+
+
+    if (
+        !Number.isFinite(actual) ||
+        actual < 0
+    ) {
+
+        preview.textContent =
+            "Въведете валидни реално натоварени тонове.";
+
+
+        preview.className =
+            "driver-difference-preview driver-difference-error";
+
+
+        return;
+    }
+
+
+    const difference =
+        actual -
+        assigned;
+
+
+    const sign =
+        difference > 0
+            ? "+"
+            : "";
+
+
+    preview.textContent =
+        `Разлика: ${sign}${formatTons(
+            difference
+        )} т.`;
+
+
+    preview.className =
+        difference === 0
+
+            ? "driver-difference-preview driver-difference-zero"
+
+            : "driver-difference-preview driver-difference-alert";
+}
+
+
+async function submitDiscrepancy(
+    form: HTMLFormElement
+): Promise<void> {
+
+    const stopId =
+        form.dataset.stopId;
+
+
+    const actual =
+        form.querySelector<
+            HTMLInputElement
+        >(
+            "#k3DriverActualLoadedTons"
+        );
+
+
+    const note =
+        form.querySelector<
+            HTMLTextAreaElement
+        >(
+            "#k3DriverDiscrepancyNote"
+        );
+
+
+    const button =
+        form.querySelector<
+            HTMLButtonElement
+        >(
+            "#k3DriverDiscrepancySubmit"
+        );
+
+
+    if (
+        !stopId ||
+        !actual ||
+        !note ||
+        !button
+    ) {
+        return;
+    }
+
+
+    const actualTons =
+        Number(
+            actual.value
+        );
+
+
+    if (
+        !Number.isFinite(
+            actualTons
+        ) ||
+        actualTons < 0
+    ) {
+
+        setMessage(
+            "Въведете валидни реално натоварени тонове.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    button.disabled =
+        true;
+
+
+    button.textContent =
+        "Изпращане...";
+
+
+    try {
+
+        await reportDriverDiscrepancy(
+            stopId,
+            actualTons,
+            note.value
+        );
+
+
+        closeDiscrepancyDialog();
+
+
+        await refreshInteractionsOnly();
+
+
+        setMessage(
+            "⚠️ Несъответствието е изпратено успешно.",
+            "success"
+        );
+
+
+    } catch (error) {
+
+        setMessage(
+            errorMessage(
+                error
+            ),
+            "error"
+        );
+
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "⚠️ Изпрати сигнал";
     }
 }
 
@@ -1877,6 +2877,21 @@ async function handleSubmit(
         await submitFinish(
             form
         );
+
+        return;
+    }
+
+
+    if (
+        form.id ===
+        "k3DriverDiscrepancyForm"
+    ) {
+
+        event.preventDefault();
+
+        await submitDiscrepancy(
+            form
+        );
     }
 }
 
@@ -1925,6 +2940,9 @@ async function handleClick(
 
         try {
 
+            stopInteractionPolling();
+
+
             await logoutCurrentSession();
 
 
@@ -1951,9 +2969,87 @@ async function handleClick(
         action ===
         "loaded"
     ) {
+
         await markLoaded(
             button
         );
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "eta-before-start"
+    ) {
+
+        await sendPreStartEta(
+            button
+        );
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "eta-current"
+    ) {
+
+        await sendCurrentEta(
+            button
+        );
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "open-discrepancy"
+    ) {
+
+        const stopId =
+            button.dataset.stopId;
+
+
+        if (stopId) {
+            openDiscrepancyDialog(
+                stopId
+            );
+        }
+
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "close-discrepancy"
+    ) {
+
+        closeDiscrepancyDialog();
+    }
+}
+
+
+function handleInput(
+    event: Event
+): void {
+
+    const target =
+        event.target;
+
+
+    if (
+        target instanceof
+            HTMLInputElement &&
+        target.id ===
+            "k3DriverActualLoadedTons"
+    ) {
+
+        updateDifferencePreview();
     }
 }
 
@@ -1999,5 +3095,14 @@ Promise<void> {
     );
 
 
+    root.addEventListener(
+        "input",
+        handleInput
+    );
+
+
     await refresh();
+
+
+    startInteractionPolling();
 }
