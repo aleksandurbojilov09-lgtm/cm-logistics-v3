@@ -1,3 +1,5 @@
+import "./login-page.css";
+
 export function renderLoginPage(): string {
     return `
         <main class="login-page">
