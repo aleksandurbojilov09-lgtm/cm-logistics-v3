@@ -1,0 +1,571 @@
+/* =========================================================
+   K3 LOGISTICS V3
+   CLIENT NOTIFICATIONS + DISCREPANCIES
+   ========================================================= */
+
+
+.client-notifications-panel {
+    margin-bottom: 22px;
+}
+
+
+.client-notifications-list {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 12px;
+
+    padding: 16px;
+}
+
+
+/* =========================================================
+   STANDARD DRIVER ETA
+   ========================================================= */
+
+
+.client-notification-card {
+    display: grid;
+
+    grid-template-columns:
+        48px
+        minmax(
+            0,
+            1fr
+        );
+
+    gap: 12px;
+
+    padding: 14px;
+
+    border: 1px solid #92400e;
+
+    border-radius: 13px;
+
+    background:
+        rgba(
+            120,
+            53,
+            15,
+            0.22
+        );
+}
+
+
+.client-notification-confirmed {
+    border-color: #166534;
+
+    background:
+        rgba(
+            20,
+            83,
+            45,
+            0.22
+        );
+}
+
+
+.client-notification-icon {
+    display: grid;
+
+    width: 46px;
+
+    height: 46px;
+
+    place-items: center;
+
+    border-radius: 12px;
+
+    background: #d97706;
+
+    font-size: 24px;
+}
+
+
+.client-notification-confirmed
+.client-notification-icon {
+    background: #15803d;
+}
+
+
+.client-notification-content {
+    min-width: 0;
+}
+
+
+.client-notification-content > strong {
+    display: block;
+
+    font-size: 15px;
+}
+
+
+.client-notification-content > p {
+    margin: 5px 0 0;
+
+    color: #cbd5e1;
+
+    font-size: 13px;
+}
+
+
+.client-notification-meta {
+    margin-top: 9px;
+
+    color: #64748b;
+
+    font-size: 10px;
+
+    line-height: 1.5;
+}
+
+
+.client-notification-state {
+    display: inline-block;
+
+    margin-top: 9px;
+
+    padding: 5px 8px;
+
+    border-radius: 9999px;
+
+    font-size: 10px;
+
+    font-weight: 800;
+}
+
+
+.client-notification-state-pending {
+    background: #78350f;
+
+    color: #fde68a;
+}
+
+
+.client-notification-state-confirmed {
+    background: #14532d;
+
+    color: #86efac;
+}
+
+
+/* =========================================================
+   DISCREPANCIES
+   ========================================================= */
+
+
+.client-discrepancy-card {
+    display: grid;
+
+    grid-template-columns:
+        48px
+        minmax(
+            0,
+            1fr
+        );
+
+    gap: 12px;
+
+    padding: 14px;
+
+    border: 1px solid #991b1b;
+
+    border-radius: 13px;
+
+    background:
+        rgba(
+            69,
+            10,
+            10,
+            0.38
+        );
+}
+
+
+.client-discrepancy-reviewed {
+    border-color: #166534;
+}
+
+
+.client-discrepancy-icon {
+    display: grid;
+
+    width: 46px;
+
+    height: 46px;
+
+    place-items: center;
+
+    border-radius: 12px;
+
+    background: #b91c1c;
+
+    font-size: 23px;
+}
+
+
+.client-discrepancy-content {
+    min-width: 0;
+}
+
+
+.client-discrepancy-content > strong {
+    display: block;
+
+    color: #fca5a5;
+
+    font-size: 15px;
+}
+
+
+.client-discrepancy-content > p {
+    margin: 5px 0 0;
+
+    color: #cbd5e1;
+
+    font-size: 12px;
+}
+
+
+.client-discrepancy-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(
+                0,
+                1fr
+            )
+        );
+
+    gap: 8px;
+
+    margin-top: 12px;
+}
+
+
+.client-discrepancy-grid > div {
+    padding: 10px;
+
+    border: 1px solid #334155;
+
+    border-radius: 10px;
+
+    background: #020617;
+
+    text-align: center;
+}
+
+
+.client-discrepancy-grid span {
+    display: block;
+
+    color: #64748b;
+
+    font-size: 10px;
+}
+
+
+.client-discrepancy-grid strong {
+    display: block;
+
+    margin-top: 4px;
+
+    font-size: 16px;
+}
+
+
+.client-discrepancy-difference {
+    margin-top: 8px;
+
+    padding: 10px;
+
+    border: 1px solid #991b1b;
+
+    border-radius: 10px;
+
+    background:
+        rgba(
+            69,
+            10,
+            10,
+            0.5
+        );
+}
+
+
+.client-discrepancy-difference span,
+.client-discrepancy-difference small {
+    display: block;
+}
+
+
+.client-discrepancy-difference span {
+    color: #f87171;
+
+    font-size: 10px;
+}
+
+
+.client-discrepancy-difference strong {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #fca5a5;
+
+    font-size: 20px;
+}
+
+
+.client-discrepancy-difference small {
+    margin-top: 3px;
+
+    color: #fecaca;
+
+    font-size: 10px;
+}
+
+
+.client-discrepancy-note {
+    margin-top: 9px;
+
+    padding: 9px 10px;
+
+    border-radius: 9px;
+
+    background: #020617;
+
+    color: #cbd5e1;
+
+    font-size: 11px;
+}
+
+
+.client-discrepancy-state {
+    display: inline-block;
+
+    margin-top: 9px;
+
+    padding: 5px 8px;
+
+    border-radius: 9999px;
+
+    background: #78350f;
+
+    color: #fcd34d;
+
+    font-size: 10px;
+
+    font-weight: 800;
+}
+
+
+.client-discrepancy-state-reviewed {
+    background: #14532d;
+
+    color: #86efac;
+}
+
+
+/* =========================================================
+   FULLSCREEN ETA
+   ========================================================= */
+
+
+.client-driver-notification[hidden] {
+    display: none !important;
+}
+
+
+.client-driver-notification {
+    position: fixed;
+
+    z-index: 9999;
+
+    inset: 0;
+
+    display: grid;
+
+    padding: 20px;
+
+    place-items: center;
+
+    background:
+        rgba(
+            2,
+            6,
+            23,
+            0.92
+        );
+
+    backdrop-filter:
+        blur(6px);
+}
+
+
+.client-driver-notification-card {
+    width:
+        min(
+            500px,
+            100%
+        );
+
+    padding: 26px 20px;
+
+    border: 1px solid #d97706;
+
+    border-radius: 20px;
+
+    background: #0f172a;
+
+    box-shadow:
+        0 28px 80px
+        rgba(
+            0,
+            0,
+            0,
+            0.55
+        );
+
+    text-align: center;
+}
+
+
+.client-driver-notification-icon {
+    display: grid;
+
+    width: 76px;
+
+    height: 76px;
+
+    margin: 0 auto 14px;
+
+    place-items: center;
+
+    border-radius: 20px;
+
+    background: #f97316;
+
+    font-size: 38px;
+}
+
+
+.client-driver-notification-label {
+    color: #fbbf24;
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.08em;
+}
+
+
+.client-driver-notification-card h2 {
+    margin: 8px 0 0;
+
+    font-size: 25px;
+}
+
+
+.client-driver-notification-card p {
+    margin: 12px auto 0;
+
+    color: #e2e8f0;
+
+    font-size: 17px;
+
+    font-weight: 700;
+
+    line-height: 1.5;
+}
+
+
+.client-driver-notification-date {
+    margin-top: 12px;
+
+    color: #64748b;
+
+    font-size: 11px;
+}
+
+
+.client-notification-confirm {
+    width: 100%;
+
+    min-height: 54px;
+
+    margin-top: 22px;
+
+    padding: 12px 16px;
+
+    border: 0;
+
+    border-radius: 12px;
+
+    background: #16a34a;
+
+    color: #ffffff;
+
+    cursor: pointer;
+
+    font-size: 16px;
+
+    font-weight: 900;
+}
+
+
+.client-notification-confirm:hover:not(:disabled) {
+    background: #22c55e;
+}
+
+
+.client-notification-confirm:disabled {
+    opacity: 0.5;
+
+    cursor: not-allowed;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+
+@media (min-width: 720px) {
+
+    .client-notifications-list {
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+    }
+
+}
+
+
+@media (min-width: 1200px) {
+
+    .client-notifications-list {
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+    }
+
+}
