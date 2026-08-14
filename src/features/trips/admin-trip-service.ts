@@ -902,3 +902,232 @@ addAdminOrderToTrip(
         );
     }
 }
+
+
+/* =========================================================
+   TRUCK CHANGE
+   ========================================================= */
+
+
+export type AdminTruckChangeMode =
+    | "temporary_for_trip"
+    | "permanent";
+
+
+export type AdminTruckChangeOption = {
+    id: string;
+
+    registrationNumber: string;
+
+    currentDriverName:
+        string | null;
+
+    homeDriverName:
+        string | null;
+
+    canTemporary: boolean;
+
+    canPermanent: boolean;
+};
+
+
+function mapTruckChangeOption(
+    value: unknown
+): AdminTruckChangeOption | null {
+
+    if (!isRecord(value)) {
+        return null;
+    }
+
+
+    const id =
+        textValue(
+            value.id
+        );
+
+
+    const registrationNumber =
+        textValue(
+            value.registrationNumber
+        );
+
+
+    if (
+        !id ||
+        !registrationNumber
+    ) {
+        return null;
+    }
+
+
+    return {
+        id,
+
+        registrationNumber,
+
+        currentDriverName:
+            nullableText(
+                value.currentDriverName
+            ),
+
+        homeDriverName:
+            nullableText(
+                value.homeDriverName
+            ),
+
+        canTemporary:
+            value.canTemporary ===
+                true,
+
+        canPermanent:
+            value.canPermanent ===
+                true
+    };
+}
+
+
+export async function
+loadAdminTruckChangeOptions(
+    tripId: string
+): Promise<AdminTruckChangeOption[]> {
+
+    if (!tripId) {
+        throw new Error(
+            "Курсът не е избран."
+        );
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await supabase.rpc(
+            "trips_admin_get_truck_change_options",
+            {
+                p_trip_id:
+                    tripId
+            }
+        );
+
+
+    if (error) {
+        throw new Error(
+            error.message ||
+            "Камионите за смяна не можаха да бъдат заредени."
+        );
+    }
+
+
+    if (!Array.isArray(data)) {
+        return [];
+    }
+
+
+    return data
+        .map(
+            mapTruckChangeOption
+        )
+        .filter(
+            (
+                option
+            ): option is AdminTruckChangeOption =>
+                option !== null
+        );
+}
+
+
+export async function
+requestAdminTruckChange(
+    tripId: string,
+    targetTruckId: string,
+    changeMode:
+        AdminTruckChangeMode
+): Promise<string> {
+
+    if (!tripId) {
+        throw new Error(
+            "Курсът не е избран."
+        );
+    }
+
+
+    if (!targetTruckId) {
+        throw new Error(
+            "Новият камион не е избран."
+        );
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await supabase.rpc(
+            "trips_admin_request_truck_change",
+            {
+                p_trip_id:
+                    tripId,
+
+                p_target_truck_id:
+                    targetTruckId,
+
+                p_change_mode:
+                    changeMode
+            }
+        );
+
+
+    if (error) {
+        throw new Error(
+            error.message ||
+            "Заявката за смяна на камион не можа да бъде създадена."
+        );
+    }
+
+
+    if (
+        typeof data !== "string" ||
+        !data
+    ) {
+        throw new Error(
+            "Заявката за смяна на камион не беше създадена."
+        );
+    }
+
+
+    return data;
+}
+
+
+export async function
+cancelAdminTruckChange(
+    requestId: string
+): Promise<void> {
+
+    if (!requestId) {
+        throw new Error(
+            "Заявката за смяна не е избрана."
+        );
+    }
+
+
+    const {
+        error
+    } =
+        await supabase.rpc(
+            "trips_admin_cancel_truck_change",
+            {
+                p_request_id:
+                    requestId
+            }
+        );
+
+
+    if (error) {
+        throw new Error(
+            error.message ||
+            "Заявката за смяна на камион не можа да бъде отменена."
+        );
+    }
+}
