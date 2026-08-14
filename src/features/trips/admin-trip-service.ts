@@ -1337,3 +1337,43 @@ loadAdminPendingTruckChange(
 
     return pending;
 }
+
+
+export async function
+loadAdminPendingTruckChanges():
+Promise<AdminPendingTruckChange[]> {
+
+    const {
+        data,
+        error
+    } =
+        await supabase.rpc(
+            "trips_admin_get_pending_truck_changes",
+            {}
+        );
+
+
+    if (error) {
+        throw new Error(
+            error.message ||
+            "Активните заявки за смяна на камион не можаха да бъдат заредени."
+        );
+    }
+
+
+    if (!Array.isArray(data)) {
+        return [];
+    }
+
+
+    return data
+        .map(
+            mapPendingTruckChange
+        )
+        .filter(
+            (
+                pending
+            ): pending is AdminPendingTruckChange =>
+                pending !== null
+        );
+}

@@ -1,5 +1,6 @@
 import "./trips-section.css";
 import "./trips-editing.css";
+import "./trips-truck-change.css";
 
 import {
     addAdminOrderToTrip,
@@ -18,6 +19,16 @@ import {
 import {
     escapeHtml
 } from "../../../shared/lib/html";
+
+import {
+    handleTruckChangeClick,
+    handleTruckChangeFieldChange,
+    handleTruckChangeSubmit,
+    refreshTruckChangeState,
+    renderTruckChangeButton,
+    renderTruckChangeStatus,
+    resetTruckChangeDialogState
+} from "./trips-truck-change";
 
 
 const MAX_TRUCK_TONS =
@@ -206,6 +217,18 @@ function errorMessage(
     )
         ? error.message
         : "Възникна неочаквана грешка.";
+}
+
+
+function getTruckChangeHost() {
+
+    return {
+        findTrip,
+        getDialog,
+        refresh,
+        setMessage,
+        errorMessage
+    };
 }
 
 
@@ -1093,6 +1116,11 @@ function renderTripCard(
             }
 
 
+            ${renderTruckChangeStatus(
+                trip
+            )}
+
+
             ${
                 current
 
@@ -1275,6 +1303,11 @@ function renderTripCard(
                 </div>
 
 
+                ${renderTruckChangeButton(
+                    trip
+                )}
+
+
                 <button
                     type="button"
                     class="trip-add-order-button"
@@ -1364,6 +1397,20 @@ Promise<void> {
 
         const nextTrips =
             await loadAdminActiveTrips();
+
+
+        if (
+            version !==
+                refreshVersion ||
+            !getRoot()?.isConnected
+        ) {
+            return;
+        }
+
+
+        await refreshTruckChangeState(
+            nextTrips
+        );
 
 
         if (
@@ -1477,6 +1524,9 @@ void {
 
     availableOrders =
         [];
+
+
+    resetTruckChangeDialogState();
 }
 
 
@@ -2605,6 +2655,24 @@ async function handleSubmit(
 
     if (
         form.id ===
+        "k3TruckChangeForm"
+    ) {
+
+        event.preventDefault();
+
+
+        await handleTruckChangeSubmit(
+            form,
+            getTruckChangeHost()
+        );
+
+
+        return;
+    }
+
+
+    if (
+        form.id ===
         "k3TripEditLoadForm"
     ) {
 
@@ -2666,6 +2734,16 @@ async function handleClick(
     const action =
         button.dataset
             .tripsAction;
+
+
+    if (
+        await handleTruckChangeClick(
+            button,
+            getTruckChangeHost()
+        )
+    ) {
+        return;
+    }
 
 
     if (
@@ -2774,6 +2852,15 @@ function handleChange(
 
     const target =
         event.target;
+
+
+    if (
+        handleTruckChangeFieldChange(
+            target
+        )
+    ) {
+        return;
+    }
 
 
     if (

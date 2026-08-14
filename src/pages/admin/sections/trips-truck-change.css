@@ -1,0 +1,265 @@
+/* =========================================================
+   K3 LOGISTICS V3
+   ADMIN TRUCK CHANGE
+   ========================================================= */
+
+
+/* =========================================================
+   CHANGE TRUCK BUTTON
+   ========================================================= */
+
+
+.trip-change-truck-button {
+    min-height: 45px;
+
+    margin-top: 10px;
+
+    padding: 9px 14px;
+
+    border: 1px solid #c2410c;
+
+    border-radius: 10px;
+
+    background:
+        rgba(
+            194,
+            65,
+            12,
+            0.22
+        );
+
+    color: #fdba74;
+
+    cursor: pointer;
+
+    font-size: 11px;
+
+    font-weight: 900;
+}
+
+
+.trip-change-truck-button:hover:not(:disabled) {
+    border-color: #f97316;
+
+    background:
+        rgba(
+            249,
+            115,
+            22,
+            0.3
+        );
+
+    color: #fed7aa;
+}
+
+
+.trip-change-truck-button:disabled {
+    opacity: 0.45;
+
+    cursor: not-allowed;
+}
+
+
+/* =========================================================
+   PENDING REQUEST
+   ========================================================= */
+
+
+.trip-truck-change-pending {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 12px;
+
+    margin:
+        0
+        17px
+        16px;
+
+    padding: 14px;
+
+    border: 1px solid #c2410c;
+
+    border-radius: 12px;
+
+    background:
+        rgba(
+            124,
+            45,
+            18,
+            0.22
+        );
+}
+
+
+.trip-truck-change-pending > div {
+    min-width: 0;
+}
+
+
+.trip-truck-change-kicker {
+    display: block;
+
+    color: #fb923c;
+
+    font-size: 10px;
+
+    font-weight: 900;
+
+    letter-spacing: 0.04em;
+
+    text-transform: uppercase;
+}
+
+
+.trip-truck-change-route {
+    display: block;
+
+    margin-top: 6px;
+
+    color: #ffffff;
+
+    font-size: 18px;
+
+    overflow-wrap: anywhere;
+}
+
+
+.trip-truck-change-pending p {
+    margin: 6px 0 0;
+
+    color: #fed7aa;
+
+    font-size: 11px;
+
+    line-height: 1.5;
+}
+
+
+.trip-truck-change-pending small {
+    display: block;
+
+    margin-top: 7px;
+
+    color: #94a3b8;
+
+    font-size: 9px;
+}
+
+
+.trip-truck-change-cancel {
+    min-height: 42px;
+
+    padding: 9px 12px;
+
+    border: 1px solid #991b1b;
+
+    border-radius: 10px;
+
+    background:
+        rgba(
+            127,
+            29,
+            29,
+            0.3
+        );
+
+    color: #fecaca;
+
+    cursor: pointer;
+
+    font-size: 11px;
+
+    font-weight: 900;
+}
+
+
+.trip-truck-change-cancel:hover:not(:disabled) {
+    background:
+        rgba(
+            153,
+            27,
+            27,
+            0.5
+        );
+}
+
+
+.trip-truck-change-cancel:disabled {
+    opacity: 0.45;
+
+    cursor: not-allowed;
+}
+
+
+/* =========================================================
+   DIALOG TRUCK DETAILS
+   ========================================================= */
+
+
+.trip-truck-change-details {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+
+    padding: 12px;
+
+    border: 1px solid #334155;
+
+    border-radius: 10px;
+
+    background: #020617;
+
+    color: #94a3b8;
+
+    font-size: 10px;
+
+    line-height: 1.5;
+}
+
+
+.trip-truck-change-details strong {
+    color: #ffffff;
+
+    font-size: 15px;
+}
+
+
+.trip-truck-change-details span {
+    display: block;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+
+@media (min-width: 640px) {
+
+    .trip-change-truck-button {
+        flex: 0 0 auto;
+
+        min-width: 170px;
+
+        margin-top: 0;
+    }
+
+
+    .trip-truck-change-pending {
+        flex-direction: row;
+
+        align-items: center;
+
+        justify-content: space-between;
+    }
+
+
+    .trip-truck-change-cancel {
+        flex: 0 0 auto;
+    }
+
+}
