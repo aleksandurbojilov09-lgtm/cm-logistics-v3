@@ -34,7 +34,21 @@ type AuthState =
         kind: "missing-role";
     };
 
+type PortalPageModule = {
+    renderPage: () =>
+        string | Promise<string>;
+
+    initializePage?: () =>
+        void | Promise<void>;
+};
+
+const portalPages =
+    import.meta.glob<PortalPageModule>(
+        "../pages/*/*-page.ts"
+    );
+
 let routerStarted = false;
+let renderVersion = 0;
 
 function getAppRoot(): HTMLDivElement {
     const app =
@@ -74,6 +88,42 @@ function getPortalRouteForRole(
     role: UserRole
 ): PortalRoute {
     return role;
+}
+
+function getPortalModulePath(
+    route: PortalRoute
+): string {
+    return (
+        `../pages/${route}/${route}-page.ts`
+    );
+}
+
+async function loadPortalPage(
+    route: PortalRoute
+): Promise<PortalPageModule | null> {
+    const modulePath =
+        getPortalModulePath(route);
+
+    const loader =
+        portalPages[modulePath];
+
+    if (!loader) {
+        return null;
+    }
+
+    const pageModule =
+        await loader();
+
+    if (
+        typeof pageModule.renderPage !==
+        "function"
+    ) {
+        throw new Error(
+            `K3 Logistics: ${modulePath} must export renderPage().`
+        );
+    }
+
+    return pageModule;
 }
 
 function renderTemporaryPortal(
@@ -147,7 +197,8 @@ async function resolveAuthState():
 
     return {
         kind: "authenticated",
-        route: getPortalRouteForRole(role)
+        route:
+            getPortalRouteForRole(role)
     };
 }
 
@@ -171,6 +222,9 @@ export function navigateTo(
 
 export async function renderCurrentRoute():
     Promise<void> {
+    const currentRender =
+        ++renderVersion;
+
     const app =
         getAppRoot();
 
@@ -183,9 +237,23 @@ export async function renderCurrentRoute():
         authState =
             await resolveAuthState();
     } catch {
+        if (
+            currentRender !==
+            renderVersion
+        ) {
+            return;
+        }
+
         app.innerHTML =
             renderAuthErrorPage();
 
+        return;
+    }
+
+    if (
+        currentRender !==
+        renderVersion
+    ) {
         return;
     }
 
@@ -224,10 +292,52 @@ export async function renderCurrentRoute():
         return;
     }
 
-    app.innerHTML =
-        renderTemporaryPortal(
-            authState.route
-        );
+    try {
+        const pageModule =
+            await loadPortalPage(
+                authState.route
+            );
+
+        if (
+            currentRender !==
+            renderVersion
+        ) {
+            return;
+        }
+
+        if (!pageModule) {
+            app.innerHTML =
+                renderTemporaryPortal(
+                    authState.route
+                );
+
+            return;
+        }
+
+        app.innerHTML =
+            await pageModule.renderPage();
+
+        if (
+            currentRender !==
+            renderVersion
+        ) {
+            return;
+        }
+
+        await pageModule
+            .initializePage?.();
+
+    } catch {
+        if (
+            currentRender !==
+            renderVersion
+        ) {
+            return;
+        }
+
+        app.innerHTML =
+            renderAuthErrorPage();
+    }
 }
 
 export function startRouter(): void {
