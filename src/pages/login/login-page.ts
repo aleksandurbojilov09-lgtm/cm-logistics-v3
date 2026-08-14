@@ -1,5 +1,9 @@
 import "./login-page.css";
 
+import {
+    getRememberedLoginId
+} from "../../shared/lib/login-preferences";
+
 export function renderLoginPage(): string {
     return `
         <main class="login-page">
@@ -111,4 +115,33 @@ export function renderLoginPage(): string {
             </div>
         </main>
     `;
+}
+
+export function initializeLoginPage(): void {
+    const usernameInput =
+        document.querySelector<HTMLInputElement>(
+            "#loginUsername"
+        );
+
+    const rememberMeInput =
+        document.querySelector<HTMLInputElement>(
+            "#rememberMe"
+        );
+
+    if (!usernameInput || !rememberMeInput) {
+        return;
+    }
+
+    const rememberedLoginId =
+        getRememberedLoginId();
+
+    if (!rememberedLoginId) {
+        return;
+    }
+
+    usernameInput.value =
+        rememberedLoginId;
+
+    rememberMeInput.checked =
+        true;
 }
