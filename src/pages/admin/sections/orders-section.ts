@@ -1,4 +1,5 @@
 import "./orders-section.css";
+import "./orders-assignment.css";
 
 import {
     createClientAccount,
@@ -10,9 +11,12 @@ import {
 } from "../../../features/clients/client-service";
 
 import {
-    loadAdminActiveOrders,
+    assignOrderLoad,
+    loadAdminOrdersWorkspace,
+    type AdminOrderAssignment,
     type AdminOrderListItem,
-    type AdminOrderStatus
+    type AdminOrderStatus,
+    type ReadyOrderComposition
 } from "../../../features/orders/admin-orders-service";
 
 import {
@@ -24,19 +28,16 @@ let clients:
     ClientManagementSnapshot | null =
     null;
 
-
 let orders:
     AdminOrderListItem[] =
     [];
 
+let compositions:
+    ReadyOrderComposition[] =
+    [];
 
 let refreshVersion =
     0;
-
-
-/* =========================================================
-   PAGE
-   ========================================================= */
 
 
 export function renderSection():
@@ -62,17 +63,19 @@ string {
                 <header
                     class="orders-panel-header"
                 >
+
                     <div>
                         <h3>
-                            📦 Активни заявки
+                            📦 Заявки за зачисляване
                         </h3>
 
                         <p>
-                            Текущи заявки,
-                            които още не са
-                            приключени.
+                            Заявки с оставащо количество,
+                            които могат да бъдат зачислени
+                            към готова композиция.
                         </p>
                     </div>
+
 
                     <span
                         id="k3ActiveOrdersCount"
@@ -80,6 +83,7 @@ string {
                     >
                         0
                     </span>
+
                 </header>
 
 
@@ -107,6 +111,7 @@ string {
                 <header
                     class="orders-panel-header"
                 >
+
                     <div>
                         <h3>
                             🏢 Клиенти и обекти
@@ -117,6 +122,7 @@ string {
                             клиентски акаунти
                         </p>
                     </div>
+
                 </header>
 
 
@@ -138,11 +144,6 @@ string {
 }
 
 
-/* =========================================================
-   HELPERS
-   ========================================================= */
-
-
 function getRoot():
 HTMLElement | null {
 
@@ -156,20 +157,24 @@ function errorMessage(
     error: unknown
 ): string {
 
-    if (
+    return (
         error instanceof Error &&
         error.message
-    ) {
-        return error.message;
-    }
-
-    return "Възникна неочаквана грешка.";
+    )
+        ? error.message
+        : "Възникна неочаквана грешка.";
 }
 
 
 function formatTons(
     value: number
 ): string {
+
+    if (
+        !Number.isFinite(value)
+    ) {
+        return "0";
+    }
 
     if (
         Number.isInteger(value)
@@ -191,17 +196,13 @@ function formatDate(
     const date =
         new Date(value);
 
-    if (
-        Number.isNaN(
-            date.getTime()
-        )
-    ) {
-        return "-";
-    }
-
-    return date.toLocaleString(
-        "bg-BG"
-    );
+    return Number.isNaN(
+        date.getTime()
+    )
+        ? "-"
+        : date.toLocaleString(
+            "bg-BG"
+        );
 }
 
 
@@ -212,10 +213,10 @@ function statusLabel(
     switch (status) {
 
         case "pending":
-            return "🟡 Чака зачисляване";
+            return "🔴 Необработена";
 
         case "partial":
-            return "🟠 Частично зачислена";
+            return "🟡 Частично зачислена";
 
         case "assigned":
             return "🟢 Зачислена";
@@ -228,6 +229,37 @@ function statusLabel(
 
         case "cancelled":
             return "⛔ Отказана";
+    }
+}
+
+
+function assignmentStatusLabel(
+    status:
+        AdminOrderAssignment["status"]
+): string {
+
+    switch (status) {
+
+        case "assigned":
+            return "Зачислено";
+
+        case "accepted":
+            return "Прието";
+
+        case "en_route":
+            return "На път";
+
+        case "arrived":
+            return "Пристигнал";
+
+        case "loaded":
+            return "Натоварено";
+
+        case "completed":
+            return "Приключено";
+
+        case "cancelled":
+            return "Отказано";
     }
 }
 
@@ -247,18 +279,15 @@ function setPageMessage(
             "#k3OrdersPageMessage"
         );
 
-
     if (!element) {
         return;
     }
-
 
     element.textContent =
         message;
 
     element.className =
         "orders-page-message";
-
 
     if (type) {
         element.classList.add(
@@ -268,9 +297,487 @@ function setPageMessage(
 }
 
 
-/* =========================================================
-   ORDERS
-   ========================================================= */
+function getOrder(
+    orderId: string
+): AdminOrderListItem | null {
+
+    return (
+        orders.find(
+            order =>
+                order.id === orderId
+        ) ||
+        null
+    );
+}
+
+
+function getComposition(
+    truckId: string
+): ReadyOrderComposition | null {
+
+    return (
+        compositions.find(
+            item =>
+                item.truckId === truckId
+        ) ||
+        null
+    );
+}
+
+
+function renderAssignmentHistory(
+    order: AdminOrderListItem
+): string {
+
+    if (
+        order.assignments.length === 0
+    ) {
+        return "";
+    }
+
+    return `
+        <div
+            class="order-assignment-history"
+        >
+
+            <div
+                class="order-subtitle"
+            >
+                🚛 Зачислявания
+            </div>
+
+
+            ${
+                order.assignments
+                    .map(
+                        assignment => `
+                            <div
+                                class="order-assignment-row"
+                            >
+
+                                <div>
+                                    <strong>
+                                        🚛
+                                        ${escapeHtml(
+                                            assignment
+                                                .truckNumber ||
+                                            "Камион"
+                                        )}
+                                    </strong>
+
+                                    <span>
+                                        ${escapeHtml(
+                                            assignment
+                                                .driverName ||
+                                            "-"
+                                        )}
+                                    </span>
+                                </div>
+
+
+                                <div>
+                                    <strong>
+                                        ${escapeHtml(
+                                            formatTons(
+                                                assignment
+                                                    .assignedTons
+                                            )
+                                        )}
+                                        т.
+                                    </strong>
+
+                                    <span>
+                                        ${escapeHtml(
+                                            assignmentStatusLabel(
+                                                assignment
+                                                    .status
+                                            )
+                                        )}
+                                    </span>
+                                </div>
+
+
+                                <div>
+                                    <strong>
+                                        🛻
+                                        ${escapeHtml(
+                                            assignment
+                                                .trailerNumber ||
+                                            "-"
+                                        )}
+                                    </strong>
+
+                                    <span>
+                                        ${
+                                            assignment
+                                                .trailerPermit
+
+                                                ? `Permit ${escapeHtml(
+                                                    assignment
+                                                        .trailerPermit
+                                                )}`
+
+                                                : ""
+                                        }
+                                    </span>
+                                </div>
+
+                            </div>
+                        `
+                    )
+                    .join("")
+            }
+
+        </div>
+    `;
+}
+
+
+function compositionOptions(
+    order: AdminOrderListItem
+): string {
+
+    const available =
+        compositions.filter(
+            composition =>
+                Math.min(
+                    order.remainingTons,
+                    composition.freeTons
+                ) > 0
+        );
+
+
+    if (
+        available.length === 0
+    ) {
+        return `
+            <option value="">
+                Няма свободна готова композиция
+            </option>
+        `;
+    }
+
+
+    return `
+        <option value="">
+            -- Избери камион --
+        </option>
+
+        ${
+            available
+                .map(
+                    composition => `
+                        <option
+                            value="${escapeHtml(
+                                composition.truckId
+                            )}"
+                        >
+                            ${escapeHtml(
+                                composition.truckNumber
+                            )}
+                            —
+                            ${escapeHtml(
+                                composition.driverName
+                            )}
+                            —
+                            ${escapeHtml(
+                                formatTons(
+                                    composition.currentLoadTons
+                                )
+                            )}/24 т.
+                            —
+                            свободни
+                            ${escapeHtml(
+                                formatTons(
+                                    composition.freeTons
+                                )
+                            )}
+                            т.
+                        </option>
+                    `
+                )
+                .join("")
+        }
+    `;
+}
+
+
+function renderAssignmentControls(
+    order: AdminOrderListItem
+): string {
+
+    if (
+        order.remainingTons <= 0
+    ) {
+        return "";
+    }
+
+
+    const hasAvailable =
+        compositions.some(
+            composition =>
+                Math.min(
+                    order.remainingTons,
+                    composition.freeTons
+                ) > 0
+        );
+
+
+    return `
+        <div
+            class="order-assignment-controls"
+        >
+
+            <div
+                class="order-subtitle"
+            >
+                🚛 Зачисляване
+            </div>
+
+
+            <select
+                id="k3OrderTruck-${escapeHtml(
+                    order.id
+                )}"
+                data-order-truck-select="${escapeHtml(
+                    order.id
+                )}"
+            >
+                ${compositionOptions(order)}
+            </select>
+
+
+            <div
+                class="order-assignment-tons-row"
+            >
+
+                <label>
+                    Тонове
+
+                    <input
+                        id="k3OrderTons-${escapeHtml(
+                            order.id
+                        )}"
+                        type="number"
+                        min="0.001"
+                        max="${escapeHtml(
+                            order.remainingTons
+                        )}"
+                        step="0.001"
+                        value="${escapeHtml(
+                            order.remainingTons
+                        )}"
+                        ${
+                            hasAvailable
+                                ? ""
+                                : "disabled"
+                        }
+                    />
+                </label>
+
+
+                <button
+                    type="button"
+                    class="order-assign-button"
+                    data-orders-action="assign-load"
+                    data-order-id="${escapeHtml(
+                        order.id
+                    )}"
+                    ${
+                        hasAvailable
+                            ? ""
+                            : "disabled"
+                    }
+                >
+                    🚛 Зачисли
+                </button>
+
+            </div>
+
+
+            <div
+                id="k3OrderCapacity-${escapeHtml(
+                    order.id
+                )}"
+                class="order-capacity-message"
+            >
+                ${
+                    hasAvailable
+                        ? "Избери готова композиция."
+                        : "Няма свободна готова композиция."
+                }
+            </div>
+
+        </div>
+    `;
+}
+
+
+function renderOrderCard(
+    order: AdminOrderListItem
+): string {
+
+    return `
+        <article
+            class="order-card"
+        >
+
+            <header
+                class="order-card-header"
+            >
+
+                <div>
+                    <strong>
+                        🏢
+                        ${escapeHtml(
+                            order.companyName ||
+                            "Фирма"
+                        )}
+                    </strong>
+
+                    <span>
+                        Заявка
+                        #${escapeHtml(
+                            order.orderNumber
+                        )}
+                        •
+                        ${escapeHtml(
+                            formatDate(
+                                order.createdAt
+                            )
+                        )}
+                    </span>
+                </div>
+
+
+                <div
+                    class="
+                        order-status
+                        order-status-${escapeHtml(
+                            order.status
+                        )}
+                    "
+                >
+                    ${escapeHtml(
+                        statusLabel(
+                            order.status
+                        )
+                    )}
+                </div>
+
+            </header>
+
+
+            <div
+                class="order-card-grid"
+            >
+
+                <div
+                    class="order-info"
+                >
+                    <span>
+                        Обект
+                    </span>
+
+                    <strong>
+                        📍
+                        ${escapeHtml(
+                            order.siteName
+                        )}
+                    </strong>
+
+                    <small>
+                        ${escapeHtml(
+                            order.siteAddress
+                        )}
+                    </small>
+                </div>
+
+
+                <div
+                    class="order-info"
+                >
+                    <span>
+                        Заявени
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(
+                            formatTons(
+                                order.requestedTons
+                            )
+                        )}
+                        т.
+                    </strong>
+                </div>
+
+
+                <div
+                    class="order-info"
+                >
+                    <span>
+                        Зачислени
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(
+                            formatTons(
+                                order.assignedTons
+                            )
+                        )}
+                        т.
+                    </strong>
+                </div>
+
+
+                <div
+                    class="
+                        order-info
+                        order-info-remaining
+                    "
+                >
+                    <span>
+                        Остатък
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(
+                            formatTons(
+                                order.remainingTons
+                            )
+                        )}
+                        т.
+                    </strong>
+                </div>
+
+            </div>
+
+
+            ${
+                order.note
+
+                    ? `
+                        <div
+                            class="order-note"
+                        >
+                            📝
+                            ${escapeHtml(
+                                order.note
+                            )}
+                        </div>
+                    `
+
+                    : ""
+            }
+
+
+            ${renderAssignmentHistory(order)}
+
+            ${renderAssignmentControls(order)}
+
+        </article>
+    `;
+}
 
 
 function renderOrders():
@@ -282,7 +789,6 @@ void {
         >(
             "#k3ActiveOrdersList"
         );
-
 
     const count =
         document.querySelector<
@@ -311,8 +817,12 @@ void {
     ) {
 
         list.innerHTML = `
-            <div class="orders-empty">
-                В момента няма активни заявки.
+            <div
+                class="orders-empty"
+            >
+                В момента няма заявки
+                с оставащо количество
+                за зачисляване.
             </div>
         `;
 
@@ -323,137 +833,268 @@ void {
     list.innerHTML =
         orders
             .map(
-                order => `
-                    <article
-                        class="order-card"
-                    >
-
-                        <header
-                            class="order-card-header"
-                        >
-                            <div>
-                                <strong>
-                                    📦 Заявка
-                                    #${escapeHtml(
-                                        order.orderNumber
-                                    )}
-                                </strong>
-
-                                <span>
-                                    ${escapeHtml(
-                                        formatDate(
-                                            order.createdAt
-                                        )
-                                    )}
-                                </span>
-                            </div>
-
-                            <div
-                                class="
-                                    order-status
-                                    order-status-${escapeHtml(
-                                        order.status
-                                    )}
-                                "
-                            >
-                                ${escapeHtml(
-                                    statusLabel(
-                                        order.status
-                                    )
-                                )}
-                            </div>
-                        </header>
-
-
-                        <div
-                            class="order-card-grid"
-                        >
-
-                            <div
-                                class="order-info"
-                            >
-                                <span>
-                                    Фирма
-                                </span>
-
-                                <strong>
-                                    🏢
-                                    ${escapeHtml(
-                                        order.companyName
-                                    )}
-                                </strong>
-                            </div>
-
-
-                            <div
-                                class="order-info"
-                            >
-                                <span>
-                                    Обект
-                                </span>
-
-                                <strong>
-                                    📍
-                                    ${escapeHtml(
-                                        order.siteName
-                                    )}
-                                </strong>
-
-                                <small>
-                                    ${escapeHtml(
-                                        order.siteAddress
-                                    )}
-                                </small>
-                            </div>
-
-
-                            <div
-                                class="order-info"
-                            >
-                                <span>
-                                    Количество
-                                </span>
-
-                                <strong>
-                                    ${escapeHtml(
-                                        formatTons(
-                                            order.requestedTons
-                                        )
-                                    )}
-                                    т.
-                                </strong>
-                            </div>
-
-                        </div>
-
-
-                        ${
-                            order.note
-
-                                ? `
-                                    <div
-                                        class="order-note"
-                                    >
-                                        📝
-                                        ${escapeHtml(
-                                            order.note
-                                        )}
-                                    </div>
-                                `
-
-                                : ""
-                        }
-
-                    </article>
-                `
+                renderOrderCard
             )
             .join("");
 }
 
 
-/* =========================================================
-   COMPANY SELECT
-   ========================================================= */
+function updateAssignmentLimit(
+    orderId: string
+): void {
+
+    const order =
+        getOrder(orderId);
+
+    const select =
+        document.getElementById(
+            `k3OrderTruck-${orderId}`
+        ) as HTMLSelectElement | null;
+
+    const input =
+        document.getElementById(
+            `k3OrderTons-${orderId}`
+        ) as HTMLInputElement | null;
+
+    const message =
+        document.getElementById(
+            `k3OrderCapacity-${orderId}`
+        );
+
+
+    if (
+        !order ||
+        !select ||
+        !input ||
+        !message
+    ) {
+        return;
+    }
+
+
+    if (!select.value) {
+
+        input.max =
+            String(
+                order.remainingTons
+            );
+
+        message.textContent =
+            "Избери готова композиция.";
+
+        return;
+    }
+
+
+    const composition =
+        getComposition(
+            select.value
+        );
+
+
+    if (!composition) {
+
+        message.textContent =
+            "Композицията вече не е налична.";
+
+        return;
+    }
+
+
+    const allowed =
+        Math.min(
+            order.remainingTons,
+            composition.freeTons
+        );
+
+
+    input.max =
+        String(allowed);
+
+
+    const current =
+        Number(
+            input.value
+        );
+
+
+    if (
+        !Number.isFinite(current) ||
+        current <= 0 ||
+        current > allowed
+    ) {
+        input.value =
+            allowed > 0
+                ? String(allowed)
+                : "";
+    }
+
+
+    message.textContent =
+        `Свободни ${formatTons(
+            composition.freeTons
+        )} т. • Максимум за тази заявка ${formatTons(
+            allowed
+        )} т.`;
+}
+
+
+async function submitAssignment(
+    button: HTMLButtonElement
+): Promise<void> {
+
+    const orderId =
+        button.dataset.orderId;
+
+
+    if (!orderId) {
+        return;
+    }
+
+
+    const order =
+        getOrder(orderId);
+
+    const select =
+        document.getElementById(
+            `k3OrderTruck-${orderId}`
+        ) as HTMLSelectElement | null;
+
+    const input =
+        document.getElementById(
+            `k3OrderTons-${orderId}`
+        ) as HTMLInputElement | null;
+
+
+    if (
+        !order ||
+        !select ||
+        !input
+    ) {
+        return;
+    }
+
+
+    const truckId =
+        select.value;
+
+    const tons =
+        Number(
+            input.value
+        );
+
+
+    if (!truckId) {
+
+        setPageMessage(
+            "Избери камион.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const composition =
+        getComposition(
+            truckId
+        );
+
+
+    if (!composition) {
+
+        setPageMessage(
+            "Композицията вече не е налична.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const allowed =
+        Math.min(
+            order.remainingTons,
+            composition.freeTons
+        );
+
+
+    if (
+        !Number.isFinite(tons) ||
+        tons <= 0
+    ) {
+
+        setPageMessage(
+            "Въведи валиден тонаж.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    if (
+        tons > allowed
+    ) {
+
+        setPageMessage(
+            `Може да зачислиш максимум ${formatTons(
+                allowed
+            )} т.`,
+            "error"
+        );
+
+        return;
+    }
+
+
+    button.disabled =
+        true;
+
+    button.textContent =
+        "Зачисляване...";
+
+
+    try {
+
+        await assignOrderLoad(
+            orderId,
+            truckId,
+            tons
+        );
+
+
+        await refreshPage();
+
+
+        setPageMessage(
+            `✅ ${formatTons(
+                tons
+            )} т. от ${
+                order.companyName ||
+                "заявката"
+            } са зачислени към ${
+                composition.truckNumber
+            }.`,
+            "success"
+        );
+
+
+    } catch (error) {
+
+        setPageMessage(
+            errorMessage(error),
+            "error"
+        );
+
+
+        button.disabled =
+            false;
+
+        button.textContent =
+            "🚛 Зачисли";
+    }
+}
 
 
 function companyOptions(
@@ -497,9 +1138,233 @@ function companyOptions(
 }
 
 
-/* =========================================================
-   CLIENT MANAGEMENT
-   ========================================================= */
+function renderCompanies():
+string {
+
+    if (!clients) {
+        return "";
+    }
+
+
+    if (
+        clients.companies.length ===
+        0
+    ) {
+        return `
+            <div
+                class="orders-empty"
+            >
+                Все още няма създадени
+                клиентски фирми.
+            </div>
+        `;
+    }
+
+
+    return clients.companies
+        .map(
+            company => {
+
+                const sites =
+                    clients?.sites.filter(
+                        site =>
+                            site.companyId ===
+                            company.id
+                    ) || [];
+
+
+                const accounts =
+                    clients?.accounts.filter(
+                        account =>
+                            account.companyId ===
+                            company.id
+                    ) || [];
+
+
+                return `
+                    <article
+                        class="client-company-card"
+                    >
+
+                        <header
+                            class="client-company-header"
+                        >
+
+                            <div>
+                                <strong>
+                                    🏢
+                                    ${escapeHtml(
+                                        company.companyName
+                                    )}
+                                </strong>
+
+                                ${
+                                    company.contactPerson
+
+                                        ? `
+                                            <span>
+                                                👤
+                                                ${escapeHtml(
+                                                    company.contactPerson
+                                                )}
+                                            </span>
+                                        `
+
+                                        : ""
+                                }
+
+                                ${
+                                    company.phone
+
+                                        ? `
+                                            <span>
+                                                📞
+                                                ${escapeHtml(
+                                                    company.phone
+                                                )}
+                                            </span>
+                                        `
+
+                                        : ""
+                                }
+                            </div>
+
+
+                            <span
+                                class="client-active-badge"
+                            >
+                                ● Активна
+                            </span>
+
+                        </header>
+
+
+                        <div
+                            class="client-company-columns"
+                        >
+
+                            <div>
+                                <h5>
+                                    📍 Обекти
+                                    (${sites.length})
+                                </h5>
+
+                                ${
+                                    sites.length
+
+                                        ? sites
+                                            .map(
+                                                site => `
+                                                    <div
+                                                        class="client-directory-item"
+                                                    >
+                                                        <strong>
+                                                            ${escapeHtml(
+                                                                site.siteName
+                                                            )}
+                                                        </strong>
+
+                                                        <span>
+                                                            ${escapeHtml(
+                                                                site.address
+                                                            )}
+                                                        </span>
+
+                                                        ${
+                                                            site.phone
+
+                                                                ? `
+                                                                    <small>
+                                                                        📞
+                                                                        ${escapeHtml(
+                                                                            site.phone
+                                                                        )}
+                                                                    </small>
+                                                                `
+
+                                                                : ""
+                                                        }
+                                                    </div>
+                                                `
+                                            )
+                                            .join("")
+
+                                        : `
+                                            <div
+                                                class="client-directory-empty"
+                                            >
+                                                Няма обекти
+                                            </div>
+                                        `
+                                }
+                            </div>
+
+
+                            <div>
+                                <h5>
+                                    👤 Акаунти
+                                    (${accounts.length})
+                                </h5>
+
+                                ${
+                                    accounts.length
+
+                                        ? accounts
+                                            .map(
+                                                account => `
+                                                    <div
+                                                        class="client-directory-item"
+                                                    >
+                                                        <strong>
+                                                            ${escapeHtml(
+                                                                account.displayName
+                                                            )}
+                                                        </strong>
+
+                                                        <span>
+                                                            ID:
+                                                            ${escapeHtml(
+                                                                account.loginId
+                                                            )}
+                                                        </span>
+
+                                                        ${
+                                                            account.phone
+
+                                                                ? `
+                                                                    <small>
+                                                                        📞
+                                                                        ${escapeHtml(
+                                                                            account.phone
+                                                                        )}
+                                                                    </small>
+                                                                `
+
+                                                                : ""
+                                                        }
+                                                    </div>
+                                                `
+                                            )
+                                            .join("")
+
+                                        : `
+                                            <div
+                                                class="client-directory-empty"
+                                            >
+                                                Няма акаунти
+                                            </div>
+                                        `
+                                }
+                            </div>
+
+                        </div>
+
+                    </article>
+                `;
+            }
+        )
+        .join("");
+}
 
 
 function renderClientManagement():
@@ -529,18 +1394,21 @@ void {
         );
 
 
+    const companyDependentDisabled =
+        clients.companies.length === 0
+            ? "disabled"
+            : "";
+
+
     container.innerHTML = `
 
         <div
             class="client-management-forms"
         >
 
-            <!-- COMPANY -->
-
             <section
                 class="client-form-card"
             >
-
                 <h4>
                     🏢 Нова фирма
                 </h4>
@@ -617,16 +1485,12 @@ void {
                     </button>
 
                 </form>
-
             </section>
 
-
-            <!-- SITE -->
 
             <section
                 class="client-form-card"
             >
-
                 <h4>
                     📍 Нов обект
                 </h4>
@@ -728,26 +1592,18 @@ void {
                             client-submit
                             client-submit-green
                         "
-                        ${
-                            clients.companies.length === 0
-                                ? "disabled"
-                                : ""
-                        }
+                        ${companyDependentDisabled}
                     >
                         ➕ Създай обект
                     </button>
 
                 </form>
-
             </section>
 
-
-            <!-- CLIENT ACCOUNT -->
 
             <section
                 class="client-form-card"
             >
-
                 <h4>
                     👤 Клиентски акаунт
                 </h4>
@@ -840,17 +1696,12 @@ void {
                             client-submit
                             client-submit-orange
                         "
-                        ${
-                            clients.companies.length === 0
-                                ? "disabled"
-                                : ""
-                        }
+                        ${companyDependentDisabled}
                     >
                         ➕ Създай клиент
                     </button>
 
                 </form>
-
             </section>
 
         </div>
@@ -885,232 +1736,6 @@ void {
 }
 
 
-/* =========================================================
-   COMPANY DIRECTORY
-   ========================================================= */
-
-
-function renderCompanies():
-string {
-
-    if (!clients) {
-        return "";
-    }
-
-
-    if (
-        clients.companies.length ===
-        0
-    ) {
-        return `
-            <div class="orders-empty">
-                Все още няма създадени
-                клиентски фирми.
-            </div>
-        `;
-    }
-
-
-    return clients.companies
-        .map(
-            company => {
-
-                const sites =
-                    clients?.sites.filter(
-                        site =>
-                            site.companyId ===
-                            company.id
-                    ) || [];
-
-
-                const accounts =
-                    clients?.accounts.filter(
-                        account =>
-                            account.companyId ===
-                            company.id
-                    ) || [];
-
-
-                return `
-                    <article
-                        class="client-company-card"
-                    >
-
-                        <header
-                            class="client-company-header"
-                        >
-                            <div>
-                                <strong>
-                                    🏢
-                                    ${escapeHtml(
-                                        company.companyName
-                                    )}
-                                </strong>
-
-                                ${
-                                    company.contactPerson
-                                        ? `
-                                            <span>
-                                                👤
-                                                ${escapeHtml(
-                                                    company.contactPerson
-                                                )}
-                                            </span>
-                                        `
-                                        : ""
-                                }
-
-                                ${
-                                    company.phone
-                                        ? `
-                                            <span>
-                                                📞
-                                                ${escapeHtml(
-                                                    company.phone
-                                                )}
-                                            </span>
-                                        `
-                                        : ""
-                                }
-                            </div>
-
-                            <span
-                                class="client-active-badge"
-                            >
-                                ● Активна
-                            </span>
-                        </header>
-
-
-                        <div
-                            class="client-company-columns"
-                        >
-
-                            <div>
-                                <h5>
-                                    📍 Обекти
-                                    (${sites.length})
-                                </h5>
-
-                                ${
-                                    sites.length
-
-                                        ? sites
-                                            .map(
-                                                site => `
-                                                    <div
-                                                        class="client-directory-item"
-                                                    >
-                                                        <strong>
-                                                            ${escapeHtml(
-                                                                site.siteName
-                                                            )}
-                                                        </strong>
-
-                                                        <span>
-                                                            ${escapeHtml(
-                                                                site.address
-                                                            )}
-                                                        </span>
-
-                                                        ${
-                                                            site.phone
-                                                                ? `
-                                                                    <small>
-                                                                        📞
-                                                                        ${escapeHtml(
-                                                                            site.phone
-                                                                        )}
-                                                                    </small>
-                                                                `
-                                                                : ""
-                                                        }
-                                                    </div>
-                                                `
-                                            )
-                                            .join("")
-
-                                        : `
-                                            <div
-                                                class="client-directory-empty"
-                                            >
-                                                Няма обекти
-                                            </div>
-                                        `
-                                }
-                            </div>
-
-
-                            <div>
-                                <h5>
-                                    👤 Акаунти
-                                    (${accounts.length})
-                                </h5>
-
-                                ${
-                                    accounts.length
-
-                                        ? accounts
-                                            .map(
-                                                account => `
-                                                    <div
-                                                        class="client-directory-item"
-                                                    >
-                                                        <strong>
-                                                            ${escapeHtml(
-                                                                account.displayName
-                                                            )}
-                                                        </strong>
-
-                                                        <span>
-                                                            ID:
-                                                            ${escapeHtml(
-                                                                account.loginId
-                                                            )}
-                                                        </span>
-
-                                                        ${
-                                                            account.phone
-                                                                ? `
-                                                                    <small>
-                                                                        📞
-                                                                        ${escapeHtml(
-                                                                            account.phone
-                                                                        )}
-                                                                    </small>
-                                                                `
-                                                                : ""
-                                                        }
-                                                    </div>
-                                                `
-                                            )
-                                            .join("")
-
-                                        : `
-                                            <div
-                                                class="client-directory-empty"
-                                            >
-                                                Няма акаунти
-                                            </div>
-                                        `
-                                }
-                            </div>
-
-                        </div>
-
-                    </article>
-                `;
-            }
-        )
-        .join("");
-}
-
-
-/* =========================================================
-   REFRESH
-   ========================================================= */
-
-
 async function refreshPage():
 Promise<void> {
 
@@ -1128,23 +1753,17 @@ Promise<void> {
 
         const [
             clientSnapshot,
-            activeOrders
+            orderWorkspace
         ] =
             await Promise.all([
                 loadClientManagementSnapshot(),
-                loadAdminActiveOrders()
+                loadAdminOrdersWorkspace()
             ]);
 
 
         if (
             version !==
-            refreshVersion
-        ) {
-            return;
-        }
-
-
-        if (
+                refreshVersion ||
             !getRoot()?.isConnected
         ) {
             return;
@@ -1155,12 +1774,16 @@ Promise<void> {
             clientSnapshot;
 
         orders =
-            activeOrders;
+            orderWorkspace.orders;
+
+        compositions =
+            orderWorkspace.compositions;
 
 
         renderOrders();
 
         renderClientManagement();
+
 
     } catch (error) {
 
@@ -1180,11 +1803,6 @@ Promise<void> {
 }
 
 
-/* =========================================================
-   COMPANY CREATE
-   ========================================================= */
-
-
 async function submitCompany(
     form: HTMLFormElement
 ): Promise<void> {
@@ -1192,32 +1810,44 @@ async function submitCompany(
     const name =
         form.querySelector<
             HTMLInputElement
-        >("#k3CompanyName");
+        >(
+            "#k3CompanyName"
+        );
 
     const contact =
         form.querySelector<
             HTMLInputElement
-        >("#k3CompanyContact");
+        >(
+            "#k3CompanyContact"
+        );
 
     const phone =
         form.querySelector<
             HTMLInputElement
-        >("#k3CompanyPhone");
+        >(
+            "#k3CompanyPhone"
+        );
 
     const email =
         form.querySelector<
             HTMLInputElement
-        >("#k3CompanyEmail");
+        >(
+            "#k3CompanyEmail"
+        );
 
     const address =
         form.querySelector<
             HTMLInputElement
-        >("#k3CompanyAddress");
+        >(
+            "#k3CompanyAddress"
+        );
 
     const button =
         form.querySelector<
             HTMLButtonElement
-        >('[type="submit"]');
+        >(
+            '[type="submit"]'
+        );
 
 
     if (
@@ -1260,10 +1890,12 @@ async function submitCompany(
 
         await refreshPage();
 
+
         setPageMessage(
             "Фирмата е създадена успешно.",
             "success"
         );
+
 
     } catch (error) {
 
@@ -1271,6 +1903,7 @@ async function submitCompany(
             errorMessage(error),
             "error"
         );
+
 
     } finally {
 
@@ -1280,17 +1913,13 @@ async function submitCompany(
 }
 
 
-/* =========================================================
-   SITE CREATE
-   ========================================================= */
-
-
 function optionalCoordinate(
     input: HTMLInputElement
 ): number | null {
 
     const value =
         input.value.trim();
+
 
     if (!value) {
         return null;
@@ -1299,6 +1928,7 @@ function optionalCoordinate(
 
     const number =
         Number(value);
+
 
     return Number.isFinite(number)
         ? number
@@ -1313,42 +1943,58 @@ async function submitSite(
     const company =
         form.querySelector<
             HTMLSelectElement
-        >("#k3SiteCompany");
+        >(
+            "#k3SiteCompany"
+        );
 
     const name =
         form.querySelector<
             HTMLInputElement
-        >("#k3SiteName");
+        >(
+            "#k3SiteName"
+        );
 
     const address =
         form.querySelector<
             HTMLInputElement
-        >("#k3SiteAddress");
+        >(
+            "#k3SiteAddress"
+        );
 
     const contact =
         form.querySelector<
             HTMLInputElement
-        >("#k3SiteContact");
+        >(
+            "#k3SiteContact"
+        );
 
     const phone =
         form.querySelector<
             HTMLInputElement
-        >("#k3SitePhone");
+        >(
+            "#k3SitePhone"
+        );
 
     const latitude =
         form.querySelector<
             HTMLInputElement
-        >("#k3SiteLatitude");
+        >(
+            "#k3SiteLatitude"
+        );
 
     const longitude =
         form.querySelector<
             HTMLInputElement
-        >("#k3SiteLongitude");
+        >(
+            "#k3SiteLongitude"
+        );
 
     const button =
         form.querySelector<
             HTMLButtonElement
-        >('[type="submit"]');
+        >(
+            '[type="submit"]'
+        );
 
 
     if (
@@ -1380,6 +2026,7 @@ async function submitSite(
         (lat === null) !==
         (lng === null)
     ) {
+
         setPageMessage(
             "Ако въвеждаш координати, трябва да попълниш и Latitude, и Longitude.",
             "error"
@@ -1423,10 +2070,12 @@ async function submitSite(
 
         await refreshPage();
 
+
         setPageMessage(
             "Обектът е създаден успешно.",
             "success"
         );
+
 
     } catch (error) {
 
@@ -1434,6 +2083,7 @@ async function submitSite(
             errorMessage(error),
             "error"
         );
+
 
     } finally {
 
@@ -1443,11 +2093,6 @@ async function submitSite(
 }
 
 
-/* =========================================================
-   CLIENT ACCOUNT CREATE
-   ========================================================= */
-
-
 async function submitClient(
     form: HTMLFormElement
 ): Promise<void> {
@@ -1455,32 +2100,44 @@ async function submitClient(
     const company =
         form.querySelector<
             HTMLSelectElement
-        >("#k3ClientCompany");
+        >(
+            "#k3ClientCompany"
+        );
 
     const name =
         form.querySelector<
             HTMLInputElement
-        >("#k3ClientName");
+        >(
+            "#k3ClientName"
+        );
 
     const phone =
         form.querySelector<
             HTMLInputElement
-        >("#k3ClientPhone");
+        >(
+            "#k3ClientPhone"
+        );
 
     const login =
         form.querySelector<
             HTMLInputElement
-        >("#k3ClientLogin");
+        >(
+            "#k3ClientLogin"
+        );
 
     const password =
         form.querySelector<
             HTMLInputElement
-        >("#k3ClientPassword");
+        >(
+            "#k3ClientPassword"
+        );
 
     const button =
         form.querySelector<
             HTMLButtonElement
-        >('[type="submit"]');
+        >(
+            '[type="submit"]'
+        );
 
 
     if (
@@ -1529,10 +2186,12 @@ async function submitClient(
 
         await refreshPage();
 
+
         setPageMessage(
             "Клиентският акаунт е създаден успешно.",
             "success"
         );
+
 
     } catch (error) {
 
@@ -1541,17 +2200,13 @@ async function submitClient(
             "error"
         );
 
+
     } finally {
 
         button.disabled =
             false;
     }
 }
-
-
-/* =========================================================
-   EVENTS
-   ========================================================= */
 
 
 async function handleSubmit(
@@ -1577,7 +2232,11 @@ async function handleSubmit(
         form.id ===
         "k3CreateCompanyForm"
     ) {
-        await submitCompany(form);
+
+        await submitCompany(
+            form
+        );
+
         return;
     }
 
@@ -1586,7 +2245,11 @@ async function handleSubmit(
         form.id ===
         "k3CreateSiteForm"
     ) {
-        await submitSite(form);
+
+        await submitSite(
+            form
+        );
+
         return;
     }
 
@@ -1595,14 +2258,17 @@ async function handleSubmit(
         form.id ===
         "k3CreateClientForm"
     ) {
-        await submitClient(form);
+
+        await submitClient(
+            form
+        );
     }
 }
 
 
-function handleClick(
+async function handleClick(
     event: Event
-): void {
+): Promise<void> {
 
     const target =
         event.target;
@@ -1623,57 +2289,102 @@ function handleClick(
         );
 
 
+    if (!button) {
+        return;
+    }
+
+
+    const action =
+        button.dataset.ordersAction;
+
+
     if (
-        !button ||
-        button.dataset.ordersAction !==
-            "toggle-client-password"
+        action ===
+        "toggle-client-password"
+    ) {
+
+        const password =
+            document.querySelector<
+                HTMLInputElement
+            >(
+                "#k3ClientPassword"
+            );
+
+
+        if (!password) {
+            return;
+        }
+
+
+        const show =
+            password.type ===
+            "password";
+
+
+        password.type =
+            show
+                ? "text"
+                : "password";
+
+
+        button.textContent =
+            show
+                ? "🙈"
+                : "👁";
+
+
+        button.setAttribute(
+            "aria-label",
+            show
+                ? "Скрий паролата"
+                : "Покажи паролата"
+        );
+
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "assign-load"
+    ) {
+
+        await submitAssignment(
+            button
+        );
+    }
+}
+
+
+function handleChange(
+    event: Event
+): void {
+
+    const target =
+        event.target;
+
+
+    if (
+        !(target instanceof
+            HTMLSelectElement)
     ) {
         return;
     }
 
 
-    const password =
-        document.querySelector<
-            HTMLInputElement
-        >(
-            "#k3ClientPassword"
+    const orderId =
+        target.dataset
+            .orderTruckSelect;
+
+
+    if (orderId) {
+
+        updateAssignmentLimit(
+            orderId
         );
-
-
-    if (!password) {
-        return;
     }
-
-
-    const show =
-        password.type ===
-        "password";
-
-
-    password.type =
-        show
-            ? "text"
-            : "password";
-
-
-    button.textContent =
-        show
-            ? "🙈"
-            : "👁";
-
-
-    button.setAttribute(
-        "aria-label",
-        show
-            ? "Скрий паролата"
-            : "Покажи паролата"
-    );
 }
-
-
-/* =========================================================
-   INITIALIZE
-   ========================================================= */
 
 
 export async function initializeSection():
@@ -1700,7 +2411,17 @@ Promise<void> {
 
     root.addEventListener(
         "click",
-        handleClick
+        event => {
+            void handleClick(
+                event
+            );
+        }
+    );
+
+
+    root.addEventListener(
+        "change",
+        handleChange
     );
 
 
