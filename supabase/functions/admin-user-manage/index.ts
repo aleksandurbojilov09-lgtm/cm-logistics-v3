@@ -10,8 +10,7 @@ const AUTH_EMAIL_DOMAIN =
 const VALID_ROLES = new Set([
     "admin",
     "dispatcher",
-    "driver",
-    "client"
+    "driver"
 ]);
 
 
@@ -96,9 +95,9 @@ export default {
             }
 
 
-            /* =============================================
-               VERIFY ACTIVE ADMIN
-               ============================================= */
+            // =================================================
+            // VERIFY ACTIVE ADMIN
+            // =================================================
 
 
             const {
@@ -109,7 +108,10 @@ export default {
                     .supabaseAdmin
                     .from("profiles")
                     .select("is_active")
-                    .eq("id", callerId)
+                    .eq(
+                        "id",
+                        callerId
+                    )
                     .maybeSingle();
 
 
@@ -132,7 +134,10 @@ export default {
                     .supabaseAdmin
                     .from("roles")
                     .select("id")
-                    .eq("code", "admin")
+                    .eq(
+                        "code",
+                        "admin"
+                    )
                     .single();
 
 
@@ -182,9 +187,9 @@ export default {
             }
 
 
-            /* =============================================
-               BODY
-               ============================================= */
+            // =================================================
+            // READ BODY
+            // =================================================
 
 
             let parsedBody:
@@ -203,7 +208,9 @@ export default {
 
 
             if (
-                !isRecord(parsedBody)
+                !isRecord(
+                    parsedBody
+                )
             ) {
                 return jsonError(
                     "Невалидни данни.",
@@ -230,6 +237,12 @@ export default {
                 );
 
 
+            const phone =
+                textValue(
+                    parsedBody.phone
+                );
+
+
             const password =
                 typeof parsedBody.password ===
                     "string"
@@ -249,12 +262,19 @@ export default {
                 ) || null;
 
 
-            if (action !== "create") {
+            if (
+                action !== "create"
+            ) {
                 return jsonError(
                     "Неподдържана операция.",
                     400
                 );
             }
+
+
+            // =================================================
+            // VALIDATION
+            // =================================================
 
 
             if (
@@ -288,21 +308,42 @@ export default {
             }
 
 
+            /*
+             * Client creation intentionally stays out
+             * of this function for now.
+             *
+             * A client must also be attached to a real
+             * client company. We will build that workflow
+             * together with the Client module instead of
+             * creating incomplete client accounts.
+             */
+
             if (
                 !VALID_ROLES.has(
                     roleCode
                 )
             ) {
                 return jsonError(
-                    "Невалидна роля.",
+                    "Тази роля все още не може да бъде създавана от този екран.",
                     400
                 );
             }
 
 
-            /* =============================================
-               CHECK LOGIN ID
-               ============================================= */
+            if (
+                roleCode === "driver" &&
+                !phone
+            ) {
+                return jsonError(
+                    "Въведете телефон на шофьора.",
+                    400
+                );
+            }
+
+
+            // =================================================
+            // CHECK LOGIN ID
+            // =================================================
 
 
             const {
@@ -322,6 +363,7 @@ export default {
 
             if (existingError) {
                 console.error(
+                    "Login ID lookup failed:",
                     existingError
                 );
 
@@ -340,9 +382,9 @@ export default {
             }
 
 
-            /* =============================================
-               CREATE AUTH USER
-               ============================================= */
+            // =================================================
+            // CREATE AUTH USER
+            // =================================================
 
 
             const authEmail =
@@ -388,9 +430,9 @@ export default {
                 authResult.user.id;
 
 
-            /* =============================================
-               CREATE APP RECORDS
-               ============================================= */
+            // =================================================
+            // ATOMIC APP RECORDS
+            // =================================================
 
 
             const {
@@ -409,6 +451,9 @@ export default {
 
                             p_display_name:
                                 displayName,
+
+                            p_phone:
+                                phone || null,
 
                             p_role_code:
                                 roleCode,
@@ -441,7 +486,7 @@ export default {
 
                 if (cleanupError) {
                     console.error(
-                        "Cleanup failed:",
+                        "Auth cleanup failed:",
                         cleanupError
                     );
                 }
@@ -452,6 +497,11 @@ export default {
                     500
                 );
             }
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
 
 
             return Response.json(
@@ -465,6 +515,9 @@ export default {
                         loginId,
 
                         displayName,
+
+                        phone:
+                            phone || null,
 
                         roleCode,
 
