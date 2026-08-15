@@ -28,6 +28,10 @@ import {
     escapeHtml
 } from "../../shared/lib/html";
 
+import {
+    isUserEditing
+} from "../../shared/lib/user-editing";
+
 
 let context:
     ClientPortalContext | null =
@@ -1414,6 +1418,12 @@ void {
     notificationTimer =
         window.setInterval(
             () => {
+
+                if (isUserEditing()) {
+                    return;
+                }
+
+
                 void refreshNotifications();
             },
             5000

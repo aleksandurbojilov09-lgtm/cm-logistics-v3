@@ -34,6 +34,10 @@ import {
 } from "../../shared/lib/html";
 
 import {
+    isUserEditing
+} from "../../shared/lib/user-editing";
+
+import {
     buildGoogleMapsNavigationUrl
 } from "../../shared/lib/google-maps";
 
@@ -2656,6 +2660,12 @@ void {
     interactionTimer =
         window.setInterval(
             () => {
+
+                if (isUserEditing()) {
+                    return;
+                }
+
+
                 void refreshInteractionsOnly();
             },
             5000

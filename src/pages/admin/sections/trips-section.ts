@@ -21,6 +21,10 @@ import {
 } from "../../../shared/lib/html";
 
 import {
+    isUserEditing
+} from "../../../shared/lib/user-editing";
+
+import {
     handleTruckChangeClick,
     handleTruckChangeFieldChange,
     handleTruckChangeSubmit,
@@ -1465,6 +1469,11 @@ void {
 
                     stopPolling();
 
+                    return;
+                }
+
+
+                if (isUserEditing()) {
                     return;
                 }
 

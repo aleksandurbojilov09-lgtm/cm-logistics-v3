@@ -10,6 +10,10 @@ import {
     escapeHtml
 } from "../../../shared/lib/html";
 
+import {
+    isUserEditing
+} from "../../../shared/lib/user-editing";
+
 
 type DiscrepancyView =
     | "reported"
@@ -1046,6 +1050,11 @@ void {
 
                     stopPolling();
 
+                    return;
+                }
+
+
+                if (isUserEditing()) {
                     return;
                 }
 
