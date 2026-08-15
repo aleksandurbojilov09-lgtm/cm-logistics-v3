@@ -61,6 +61,19 @@ let mapLoadVersion =
     0;
 
 
+let reverseGeocodeTimer:
+    number | null =
+    null;
+
+
+let reverseGeocodeVersion =
+    0;
+
+
+const reverseGeocodeCache =
+    new Map<string, string>();
+
+
 export function renderLoginPage(): string {
     return `
         <main class="login-page">
@@ -477,9 +490,160 @@ function setRegistrationCoordinates(
 }
 
 
+function getRegistrationAddressInput():
+HTMLInputElement | null {
+    return document.querySelector<HTMLInputElement>(
+        "#registrationLoadingAddress"
+    );
+}
+
+
+function scheduleRegistrationAddressLookup(
+    coordinates: LeafletLatLng
+): void {
+    if (reverseGeocodeTimer !== null) {
+        window.clearTimeout(
+            reverseGeocodeTimer
+        );
+    }
+
+    const cacheKey =
+        `${coordinates.lat.toFixed(5)},${coordinates.lng.toFixed(5)}`;
+
+    const cachedAddress =
+        reverseGeocodeCache.get(
+            cacheKey
+        );
+
+    if (cachedAddress) {
+        const addressInput =
+            getRegistrationAddressInput();
+
+        if (addressInput) {
+            addressInput.value =
+                cachedAddress;
+        }
+
+        return;
+    }
+
+    const requestVersion =
+        ++reverseGeocodeVersion;
+
+    reverseGeocodeTimer =
+        window.setTimeout(
+            () => {
+                reverseGeocodeTimer =
+                    null;
+
+                void reverseGeocodeRegistrationAddress(
+                    coordinates,
+                    cacheKey,
+                    requestVersion
+                );
+            },
+            1100
+        );
+}
+
+
+async function reverseGeocodeRegistrationAddress(
+    coordinates: LeafletLatLng,
+    cacheKey: string,
+    requestVersion: number
+): Promise<void> {
+    try {
+        const parameters =
+            new URLSearchParams({
+                format: "jsonv2",
+                lat: String(
+                    coordinates.lat
+                ),
+                lon: String(
+                    coordinates.lng
+                ),
+                zoom: "18",
+                addressdetails: "1",
+                "accept-language": "bg"
+            });
+
+        const response =
+            await fetch(
+                `https://nominatim.openstreetmap.org/reverse?${parameters.toString()}`,
+                {
+                    headers: {
+                        Accept:
+                            "application/json"
+                    }
+                }
+            );
+
+        if (!response.ok) {
+            return;
+        }
+
+        const result:
+            unknown =
+            await response.json();
+
+        if (
+            requestVersion !==
+                reverseGeocodeVersion ||
+            typeof result !== "object" ||
+            result === null ||
+            !(
+                "display_name" in
+                result
+            ) ||
+            typeof result.display_name !==
+                "string"
+        ) {
+            return;
+        }
+
+        const address =
+            result.display_name
+                .trim()
+                .slice(
+                    0,
+                    250
+                );
+
+        if (!address) {
+            return;
+        }
+
+        reverseGeocodeCache.set(
+            cacheKey,
+            address
+        );
+
+        const addressInput =
+            getRegistrationAddressInput();
+
+        if (addressInput) {
+            addressInput.value =
+                address;
+        }
+    } catch {
+        // Address may still be entered manually.
+    }
+}
+
+
 function disposeRegistrationMap():
 void {
     mapLoadVersion += 1;
+    reverseGeocodeVersion += 1;
+
+    if (reverseGeocodeTimer !== null) {
+        window.clearTimeout(
+            reverseGeocodeTimer
+        );
+
+        reverseGeocodeTimer =
+            null;
+    }
 
     registrationMap?.remove();
 
@@ -618,9 +782,16 @@ async function initializeRegistrationMap(
                                     if (
                                         registrationMarker
                                     ) {
-                                        setRegistrationCoordinates(
+                                        const markerCoordinates =
                                             registrationMarker
-                                                .getLatLng()
+                                                .getLatLng();
+
+                                        setRegistrationCoordinates(
+                                            markerCoordinates
+                                        );
+
+                                        scheduleRegistrationAddressLookup(
+                                            markerCoordinates
                                         );
                                     }
                                 }
@@ -629,6 +800,10 @@ async function initializeRegistrationMap(
 
 
                 setRegistrationCoordinates(
+                    event.latlng
+                );
+
+                scheduleRegistrationAddressLookup(
                     event.latlng
                 );
 
