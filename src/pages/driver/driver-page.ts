@@ -2609,33 +2609,7 @@ Promise<void> {
             nextTruckChange;
 
 
-        const activeElement =
-            document.activeElement;
-
-        const tripControl =
-            document.querySelector<HTMLElement>(
-                "#k3DriverTripControl"
-            );
-
-        const isEditingTripControl =
-            (
-                activeElement instanceof
-                    HTMLInputElement ||
-                activeElement instanceof
-                    HTMLTextAreaElement ||
-                activeElement instanceof
-                    HTMLSelectElement
-            ) &&
-            Boolean(
-                tripControl?.contains(
-                    activeElement
-                )
-            );
-
-
-        if (!isEditingTripControl) {
-            renderTripControl();
-        }
+        renderTripControl();
 
 
         renderTruckChangeDialog();
