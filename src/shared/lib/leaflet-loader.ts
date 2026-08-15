@@ -4,6 +4,17 @@ export type LeafletCoordinate = [
 ];
 
 
+export type LeafletLatLng = {
+    lat: number;
+    lng: number;
+};
+
+
+export type LeafletMouseEvent = {
+    latlng: LeafletLatLng;
+};
+
+
 export type LeafletMap = {
     setView(
         coordinates: LeafletCoordinate,
@@ -25,6 +36,13 @@ export type LeafletMap = {
     invalidateSize():
         LeafletMap;
 
+    on(
+        event: "click",
+        handler: (
+            event: LeafletMouseEvent
+        ) => void
+    ): LeafletMap;
+
     remove():
         void;
 };
@@ -40,7 +58,7 @@ export type LeafletLayerGroup = {
 };
 
 
-type LeafletMarker = {
+export type LeafletMarker = {
     addTo(
         layer:
             LeafletLayerGroup |
@@ -49,6 +67,20 @@ type LeafletMarker = {
 
     bindPopup(
         html: string
+    ): LeafletMarker;
+
+    setLatLng(
+        coordinates:
+            LeafletCoordinate |
+            LeafletLatLng
+    ): LeafletMarker;
+
+    getLatLng():
+        LeafletLatLng;
+
+    on(
+        event: "dragend",
+        handler: () => void
     ): LeafletMarker;
 };
 
@@ -111,6 +143,7 @@ export type LeafletNamespace = {
             icon?: LeafletIcon;
             title?: string;
             alt?: string;
+            draggable?: boolean;
         }
     ): LeafletMarker;
 };

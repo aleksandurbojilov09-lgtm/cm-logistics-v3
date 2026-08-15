@@ -10,6 +10,10 @@ import {
     saveRememberedLoginId
 } from "../../shared/lib/login-preferences";
 
+import {
+    getCurrentUserRole
+} from "./get-current-role";
+
 type LoginInput = {
     loginId: string;
     password: string;
@@ -62,6 +66,38 @@ export async function login(
             success: false,
             message:
                 "Невалидно потребителско ID или парола."
+        };
+    }
+
+
+    let role;
+
+
+    try {
+        role =
+            await getCurrentUserRole();
+    } catch {
+        await supabase.auth.signOut({
+            scope: "local"
+        });
+
+        return {
+            success: false,
+            message:
+                "Достъпът не можа да бъде проверен. Опитайте отново."
+        };
+    }
+
+
+    if (!role) {
+        await supabase.auth.signOut({
+            scope: "local"
+        });
+
+        return {
+            success: false,
+            message:
+                "Акаунтът още няма активен достъп. Ако сте нов клиент, изчакайте одобрение."
         };
     }
 

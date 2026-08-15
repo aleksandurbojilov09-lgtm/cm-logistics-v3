@@ -2,3 +2,9 @@ project_id = "cm-logistics-v3"
 
 [functions.admin-user-manage]
 verify_jwt = true
+
+[functions.client-register]
+verify_jwt = false
+
+[functions.admin-client-registration]
+verify_jwt = true

@@ -311,174 +311,13 @@
 }
 
 
-.client-management-forms {
-    display: grid;
-
-    grid-template-columns: 1fr;
-
-    gap: 16px;
-}
-
-
-.client-form-card {
-    padding: 17px;
-
-    border:
-        1px solid
-        var(--cm-color-border);
-
-    border-radius: 14px;
-
-    background: #020617;
-}
-
-
-.client-form-card h4 {
-    margin: 0 0 17px;
-
-    font-size: 16px;
-}
-
-
-.client-form {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 14px;
-}
-
-
-.client-form label {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 7px;
-
-    color: #cbd5e1;
-
-    font-size: 12px;
-
-    font-weight: 600;
-}
-
-
-.client-form input,
-.client-form select {
-    width: 100%;
-
-    min-height: 46px;
-
-    padding: 10px 12px;
-
-    border: 1px solid #475569;
-
-    border-radius: 10px;
-
-    outline: none;
-
-    background: #1e293b;
-
-    color: #ffffff;
-
-    font: inherit;
-}
-
-
-.client-form input:focus,
-.client-form select:focus {
-    border-color: #3b82f6;
-}
-
-
-.client-coordinates {
-    display: grid;
-
-    grid-template-columns: 1fr;
-
-    gap: 10px;
-}
-
-
-.client-password-row {
-    display: grid;
-
-    grid-template-columns:
-        minmax(0, 1fr)
-        46px;
-
-    gap: 8px;
-}
-
-
-.client-password-toggle {
-    min-height: 46px;
-
-    border: 1px solid #475569;
-
-    border-radius: 10px;
-
-    background: #1e293b;
-
-    color: #ffffff;
-}
-
-
-.client-submit {
-    min-height: 48px;
-
-    margin-top: 3px;
-
-    padding: 11px 14px;
-
-    border: 0;
-
-    border-radius: 11px;
-
-    color: #ffffff;
-
-    cursor: pointer;
-
-    font-weight: 800;
-}
-
-
-.client-submit:disabled {
-    opacity: 0.45;
-
-    cursor: not-allowed;
-}
-
-
-.client-submit-blue {
-    background: #2563eb;
-}
-
-
-.client-submit-green {
-    background: #047857;
-}
-
-
-.client-submit-orange {
-    background: #c2410c;
-}
-
-
 /* =========================================================
    CLIENT DIRECTORY
    ========================================================= */
 
 
 .client-directory {
-    margin-top: 24px;
-
-    padding-top: 20px;
-
-    border-top:
-        1px solid
-        var(--cm-color-border);
+    margin-top: 0;
 }
 
 
@@ -673,15 +512,6 @@
     }
 
 
-    .client-coordinates {
-        grid-template-columns:
-            repeat(
-                2,
-                minmax(0, 1fr)
-            );
-    }
-
-
     .client-company-header {
         flex-direction: row;
 
@@ -695,21 +525,6 @@
                 2,
                 minmax(0, 1fr)
             );
-    }
-
-}
-
-
-@media (min-width: 1050px) {
-
-    .client-management-forms {
-        grid-template-columns:
-            repeat(
-                3,
-                minmax(0, 1fr)
-            );
-
-        align-items: start;
     }
 
 }

@@ -5,8 +5,61 @@ import {
 } from "../../features/auth/login";
 
 import {
+    submitClientRegistration
+} from "../../features/clients/client-registration-service";
+
+import {
+    normalizeLoginId
+} from "../../shared/lib/auth-login-id";
+
+import {
+    loadLeaflet,
+    type LeafletLatLng,
+    type LeafletMap,
+    type LeafletMarker
+} from "../../shared/lib/leaflet-loader";
+
+import {
     getRememberedLoginId
 } from "../../shared/lib/login-preferences";
+
+
+const DEFAULT_MAP_CENTER: [
+    number,
+    number
+] = [
+    42.6977,
+    23.3219
+];
+
+
+const REGISTRATION_SUCCESS_MESSAGE =
+    "Заявката за регистрация е изпратена. Изчакайте одобрение от администратор.";
+
+
+let registrationMap:
+    LeafletMap | null =
+    null;
+
+
+let registrationMarker:
+    LeafletMarker | null =
+    null;
+
+
+let registrationLatitude:
+    number | null =
+    null;
+
+
+let registrationLongitude:
+    number | null =
+    null;
+
+
+let mapLoadVersion =
+    0;
+
 
 export function renderLoginPage(): string {
     return `
@@ -61,11 +114,18 @@ export function renderLoginPage(): string {
 
                 <div class="login-card">
 
-                    <div class="login-tabs">
+                    <div
+                        class="login-tabs"
+                        role="tablist"
+                        aria-label="Достъп до системата"
+                    >
                         <button
                             id="loginTab"
                             class="login-tab login-tab-active"
                             type="button"
+                            role="tab"
+                            aria-controls="loginSection"
+                            aria-selected="true"
                         >
                             🔑 Вход
                         </button>
@@ -74,6 +134,9 @@ export function renderLoginPage(): string {
                             id="registerTab"
                             class="login-tab"
                             type="button"
+                            role="tab"
+                            aria-controls="registerSection"
+                            aria-selected="false"
                         >
                             🏢 Регистрация на фирма
                         </button>
@@ -82,13 +145,15 @@ export function renderLoginPage(): string {
                     <section
                         id="loginSection"
                         class="login-section"
+                        role="tabpanel"
+                        aria-labelledby="loginTab"
                     >
                         <div class="login-form-container">
 
                             <h2>Вход в системата</h2>
 
                             <p class="login-description">
-                                За администратор, диспечери, шофьори и клиенти
+                                За администратор, диспечери, шофьори и одобрени клиенти
                             </p>
 
                             <form
@@ -153,6 +218,190 @@ export function renderLoginPage(): string {
                         </div>
                     </section>
 
+                    <section
+                        id="registerSection"
+                        class="login-section"
+                        role="tabpanel"
+                        aria-labelledby="registerTab"
+                        hidden
+                    >
+                        <div class="registration-form-container">
+
+                            <h2>Регистрация на клиентска фирма</h2>
+
+                            <p class="login-description">
+                                Попълнете данните и изберете точната позиция за товарене. Достъпът се активира след одобрение от администратор.
+                            </p>
+
+                            <form
+                                id="registrationForm"
+                                class="registration-form"
+                                autocomplete="on"
+                            >
+                                <div class="registration-grid">
+                                    <div class="login-field">
+                                        <label for="registrationCompanyName">
+                                            Име на фирмата
+                                        </label>
+
+                                        <input
+                                            id="registrationCompanyName"
+                                            type="text"
+                                            maxlength="160"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div class="login-field">
+                                        <label for="registrationContactPerson">
+                                            Лице за контакт
+                                        </label>
+
+                                        <input
+                                            id="registrationContactPerson"
+                                            type="text"
+                                            autocomplete="name"
+                                            maxlength="120"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div class="login-field">
+                                        <label for="registrationPhone">
+                                            Телефон
+                                        </label>
+
+                                        <input
+                                            id="registrationPhone"
+                                            type="tel"
+                                            autocomplete="tel"
+                                            maxlength="40"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div class="login-field">
+                                        <label for="registrationLoginId">
+                                            Потребителско ID
+                                        </label>
+
+                                        <input
+                                            id="registrationLoginId"
+                                            type="text"
+                                            autocomplete="username"
+                                            minlength="3"
+                                            maxlength="32"
+                                            pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,31}"
+                                            autocapitalize="none"
+                                            spellcheck="false"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div class="login-field">
+                                        <label for="registrationPassword">
+                                            Парола
+                                        </label>
+
+                                        <input
+                                            id="registrationPassword"
+                                            type="password"
+                                            autocomplete="new-password"
+                                            minlength="8"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div class="login-field">
+                                        <label for="registrationPasswordConfirm">
+                                            Потвърди паролата
+                                        </label>
+
+                                        <input
+                                            id="registrationPasswordConfirm"
+                                            type="password"
+                                            autocomplete="new-password"
+                                            minlength="8"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div class="login-field">
+                                    <label for="registrationLoadingAddress">
+                                        Адрес за товарене
+                                    </label>
+
+                                    <input
+                                        id="registrationLoadingAddress"
+                                        type="text"
+                                        autocomplete="street-address"
+                                        maxlength="250"
+                                        required
+                                    />
+                                </div>
+
+                                <div class="registration-map-field">
+                                    <div class="registration-map-heading">
+                                        <div>
+                                            <strong>Точна позиция за товарене</strong>
+                                            <span>Кликнете върху картата или преместете маркера.</span>
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        id="registrationMap"
+                                        class="registration-map"
+                                        aria-label="Карта за избор на позиция за товарене"
+                                    >
+                                        <div class="registration-map-loading">
+                                            Картата ще се зареди при отваряне на регистрацията.
+                                        </div>
+                                    </div>
+
+                                    <div class="registration-coordinates">
+                                        <label>
+                                            Latitude
+
+                                            <input
+                                                id="registrationLatitude"
+                                                type="text"
+                                                readonly
+                                                tabindex="-1"
+                                            />
+                                        </label>
+
+                                        <label>
+                                            Longitude
+
+                                            <input
+                                                id="registrationLongitude"
+                                                type="text"
+                                                readonly
+                                                tabindex="-1"
+                                            />
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div
+                                    id="registrationMessage"
+                                    class="registration-message"
+                                    aria-live="polite"
+                                ></div>
+
+                                <button
+                                    id="registrationButton"
+                                    class="login-button"
+                                    type="submit"
+                                >
+                                    🏢 Изпрати заявка
+                                </button>
+                            </form>
+
+                        </div>
+                    </section>
+
                 </div>
 
             </div>
@@ -160,36 +409,357 @@ export function renderLoginPage(): string {
     `;
 }
 
+
+function setMessage(
+    element: HTMLElement,
+    message: string,
+    status: "success" | "error" | null
+): void {
+    element.textContent =
+        message;
+
+    if (status) {
+        element.dataset.status =
+            status;
+    } else {
+        delete element.dataset.status;
+    }
+}
+
+
+function updateCoordinateInputs():
+void {
+    const latitudeInput =
+        document.querySelector<
+            HTMLInputElement
+        >(
+            "#registrationLatitude"
+        );
+
+    const longitudeInput =
+        document.querySelector<
+            HTMLInputElement
+        >(
+            "#registrationLongitude"
+        );
+
+
+    if (latitudeInput) {
+        latitudeInput.value =
+            registrationLatitude ===
+                null
+                ? ""
+                : registrationLatitude
+                    .toFixed(6);
+    }
+
+    if (longitudeInput) {
+        longitudeInput.value =
+            registrationLongitude ===
+                null
+                ? ""
+                : registrationLongitude
+                    .toFixed(6);
+    }
+}
+
+
+function setRegistrationCoordinates(
+    coordinates: LeafletLatLng
+): void {
+    registrationLatitude =
+        coordinates.lat;
+
+    registrationLongitude =
+        coordinates.lng;
+
+    updateCoordinateInputs();
+}
+
+
+function disposeRegistrationMap():
+void {
+    mapLoadVersion += 1;
+
+    registrationMap?.remove();
+
+    registrationMap =
+        null;
+
+    registrationMarker =
+        null;
+
+    registrationLatitude =
+        null;
+
+    registrationLongitude =
+        null;
+
+    updateCoordinateInputs();
+
+
+    const mapElement =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#registrationMap"
+        );
+
+
+    if (mapElement) {
+        mapElement.innerHTML = `
+            <div class="registration-map-loading">
+                Зареждане на картата...
+            </div>
+        `;
+    }
+}
+
+
+async function initializeRegistrationMap(
+    messageElement: HTMLElement
+): Promise<void> {
+    if (registrationMap) {
+        registrationMap.invalidateSize();
+        return;
+    }
+
+
+    const mapElement =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#registrationMap"
+        );
+
+
+    if (!mapElement) {
+        return;
+    }
+
+
+    const currentLoad =
+        ++mapLoadVersion;
+
+
+    mapElement.innerHTML = `
+        <div class="registration-map-loading">
+            Зареждане на картата...
+        </div>
+    `;
+
+
+    try {
+        const leaflet =
+            await loadLeaflet();
+
+
+        if (
+            currentLoad !==
+                mapLoadVersion ||
+            !mapElement.isConnected
+        ) {
+            return;
+        }
+
+
+        mapElement.innerHTML = "";
+
+
+        const map =
+            leaflet
+                .map(mapElement)
+                .setView(
+                    DEFAULT_MAP_CENTER,
+                    7
+                );
+
+
+        leaflet
+            .tileLayer(
+                "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+                    maxZoom: 19,
+                    attribution:
+                        "&copy; OpenStreetMap contributors"
+                }
+            )
+            .addTo(map);
+
+
+        map.on(
+            "click",
+            event => {
+                if (registrationMarker) {
+                    registrationMarker
+                        .setLatLng(
+                            event.latlng
+                        );
+                } else {
+                    registrationMarker =
+                        leaflet
+                            .marker(
+                                [
+                                    event.latlng.lat,
+                                    event.latlng.lng
+                                ],
+                                {
+                                    draggable: true,
+                                    title:
+                                        "Позиция за товарене",
+                                    alt:
+                                        "Позиция за товарене"
+                                }
+                            )
+                            .addTo(map)
+                            .on(
+                                "dragend",
+                                () => {
+                                    if (
+                                        registrationMarker
+                                    ) {
+                                        setRegistrationCoordinates(
+                                            registrationMarker
+                                                .getLatLng()
+                                        );
+                                    }
+                                }
+                            );
+                }
+
+
+                setRegistrationCoordinates(
+                    event.latlng
+                );
+
+                setMessage(
+                    messageElement,
+                    "",
+                    null
+                );
+            }
+        );
+
+
+        registrationMap =
+            map;
+
+
+        window.setTimeout(
+            () => {
+                registrationMap
+                    ?.invalidateSize();
+            },
+            0
+        );
+    } catch {
+        mapElement.innerHTML = `
+            <div class="registration-map-error">
+                Картата не можа да бъде заредена.
+            </div>
+        `;
+
+        setMessage(
+            messageElement,
+            "Картата не можа да бъде заредена. Опитайте отново.",
+            "error"
+        );
+    }
+}
+
+
 export function initializeLoginPage(): void {
     const form =
-        document.querySelector<HTMLFormElement>(
+        document.querySelector<
+            HTMLFormElement
+        >(
             "#loginForm"
         );
 
     const usernameInput =
-        document.querySelector<HTMLInputElement>(
+        document.querySelector<
+            HTMLInputElement
+        >(
             "#loginUsername"
         );
 
     const passwordInput =
-        document.querySelector<HTMLInputElement>(
+        document.querySelector<
+            HTMLInputElement
+        >(
             "#loginPassword"
         );
 
     const rememberMeInput =
-        document.querySelector<HTMLInputElement>(
+        document.querySelector<
+            HTMLInputElement
+        >(
             "#rememberMe"
         );
 
     const loginButton =
-        document.querySelector<HTMLButtonElement>(
+        document.querySelector<
+            HTMLButtonElement
+        >(
             "#loginButton"
         );
 
     const loginMessage =
-        document.querySelector<HTMLDivElement>(
+        document.querySelector<
+            HTMLDivElement
+        >(
             "#loginMessage"
         );
+
+    const loginTab =
+        document.querySelector<
+            HTMLButtonElement
+        >(
+            "#loginTab"
+        );
+
+    const registerTab =
+        document.querySelector<
+            HTMLButtonElement
+        >(
+            "#registerTab"
+        );
+
+    const loginSection =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#loginSection"
+        );
+
+    const registerSection =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#registerSection"
+        );
+
+    const registrationForm =
+        document.querySelector<
+            HTMLFormElement
+        >(
+            "#registrationForm"
+        );
+
+    const registrationMessage =
+        document.querySelector<
+            HTMLDivElement
+        >(
+            "#registrationMessage"
+        );
+
+    const registrationButton =
+        document.querySelector<
+            HTMLButtonElement
+        >(
+            "#registrationButton"
+        );
+
 
     if (
         !form ||
@@ -197,10 +767,76 @@ export function initializeLoginPage(): void {
         !passwordInput ||
         !rememberMeInput ||
         !loginButton ||
-        !loginMessage
+        !loginMessage ||
+        !loginTab ||
+        !registerTab ||
+        !loginSection ||
+        !registerSection ||
+        !registrationForm ||
+        !registrationMessage ||
+        !registrationButton
     ) {
         return;
     }
+
+
+    disposeRegistrationMap();
+
+
+    const showTab = (
+        tab: "login" | "register"
+    ): void => {
+        const showLogin =
+            tab === "login";
+
+
+        loginSection.hidden =
+            !showLogin;
+
+        registerSection.hidden =
+            showLogin;
+
+        loginTab.classList.toggle(
+            "login-tab-active",
+            showLogin
+        );
+
+        registerTab.classList.toggle(
+            "login-tab-active",
+            !showLogin
+        );
+
+        loginTab.setAttribute(
+            "aria-selected",
+            String(showLogin)
+        );
+
+        registerTab.setAttribute(
+            "aria-selected",
+            String(!showLogin)
+        );
+
+
+        if (showLogin) {
+            usernameInput.focus();
+        } else {
+            void initializeRegistrationMap(
+                registrationMessage
+            );
+        }
+    };
+
+
+    loginTab.addEventListener(
+        "click",
+        () => showTab("login")
+    );
+
+    registerTab.addEventListener(
+        "click",
+        () => showTab("register")
+    );
+
 
     const rememberedLoginId =
         getRememberedLoginId();
@@ -213,15 +849,24 @@ export function initializeLoginPage(): void {
             true;
     }
 
+
     form.addEventListener(
         "submit",
-        async (event) => {
+        async event => {
             event.preventDefault();
 
-            loginMessage.textContent = "";
+            setMessage(
+                loginMessage,
+                "",
+                null
+            );
 
-            loginButton.disabled = true;
-            loginButton.textContent = "Влизане...";
+            loginButton.disabled =
+                true;
+
+            loginButton.textContent =
+                "Влизане...";
+
 
             try {
                 const result =
@@ -236,29 +881,248 @@ export function initializeLoginPage(): void {
                             rememberMeInput.checked
                     });
 
+
                 if (!result.success) {
-                    loginMessage.textContent =
-                        result.message;
-
-                    return;
+                    setMessage(
+                        loginMessage,
+                        result.message,
+                        "error"
+                    );
                 }
-
-                /*
-                 * Нищо друго не правим тук.
-                 *
-                 * Central Router слуша SIGNED_IN
-                 * и автоматично:
-                 *
-                 * 1. проверява сесията
-                 * 2. взима ролята
-                 * 3. отваря правилния портал
-                 */
             } catch {
-                loginMessage.textContent =
-                    "Възникна грешка при вход. Опитайте отново.";
+                setMessage(
+                    loginMessage,
+                    "Възникна грешка при вход. Опитайте отново.",
+                    "error"
+                );
             } finally {
-                loginButton.disabled = false;
-                loginButton.textContent = "🔑 Вход";
+                loginButton.disabled =
+                    false;
+
+                loginButton.textContent =
+                    "🔑 Вход";
+            }
+        }
+    );
+
+
+    registrationForm.addEventListener(
+        "submit",
+        async event => {
+            event.preventDefault();
+
+
+            const companyName =
+                registrationForm
+                    .querySelector<
+                        HTMLInputElement
+                    >(
+                        "#registrationCompanyName"
+                    );
+
+            const contactPerson =
+                registrationForm
+                    .querySelector<
+                        HTMLInputElement
+                    >(
+                        "#registrationContactPerson"
+                    );
+
+            const phone =
+                registrationForm
+                    .querySelector<
+                        HTMLInputElement
+                    >(
+                        "#registrationPhone"
+                    );
+
+            const loginIdInput =
+                registrationForm
+                    .querySelector<
+                        HTMLInputElement
+                    >(
+                        "#registrationLoginId"
+                    );
+
+            const registrationPassword =
+                registrationForm
+                    .querySelector<
+                        HTMLInputElement
+                    >(
+                        "#registrationPassword"
+                    );
+
+            const passwordConfirm =
+                registrationForm
+                    .querySelector<
+                        HTMLInputElement
+                    >(
+                        "#registrationPasswordConfirm"
+                    );
+
+            const loadingAddress =
+                registrationForm
+                    .querySelector<
+                        HTMLInputElement
+                    >(
+                        "#registrationLoadingAddress"
+                    );
+
+
+            if (
+                !companyName ||
+                !contactPerson ||
+                !phone ||
+                !loginIdInput ||
+                !registrationPassword ||
+                !passwordConfirm ||
+                !loadingAddress
+            ) {
+                return;
+            }
+
+
+            const normalizedLoginId =
+                normalizeLoginId(
+                    loginIdInput.value
+                );
+
+
+            if (
+                !/^[a-z0-9][a-z0-9._-]{2,31}$/
+                    .test(normalizedLoginId)
+            ) {
+                setMessage(
+                    registrationMessage,
+                    "ID-то трябва да е 3–32 символа и може да съдържа латински букви, цифри, точка, тире и долна черта.",
+                    "error"
+                );
+
+                loginIdInput.focus();
+                return;
+            }
+
+
+            if (
+                registrationPassword
+                    .value.length < 8
+            ) {
+                setMessage(
+                    registrationMessage,
+                    "Паролата трябва да бъде поне 8 символа.",
+                    "error"
+                );
+
+                registrationPassword.focus();
+                return;
+            }
+
+
+            if (
+                registrationPassword.value !==
+                    passwordConfirm.value
+            ) {
+                setMessage(
+                    registrationMessage,
+                    "Паролите не съвпадат.",
+                    "error"
+                );
+
+                passwordConfirm.focus();
+                return;
+            }
+
+
+            if (
+                registrationLatitude ===
+                    null ||
+                registrationLongitude ===
+                    null
+            ) {
+                setMessage(
+                    registrationMessage,
+                    "Изберете точната позиция за товарене на картата.",
+                    "error"
+                );
+
+                return;
+            }
+
+
+            setMessage(
+                registrationMessage,
+                "",
+                null
+            );
+
+            registrationButton.disabled =
+                true;
+
+            registrationButton.textContent =
+                "Изпращане...";
+
+
+            try {
+                await submitClientRegistration({
+                    companyName:
+                        companyName.value
+                            .trim(),
+
+                    contactPerson:
+                        contactPerson.value
+                            .trim(),
+
+                    phone:
+                        phone.value.trim(),
+
+                    loginId:
+                        normalizedLoginId,
+
+                    password:
+                        registrationPassword
+                            .value,
+
+                    loadingAddress:
+                        loadingAddress.value
+                            .trim(),
+
+                    latitude:
+                        registrationLatitude,
+
+                    longitude:
+                        registrationLongitude
+                });
+
+
+                registrationForm.reset();
+
+                disposeRegistrationMap();
+
+                usernameInput.value =
+                    normalizedLoginId;
+
+                showTab("login");
+
+                setMessage(
+                    loginMessage,
+                    REGISTRATION_SUCCESS_MESSAGE,
+                    "success"
+                );
+            } catch (error) {
+                setMessage(
+                    registrationMessage,
+                    error instanceof Error &&
+                    error.message
+                        ? error.message
+                        : "Заявката за регистрация не можа да бъде изпратена.",
+                    "error"
+                );
+            } finally {
+                registrationButton.disabled =
+                    false;
+
+                registrationButton.textContent =
+                    "🏢 Изпрати заявка";
             }
         }
     );

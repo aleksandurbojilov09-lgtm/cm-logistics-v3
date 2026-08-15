@@ -17,6 +17,13 @@ const ADMIN_VIEW_CONFIG = {
         icon: "📦"
     },
 
+    registrations: {
+        title: "Клиентски регистрации",
+        subtitle: "Одобрение и отказ на нови клиентски фирми",
+        label: "Регистрации",
+        icon: "🏢"
+    },
+
     discrepancies: {
         title: "Несъответствия",
         subtitle: "Сигнали от шофьори и история по фирми",
