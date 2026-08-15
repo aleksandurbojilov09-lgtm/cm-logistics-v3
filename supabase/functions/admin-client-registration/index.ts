@@ -232,6 +232,7 @@ export default {
                             loading_address,
                             latitude,
                             longitude,
+                            loading_ramp,
                             created_at
                             `
                         )
@@ -291,6 +292,10 @@ export default {
                                     longitude:
                                         row.longitude,
 
+                                    loadingRamp:
+                                        row.loading_ramp ===
+                                        true,
+
                                     createdAt:
                                         row.created_at
                                 })
@@ -321,6 +326,10 @@ export default {
                 nullableTextValue(
                     parsedBody.note
                 );
+
+            const loadingRamp =
+                parsedBody.loadingRamp ===
+                true;
 
 
             if (!isUuid(requestId)) {
@@ -399,7 +408,10 @@ export default {
                                 decision,
 
                             p_note:
-                                note
+                                note,
+
+                            p_loading_ramp:
+                                loadingRamp
                         }
                     );
 

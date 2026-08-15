@@ -28,6 +28,7 @@ export type PendingClientRegistration = {
     loadingAddress: string;
     latitude: number;
     longitude: number;
+    loadingRamp: boolean;
     createdAt: string;
 };
 
@@ -36,6 +37,7 @@ export type ReviewClientRegistrationInput = {
     requestId: string;
     decision: "approve" | "reject";
     note: string;
+    loadingRamp: boolean;
 };
 
 
@@ -266,6 +268,10 @@ Promise<PendingClientRegistration[]> {
             latitude,
             longitude,
 
+            loadingRamp:
+                value.loadingRamp ===
+                true,
+
             createdAt:
                 stringValue(
                     value.createdAt
@@ -302,7 +308,10 @@ export async function reviewClientRegistration(
 
                         note:
                             input.note ||
-                            null
+                            null,
+
+                        loadingRamp:
+                            input.loadingRamp
                     }
                 }
             );

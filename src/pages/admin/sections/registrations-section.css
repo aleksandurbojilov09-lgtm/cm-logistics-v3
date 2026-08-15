@@ -233,3 +233,151 @@
         padding: 20px;
     }
 }
+
+
+/* =========================================================
+   LOADING RAMP
+   ========================================================= */
+
+.registration-ramp-option {
+    position: relative;
+
+    display: flex !important;
+
+    align-items: center;
+
+    gap: 12px;
+
+    cursor: pointer;
+
+    border-color: #475569 !important;
+
+    transition:
+        border-color 0.15s,
+        background 0.15s;
+}
+
+
+.registration-ramp-option:hover {
+    border-color: #7c3aed !important;
+
+    background: #171329 !important;
+}
+
+
+.registration-ramp-option
+> input {
+    position: absolute;
+
+    width: 1px;
+
+    height: 1px;
+
+    opacity: 0;
+
+    pointer-events: none;
+}
+
+
+.registration-ramp-check {
+    display: grid !important;
+
+    width: 30px;
+
+    height: 30px;
+
+    flex: 0 0 30px;
+
+    place-items: center;
+
+    margin: 0 !important;
+
+    border:
+        2px solid #64748b;
+
+    border-radius: 8px;
+
+    background: #0f172a;
+
+    color: transparent !important;
+
+    font-size: 17px !important;
+
+    font-weight: 900;
+
+    transition:
+        border-color 0.15s,
+        background 0.15s,
+        color 0.15s;
+}
+
+
+.registration-ramp-option
+> input:checked
++ .registration-ramp-check {
+    border-color: #8b5cf6;
+
+    background: #7c3aed;
+
+    color: #ffffff !important;
+}
+
+
+.registration-ramp-option
+> input:focus-visible
++ .registration-ramp-check {
+    outline:
+        3px solid
+        rgba(
+            139,
+            92,
+            246,
+            0.35
+        );
+
+    outline-offset: 2px;
+}
+
+
+.registration-ramp-copy {
+    display: flex !important;
+
+    min-width: 0;
+
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+
+.registration-ramp-copy strong {
+    margin: 0 !important;
+
+    color: #ffffff;
+
+    font-size: 14px;
+}
+
+
+.registration-ramp-copy small {
+    color: #94a3b8;
+
+    font-size: 11px;
+
+    line-height: 1.4;
+}
+
+
+.registration-ramp-option:has(
+    > input:checked
+) {
+    border-color: #7c3aed !important;
+
+    background:
+        rgba(
+            124,
+            58,
+            237,
+            0.12
+        ) !important;
+}

@@ -257,6 +257,45 @@ void {
                                 </strong>
                             </div>
 
+                            <label
+                                class="
+                                    registration-ramp-option
+                                    registration-detail-wide
+                                "
+                            >
+                                <input
+                                    type="checkbox"
+                                    data-registration-loading-ramp="${escapeHtml(
+                                        registration.id
+                                    )}"
+                                    ${
+                                        registration.loadingRamp
+                                            ? "checked"
+                                            : ""
+                                    }
+                                />
+
+                                <span
+                                    class="registration-ramp-check"
+                                >
+                                    ✓
+                                </span>
+
+                                <span
+                                    class="registration-ramp-copy"
+                                >
+                                    <strong>
+                                        Товарене рампа
+                                    </strong>
+
+                                    <small>
+                                        Този обект задължително
+                                        ще бъде първият адрес
+                                        на камиона.
+                                    </small>
+                                </span>
+                            </label>
+
                             <div>
                                 <span>Latitude</span>
                                 <strong>
@@ -435,6 +474,17 @@ async function handleReview(
         ?.value.trim() ||
         "";
 
+
+    const loadingRamp =
+        document.querySelector<
+            HTMLInputElement
+        >(
+            `[data-registration-loading-ramp="${requestId}"]`
+        )
+        ?.checked ===
+        true;
+
+
     const card =
         button.closest<HTMLElement>(
             "[data-registration-card]"
@@ -466,7 +516,8 @@ async function handleReview(
             await reviewClientRegistration({
                 requestId,
                 decision,
-                note
+                note,
+                loadingRamp
             });
 
 
