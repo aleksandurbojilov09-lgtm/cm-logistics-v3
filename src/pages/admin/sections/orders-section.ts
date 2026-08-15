@@ -37,10 +37,6 @@ let clients:
     ClientManagementSnapshot | null =
     null;
 
-let orders:
-    AdminOrderListItem[] =
-    [];
-
 let mapOrders:
     AdminOrderListItem[] =
     [];
@@ -348,23 +344,6 @@ function formatTons(
 }
 
 
-function formatDate(
-    value: string
-): string {
-
-    const date =
-        new Date(value);
-
-    return Number.isNaN(
-        date.getTime()
-    )
-        ? "-"
-        : date.toLocaleString(
-            "bg-BG"
-        );
-}
-
-
 function statusLabel(
     status: AdminOrderStatus
 ): string {
@@ -388,37 +367,6 @@ function statusLabel(
 
         case "cancelled":
             return "⛔ Отказана";
-    }
-}
-
-
-function assignmentStatusLabel(
-    status:
-        AdminOrderAssignment["status"]
-): string {
-
-    switch (status) {
-
-        case "assigned":
-            return "Зачислено";
-
-        case "accepted":
-            return "Прието";
-
-        case "en_route":
-            return "На път";
-
-        case "arrived":
-            return "Пристигнал";
-
-        case "loaded":
-            return "Натоварено";
-
-        case "completed":
-            return "Приключено";
-
-        case "cancelled":
-            return "Отказано";
     }
 }
 
@@ -456,20 +404,6 @@ function setPageMessage(
 }
 
 
-function getOrder(
-    orderId: string
-): AdminOrderListItem | null {
-
-    return (
-        orders.find(
-            order =>
-                order.id === orderId
-        ) ||
-        null
-    );
-}
-
-
 function getComposition(
     truckId: string
 ): ReadyOrderComposition | null {
@@ -495,6 +429,156 @@ function getOperationalOrder(
                 order.id ===
                 orderId
         ) ||
+        null
+    );
+}
+
+
+
+type OperationalTruckOption = {
+    truckId: string;
+
+    truckNumber: string;
+    driverName: string;
+
+    activeAssignedTons: number;
+
+    composition:
+        ReadyOrderComposition | null;
+};
+
+
+function operationalTruckOptions():
+OperationalTruckOption[] {
+
+    const result =
+        new Map<
+            string,
+            OperationalTruckOption
+        >();
+
+
+    for (
+        const composition
+        of compositions
+    ) {
+
+        result.set(
+            composition.truckId,
+            {
+                truckId:
+                    composition.truckId,
+
+                truckNumber:
+                    composition.truckNumber,
+
+                driverName:
+                    composition.driverName,
+
+                activeAssignedTons:
+                    composition.currentLoadTons,
+
+                composition
+            }
+        );
+    }
+
+
+    for (
+        const order
+        of mapOrders
+    ) {
+
+        for (
+            const assignment
+            of currentOrderAssignments(
+                order
+            )
+        ) {
+
+            if (
+                !assignment.truckId
+            ) {
+                continue;
+            }
+
+
+            const existing =
+                result.get(
+                    assignment.truckId
+                );
+
+
+            if (existing) {
+
+                if (
+                    !existing.composition
+                ) {
+                    existing.activeAssignedTons +=
+                        assignment.assignedTons;
+                }
+
+                continue;
+            }
+
+
+            result.set(
+                assignment.truckId,
+                {
+                    truckId:
+                        assignment.truckId,
+
+                    truckNumber:
+                        assignment.truckNumber ||
+                        "Камион",
+
+                    driverName:
+                        assignment.driverName ||
+                        "-",
+
+                    activeAssignedTons:
+                        assignment.assignedTons,
+
+                    composition:
+                        null
+                }
+            );
+        }
+    }
+
+
+    return Array
+        .from(
+            result.values()
+        )
+        .sort(
+            (
+                first,
+                second
+            ) =>
+                first.truckNumber.localeCompare(
+                    second.truckNumber,
+                    "bg"
+                )
+        );
+}
+
+
+function selectedOperationalTruck():
+OperationalTruckOption | null {
+
+    if (!selectedTruckId) {
+        return null;
+    }
+
+
+    return (
+        operationalTruckOptions()
+            .find(
+                truck =>
+                    truck.truckId ===
+                    selectedTruckId
+            ) ||
         null
     );
 }
@@ -636,43 +720,84 @@ void {
         "";
 
 
+    const truckOptions =
+        operationalTruckOptions();
+
+
     select.innerHTML = `
         <option value="">
             -- Избери камион --
         </option>
 
         ${
-            compositions
+            truckOptions
                 .map(
-                    composition => `
-                        <option
-                            value="${escapeHtml(
-                                composition.truckId
-                            )}"
-                        >
-                            ${escapeHtml(
-                                composition.truckNumber
-                            )}
-                            —
-                            ${escapeHtml(
-                                composition.driverName
-                            )}
-                            —
-                            ${escapeHtml(
-                                formatTons(
-                                    composition.currentLoadTons
-                                )
-                            )}/24 т.
-                            —
-                            свободни
-                            ${escapeHtml(
-                                formatTons(
-                                    composition.freeTons
-                                )
-                            )}
-                            т.
-                        </option>
-                    `
+                    truck => {
+
+                        if (
+                            truck.composition
+                        ) {
+
+                            return `
+                                <option
+                                    value="${escapeHtml(
+                                        truck.truckId
+                                    )}"
+                                >
+                                    ${escapeHtml(
+                                        truck.truckNumber
+                                    )}
+                                    —
+                                    ${escapeHtml(
+                                        truck.driverName
+                                    )}
+                                    —
+                                    ${escapeHtml(
+                                        formatTons(
+                                            truck.composition
+                                                .currentLoadTons
+                                        )
+                                    )}/24 т.
+                                    —
+                                    свободни
+                                    ${escapeHtml(
+                                        formatTons(
+                                            truck.composition
+                                                .freeTons
+                                        )
+                                    )}
+                                    т.
+                                </option>
+                            `;
+                        }
+
+
+                        return `
+                            <option
+                                value="${escapeHtml(
+                                    truck.truckId
+                                )}"
+                            >
+                                ${escapeHtml(
+                                    truck.truckNumber
+                                )}
+                                —
+                                ${escapeHtml(
+                                    truck.driverName
+                                )}
+                                —
+                                зачислени
+                                ${escapeHtml(
+                                    formatTons(
+                                        truck.activeAssignedTons
+                                    )
+                                )}
+                                т.
+                                —
+                                само преглед
+                            </option>
+                        `;
+                    }
                 )
                 .join("")
         }
@@ -777,6 +902,10 @@ void {
 
     const composition =
         selectedComposition();
+
+
+    const selectedTruck =
+        selectedOperationalTruck();
 
 
     const allowed =
@@ -992,10 +1121,23 @@ void {
                                     т.
                                 `
 
-                                : `
-                                    Избери камион
-                                    от падащото меню горе.
-                                `
+                                : selectedTruck
+
+                                    ? `
+                                        🚛
+                                        ${escapeHtml(
+                                            selectedTruck.truckNumber
+                                        )}
+                                        е избран за преглед,
+                                        но в момента не е
+                                        наличен за ново
+                                        зачисляване.
+                                    `
+
+                                    : `
+                                        Избери камион
+                                        от падащото меню горе.
+                                    `
                         }
                     </div>
                 `
@@ -1437,737 +1579,6 @@ async function submitSelectedAssignment(
 }
 
 
-function renderAssignmentHistory(
-    order: AdminOrderListItem
-): string {
-
-    if (
-        order.assignments.length === 0
-    ) {
-        return "";
-    }
-
-    return `
-        <div
-            class="order-assignment-history"
-        >
-
-            <div
-                class="order-subtitle"
-            >
-                🚛 Зачислявания
-            </div>
-
-
-            ${
-                order.assignments
-                    .map(
-                        assignment => `
-                            <div
-                                class="order-assignment-row"
-                            >
-
-                                <div>
-                                    <strong>
-                                        🚛
-                                        ${escapeHtml(
-                                            assignment
-                                                .truckNumber ||
-                                            "Камион"
-                                        )}
-                                    </strong>
-
-                                    <span>
-                                        ${escapeHtml(
-                                            assignment
-                                                .driverName ||
-                                            "-"
-                                        )}
-                                    </span>
-                                </div>
-
-
-                                <div>
-                                    <strong>
-                                        ${escapeHtml(
-                                            formatTons(
-                                                assignment
-                                                    .assignedTons
-                                            )
-                                        )}
-                                        т.
-                                    </strong>
-
-                                    <span>
-                                        ${escapeHtml(
-                                            assignmentStatusLabel(
-                                                assignment
-                                                    .status
-                                            )
-                                        )}
-                                    </span>
-                                </div>
-
-
-                                <div>
-                                    <strong>
-                                        🛻
-                                        ${escapeHtml(
-                                            assignment
-                                                .trailerNumber ||
-                                            "-"
-                                        )}
-                                    </strong>
-
-                                    <span>
-                                        ${
-                                            assignment
-                                                .trailerPermit
-
-                                                ? `Permit ${escapeHtml(
-                                                    assignment
-                                                        .trailerPermit
-                                                )}`
-
-                                                : ""
-                                        }
-                                    </span>
-                                </div>
-
-                            </div>
-                        `
-                    )
-                    .join("")
-            }
-
-        </div>
-    `;
-}
-
-
-function compositionOptions(
-    order: AdminOrderListItem
-): string {
-
-    const available =
-        compositions.filter(
-            composition =>
-                Math.min(
-                    order.remainingTons,
-                    composition.freeTons
-                ) > 0
-        );
-
-
-    if (
-        available.length === 0
-    ) {
-        return `
-            <option value="">
-                Няма свободна готова композиция
-            </option>
-        `;
-    }
-
-
-    return `
-        <option value="">
-            -- Избери камион --
-        </option>
-
-        ${
-            available
-                .map(
-                    composition => `
-                        <option
-                            value="${escapeHtml(
-                                composition.truckId
-                            )}"
-                        >
-                            ${escapeHtml(
-                                composition.truckNumber
-                            )}
-                            —
-                            ${escapeHtml(
-                                composition.driverName
-                            )}
-                            —
-                            ${escapeHtml(
-                                formatTons(
-                                    composition.currentLoadTons
-                                )
-                            )}/24 т.
-                            —
-                            свободни
-                            ${escapeHtml(
-                                formatTons(
-                                    composition.freeTons
-                                )
-                            )}
-                            т.
-                        </option>
-                    `
-                )
-                .join("")
-        }
-    `;
-}
-
-
-function renderAssignmentControls(
-    order: AdminOrderListItem
-): string {
-
-    if (
-        order.remainingTons <= 0
-    ) {
-        return "";
-    }
-
-
-    const hasAvailable =
-        compositions.some(
-            composition =>
-                Math.min(
-                    order.remainingTons,
-                    composition.freeTons
-                ) > 0
-        );
-
-
-    return `
-        <div
-            class="order-assignment-controls"
-        >
-
-            <div
-                class="order-subtitle"
-            >
-                🚛 Зачисляване
-            </div>
-
-
-            <select
-                id="k3OrderTruck-${escapeHtml(
-                    order.id
-                )}"
-                data-order-truck-select="${escapeHtml(
-                    order.id
-                )}"
-            >
-                ${compositionOptions(order)}
-            </select>
-
-
-            <div
-                class="order-assignment-tons-row"
-            >
-
-                <label>
-                    Тонове
-
-                    <input
-                        id="k3OrderTons-${escapeHtml(
-                            order.id
-                        )}"
-                        type="number"
-                        min="0.001"
-                        max="${escapeHtml(
-                            order.remainingTons
-                        )}"
-                        step="0.001"
-                        value="${escapeHtml(
-                            order.remainingTons
-                        )}"
-                        ${
-                            hasAvailable
-                                ? ""
-                                : "disabled"
-                        }
-                    />
-                </label>
-
-
-                <button
-                    type="button"
-                    class="order-assign-button"
-                    data-orders-action="assign-load"
-                    data-order-id="${escapeHtml(
-                        order.id
-                    )}"
-                    ${
-                        hasAvailable
-                            ? ""
-                            : "disabled"
-                    }
-                >
-                    🚛 Зачисли
-                </button>
-
-            </div>
-
-
-            <div
-                id="k3OrderCapacity-${escapeHtml(
-                    order.id
-                )}"
-                class="order-capacity-message"
-            >
-                ${
-                    hasAvailable
-                        ? "Избери готова композиция."
-                        : "Няма свободна готова композиция."
-                }
-            </div>
-
-        </div>
-    `;
-}
-
-
-function renderOrderCard(
-    order: AdminOrderListItem
-): string {
-
-    return `
-        <article
-            class="order-card"
-        >
-
-            <header
-                class="order-card-header"
-            >
-
-                <div>
-                    <strong>
-                        🏢
-                        ${escapeHtml(
-                            order.companyName ||
-                            "Фирма"
-                        )}
-                    </strong>
-
-                    <span>
-                        Заявка
-                        #${escapeHtml(
-                            order.orderNumber
-                        )}
-                        •
-                        ${escapeHtml(
-                            formatDate(
-                                order.createdAt
-                            )
-                        )}
-                    </span>
-                </div>
-
-
-                <div
-                    class="
-                        order-status
-                        order-status-${escapeHtml(
-                            order.status
-                        )}
-                    "
-                >
-                    ${escapeHtml(
-                        statusLabel(
-                            order.status
-                        )
-                    )}
-                </div>
-
-            </header>
-
-
-            <div
-                class="order-card-grid"
-            >
-
-                <div
-                    class="order-info"
-                >
-                    <span>
-                        Обект
-                    </span>
-
-                    <strong>
-                        📍
-                        ${escapeHtml(
-                            order.siteName
-                        )}
-                    </strong>
-
-                    <small>
-                        ${escapeHtml(
-                            order.siteAddress
-                        )}
-                    </small>
-                </div>
-
-
-                <div
-                    class="order-info"
-                >
-                    <span>
-                        Заявени
-                    </span>
-
-                    <strong>
-                        ${escapeHtml(
-                            formatTons(
-                                order.requestedTons
-                            )
-                        )}
-                        т.
-                    </strong>
-                </div>
-
-
-                <div
-                    class="order-info"
-                >
-                    <span>
-                        Зачислени
-                    </span>
-
-                    <strong>
-                        ${escapeHtml(
-                            formatTons(
-                                order.assignedTons
-                            )
-                        )}
-                        т.
-                    </strong>
-                </div>
-
-
-                <div
-                    class="
-                        order-info
-                        order-info-remaining
-                    "
-                >
-                    <span>
-                        Остатък
-                    </span>
-
-                    <strong>
-                        ${escapeHtml(
-                            formatTons(
-                                order.remainingTons
-                            )
-                        )}
-                        т.
-                    </strong>
-                </div>
-
-            </div>
-
-
-            <button
-                type="button"
-                class="order-map-focus-button"
-                data-orders-map-focus="${escapeHtml(
-                    order.id
-                )}"
-            >
-                🗺 Покажи адреса на картата
-            </button>
-
-
-            ${
-                order.note
-
-                    ? `
-                        <div
-                            class="order-note"
-                        >
-                            📝
-                            ${escapeHtml(
-                                order.note
-                            )}
-                        </div>
-                    `
-
-                    : ""
-            }
-
-
-            ${renderAssignmentHistory(order)}
-
-            ${renderAssignmentControls(order)}
-
-        </article>
-    `;
-}
-
-
-function renderOrders():
-void {
-
-    renderCompactOrders();
-}
-
-
-function updateAssignmentLimit(
-    orderId: string
-): void {
-
-    const order =
-        getOrder(orderId);
-
-    const select =
-        document.getElementById(
-            `k3OrderTruck-${orderId}`
-        ) as HTMLSelectElement | null;
-
-    const input =
-        document.getElementById(
-            `k3OrderTons-${orderId}`
-        ) as HTMLInputElement | null;
-
-    const message =
-        document.getElementById(
-            `k3OrderCapacity-${orderId}`
-        );
-
-
-    if (
-        !order ||
-        !select ||
-        !input ||
-        !message
-    ) {
-        return;
-    }
-
-
-    if (!select.value) {
-
-        input.max =
-            String(
-                order.remainingTons
-            );
-
-        message.textContent =
-            "Избери готова композиция.";
-
-        return;
-    }
-
-
-    const composition =
-        getComposition(
-            select.value
-        );
-
-
-    if (!composition) {
-
-        message.textContent =
-            "Композицията вече не е налична.";
-
-        return;
-    }
-
-
-    const allowed =
-        Math.min(
-            order.remainingTons,
-            composition.freeTons
-        );
-
-
-    input.max =
-        String(allowed);
-
-
-    const current =
-        Number(
-            input.value
-        );
-
-
-    if (
-        !Number.isFinite(current) ||
-        current <= 0 ||
-        current > allowed
-    ) {
-        input.value =
-            allowed > 0
-                ? String(allowed)
-                : "";
-    }
-
-
-    message.textContent =
-        `Свободни ${formatTons(
-            composition.freeTons
-        )} т. • Максимум за тази заявка ${formatTons(
-            allowed
-        )} т.`;
-}
-
-
-async function submitAssignment(
-    button: HTMLButtonElement
-): Promise<void> {
-
-    const orderId =
-        button.dataset.orderId;
-
-
-    if (!orderId) {
-        return;
-    }
-
-
-    const order =
-        getOrder(orderId);
-
-    const select =
-        document.getElementById(
-            `k3OrderTruck-${orderId}`
-        ) as HTMLSelectElement | null;
-
-    const input =
-        document.getElementById(
-            `k3OrderTons-${orderId}`
-        ) as HTMLInputElement | null;
-
-
-    if (
-        !order ||
-        !select ||
-        !input
-    ) {
-        return;
-    }
-
-
-    const truckId =
-        select.value;
-
-    const tons =
-        Number(
-            input.value
-        );
-
-
-    if (!truckId) {
-
-        setPageMessage(
-            "Избери камион.",
-            "error"
-        );
-
-        return;
-    }
-
-
-    const composition =
-        getComposition(
-            truckId
-        );
-
-
-    if (!composition) {
-
-        setPageMessage(
-            "Композицията вече не е налична.",
-            "error"
-        );
-
-        return;
-    }
-
-
-    const allowed =
-        Math.min(
-            order.remainingTons,
-            composition.freeTons
-        );
-
-
-    if (
-        !Number.isFinite(tons) ||
-        tons <= 0
-    ) {
-
-        setPageMessage(
-            "Въведи валиден тонаж.",
-            "error"
-        );
-
-        return;
-    }
-
-
-    if (
-        tons > allowed
-    ) {
-
-        setPageMessage(
-            `Може да зачислиш максимум ${formatTons(
-                allowed
-            )} т.`,
-            "error"
-        );
-
-        return;
-    }
-
-
-    button.disabled =
-        true;
-
-    button.textContent =
-        "Зачисляване...";
-
-
-    try {
-
-        await assignOrderLoad(
-            orderId,
-            truckId,
-            tons
-        );
-
-
-        await refreshPage();
-
-
-        setPageMessage(
-            `✅ ${formatTons(
-                tons
-            )} т. от ${
-                order.companyName ||
-                "заявката"
-            } са зачислени към ${
-                composition.truckNumber
-            }.`,
-            "success"
-        );
-
-
-    } catch (error) {
-
-        setPageMessage(
-            errorMessage(error),
-            "error"
-        );
-
-
-        button.disabled =
-            false;
-
-        button.textContent =
-            "🚛 Зачисли";
-    }
-}
-
-
 function renderCompanies():
 string {
 
@@ -2491,9 +1902,6 @@ Promise<void> {
         clients =
             clientSnapshot;
 
-        orders =
-            orderWorkspace.orders;
-
         mapOrders =
             orderWorkspace.mapOrders;
 
@@ -2506,11 +1914,12 @@ Promise<void> {
 
         if (
             selectedTruckId &&
-            !compositions.some(
-                composition =>
-                    composition.truckId ===
-                    selectedTruckId
-            )
+            !operationalTruckOptions()
+                .some(
+                    truck =>
+                        truck.truckId ===
+                        selectedTruckId
+                )
         ) {
             selectedTruckId =
                 null;
