@@ -1,5 +1,6 @@
 import "./orders-section.css";
 import "./orders-assignment.css";
+import "./orders-map.css";
 
 import {
     loadClientManagementSnapshot,
@@ -16,6 +17,19 @@ import {
 } from "../../../features/orders/admin-orders-service";
 
 import {
+    type FixedLocation
+} from "../../../entities/location/fixed-location";
+
+import {
+    loadFixedLocations
+} from "../../../entities/location/fixed-location-service";
+
+import {
+    initializeAdminOrdersMapControls,
+    renderAdminOrdersMap
+} from "./orders-map";
+
+import {
     escapeHtml
 } from "../../../shared/lib/html";
 
@@ -26,6 +40,14 @@ let clients:
 
 let orders:
     AdminOrderListItem[] =
+    [];
+
+let mapOrders:
+    AdminOrderListItem[] =
+    [];
+
+let fixedLocations:
+    FixedLocation[] =
     [];
 
 let compositions:
@@ -50,6 +72,56 @@ string {
                 class="orders-page-message"
                 aria-live="polite"
             ></div>
+
+
+            <section
+                id="k3OrdersMapPanel"
+                class="
+                    orders-panel
+                    orders-map-panel
+                "
+            >
+
+                <header
+                    class="orders-panel-header"
+                >
+
+                    <div>
+                        <h3>
+                            🗺 Оперативна карта
+                        </h3>
+
+                        <p>
+                            Виж кой камион към кои
+                            адреси е зачислен.
+                            Цветовете групират адресите
+                            по камион.
+                        </p>
+                    </div>
+
+                </header>
+
+
+                <div
+                    id="k3OrdersMapToolbar"
+                    class="orders-map-toolbar"
+                ></div>
+
+
+                <div
+                    id="k3OrdersMapSummary"
+                    class="orders-map-summary"
+                >
+                    Зареждане...
+                </div>
+
+
+                <div
+                    id="k3OrdersOperationalMap"
+                    class="orders-operational-map"
+                ></div>
+
+            </section>
 
 
             <section
@@ -749,6 +821,17 @@ function renderOrderCard(
             </div>
 
 
+            <button
+                type="button"
+                class="order-map-focus-button"
+                data-orders-map-focus="${escapeHtml(
+                    order.id
+                )}"
+            >
+                🗺 Покажи адреса на картата
+            </button>
+
+
             ${
                 order.note
 
@@ -1390,11 +1473,17 @@ Promise<void> {
 
         const [
             clientSnapshot,
-            orderWorkspace
+            orderWorkspace,
+            locationSnapshot
         ] =
             await Promise.all([
                 loadClientManagementSnapshot(),
-                loadAdminOrdersWorkspace()
+                loadAdminOrdersWorkspace(),
+
+                loadFixedLocations()
+                    .catch(
+                        () => []
+                    )
             ]);
 
 
@@ -1413,6 +1502,12 @@ Promise<void> {
         orders =
             orderWorkspace.orders;
 
+        mapOrders =
+            orderWorkspace.mapOrders;
+
+        fixedLocations =
+            locationSnapshot;
+
         compositions =
             orderWorkspace.compositions;
 
@@ -1420,6 +1515,11 @@ Promise<void> {
         renderOrders();
 
         renderClientManagement();
+
+        await renderAdminOrdersMap(
+            mapOrders,
+            fixedLocations
+        );
 
 
     } catch (error) {
@@ -1524,6 +1624,11 @@ Promise<void> {
     if (!root) {
         return;
     }
+
+
+    initializeAdminOrdersMapControls(
+        root
+    );
 
 
     root.addEventListener(
