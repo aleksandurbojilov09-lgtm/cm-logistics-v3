@@ -25,7 +25,6 @@ import {
 } from "../../../entities/location/fixed-location-service";
 
 import {
-    initializeAdminOrdersMapControls,
     renderAdminOrdersMap
 } from "./orders-map";
 
@@ -57,6 +56,23 @@ let compositions:
 let refreshVersion =
     0;
 
+let selectedTruckId:
+    string | null =
+    null;
+
+let selectedOrderId:
+    string | null =
+    null;
+
+let orderSearch =
+    "";
+
+let orderFilter:
+    "all" |
+    "assignable" |
+    "selected-truck" =
+    "assignable";
+
 
 export function renderSection():
 string {
@@ -75,10 +91,9 @@ string {
 
 
             <section
-                id="k3OrdersMapPanel"
                 class="
                     orders-panel
-                    orders-map-panel
+                    orders-dispatch-panel
                 "
             >
 
@@ -88,59 +103,13 @@ string {
 
                     <div>
                         <h3>
-                            🗺 Оперативна карта
+                            🗺 Разпределяне на заявки
                         </h3>
 
                         <p>
-                            Виж кой камион към кои
-                            адреси е зачислен.
-                            Цветовете групират адресите
-                            по камион.
-                        </p>
-                    </div>
-
-                </header>
-
-
-                <div
-                    id="k3OrdersMapToolbar"
-                    class="orders-map-toolbar"
-                ></div>
-
-
-                <div
-                    id="k3OrdersMapSummary"
-                    class="orders-map-summary"
-                >
-                    Зареждане...
-                </div>
-
-
-                <div
-                    id="k3OrdersOperationalMap"
-                    class="orders-operational-map"
-                ></div>
-
-            </section>
-
-
-            <section
-                class="orders-panel"
-            >
-
-                <header
-                    class="orders-panel-header"
-                >
-
-                    <div>
-                        <h3>
-                            📦 Заявки за зачисляване
-                        </h3>
-
-                        <p>
-                            Заявки с оставащо количество,
-                            които могат да бъдат зачислени
-                            към готова композиция.
+                            Избери камион веднъж,
+                            после избирай адреси
+                            от картата или списъка.
                         </p>
                     </div>
 
@@ -156,47 +125,169 @@ string {
 
 
                 <div
-                    id="k3ActiveOrdersList"
-                    class="orders-list"
+                    class="orders-dispatch-toolbar"
                 >
-                    <div
-                        class="orders-loading"
+
+                    <label
+                        class="orders-dispatch-field"
                     >
-                        Зареждане...
+                        <span>
+                            🚛 Активен камион
+                        </span>
+
+                        <select
+                            id="k3DispatchTruckSelect"
+                        >
+                            <option value="">
+                                -- Избери камион --
+                            </option>
+                        </select>
+                    </label>
+
+
+                    <label
+                        class="orders-dispatch-field"
+                    >
+                        <span>
+                            🔍 Търси фирма / град / адрес
+                        </span>
+
+                        <input
+                            id="k3DispatchOrderSearch"
+                            type="search"
+                            autocomplete="off"
+                            placeholder="Напр. София, test1..."
+                        />
+                    </label>
+
+                </div>
+
+
+                <div
+                    class="orders-dispatch-filters"
+                >
+                    <button
+                        type="button"
+                        class="orders-dispatch-filter"
+                        data-orders-action="set-filter"
+                        data-orders-filter="assignable"
+                    >
+                        ⚠️ За зачисляване
+                    </button>
+
+                    <button
+                        type="button"
+                        class="orders-dispatch-filter"
+                        data-orders-action="set-filter"
+                        data-orders-filter="all"
+                    >
+                        🗺 Всички активни
+                    </button>
+
+                    <button
+                        id="k3SelectedTruckFilter"
+                        type="button"
+                        class="orders-dispatch-filter"
+                        data-orders-action="set-filter"
+                        data-orders-filter="selected-truck"
+                    >
+                        🚛 Само избрания камион
+                    </button>
+                </div>
+
+
+                <div
+                    class="orders-dispatch-grid"
+                >
+
+                    <div
+                        class="orders-dispatch-map-column"
+                    >
+                        <div
+                            id="k3OrdersOperationalMap"
+                            class="orders-operational-map"
+                        ></div>
                     </div>
+
+
+                    <aside
+                        class="orders-dispatch-sidebar"
+                    >
+
+                        <div
+                            id="k3SelectedOrder"
+                            class="orders-selected-order"
+                        ></div>
+
+
+                        <div
+                            class="orders-compact-list-wrap"
+                        >
+
+                            <div
+                                class="orders-compact-list-header"
+                            >
+                                <strong>
+                                    📍 Адреси
+                                </strong>
+
+                                <span
+                                    id="k3VisibleOrdersCount"
+                                >
+                                    0
+                                </span>
+                            </div>
+
+
+                            <div
+                                id="k3ActiveOrdersList"
+                                class="orders-compact-list"
+                            >
+                                <div
+                                    class="orders-loading"
+                                >
+                                    Зареждане...
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </aside>
+
                 </div>
 
             </section>
 
 
-            <section
+            <details
                 class="
                     orders-panel
                     client-management-panel
+                    orders-collapsible-panel
                 "
             >
 
-                <header
-                    class="orders-panel-header"
-                >
-
+                <summary>
                     <div>
                         <h3>
                             🏢 Клиенти и обекти
                         </h3>
 
                         <p>
-                            Фирма → обекти →
-                            клиентски акаунти
+                            Отвори само когато
+                            ти е необходима
+                            клиентската структура.
                         </p>
                     </div>
-
-                </header>
+                </summary>
 
 
                 <div
                     id="k3ClientManagement"
-                    class="client-management"
+                    class="
+                        client-management
+                        orders-collapsible-content
+                    "
                 >
                     <div
                         class="orders-loading"
@@ -205,7 +296,7 @@ string {
                     </div>
                 </div>
 
-            </section>
+            </details>
 
         </section>
     `;
@@ -390,6 +481,959 @@ function getComposition(
         ) ||
         null
     );
+}
+
+
+
+function getOperationalOrder(
+    orderId: string
+): AdminOrderListItem | null {
+
+    return (
+        mapOrders.find(
+            order =>
+                order.id ===
+                orderId
+        ) ||
+        null
+    );
+}
+
+
+function selectedComposition():
+ReadyOrderComposition | null {
+
+    if (!selectedTruckId) {
+        return null;
+    }
+
+    return getComposition(
+        selectedTruckId
+    );
+}
+
+
+function currentOrderAssignments(
+    order: AdminOrderListItem
+): AdminOrderAssignment[] {
+
+    return order
+        .assignments
+        .filter(
+            assignment =>
+                assignment.status !==
+                    "cancelled" &&
+                assignment.status !==
+                    "completed"
+        );
+}
+
+
+function selectedTruckHasOrder(
+    order: AdminOrderListItem
+): boolean {
+
+    if (!selectedTruckId) {
+        return false;
+    }
+
+    return currentOrderAssignments(
+        order
+    ).some(
+        assignment =>
+            assignment.truckId ===
+            selectedTruckId
+    );
+}
+
+
+function visibleOperationalOrders():
+AdminOrderListItem[] {
+
+    const normalizedSearch =
+        orderSearch
+            .trim()
+            .toLocaleLowerCase(
+                "bg-BG"
+            );
+
+
+    return mapOrders.filter(
+        order => {
+
+            if (
+                orderFilter ===
+                    "assignable" &&
+                order.remainingTons <=
+                    0
+            ) {
+                return false;
+            }
+
+
+            if (
+                orderFilter ===
+                "selected-truck"
+            ) {
+
+                if (
+                    !selectedTruckId ||
+                    !selectedTruckHasOrder(
+                        order
+                    )
+                ) {
+                    return false;
+                }
+            }
+
+
+            if (
+                !normalizedSearch
+            ) {
+                return true;
+            }
+
+
+            const haystack =
+                [
+                    order.companyName,
+                    order.siteName,
+                    order.siteAddress,
+                    order.orderNumber
+                ]
+                    .join(" ")
+                    .toLocaleLowerCase(
+                        "bg-BG"
+                    );
+
+
+            return haystack.includes(
+                normalizedSearch
+            );
+        }
+    );
+}
+
+
+function renderTruckSelector():
+void {
+
+    const select =
+        document.querySelector<
+            HTMLSelectElement
+        >(
+            "#k3DispatchTruckSelect"
+        );
+
+
+    if (!select) {
+        return;
+    }
+
+
+    const previousValue =
+        selectedTruckId ||
+        "";
+
+
+    select.innerHTML = `
+        <option value="">
+            -- Избери камион --
+        </option>
+
+        ${
+            compositions
+                .map(
+                    composition => `
+                        <option
+                            value="${escapeHtml(
+                                composition.truckId
+                            )}"
+                        >
+                            ${escapeHtml(
+                                composition.truckNumber
+                            )}
+                            —
+                            ${escapeHtml(
+                                composition.driverName
+                            )}
+                            —
+                            ${escapeHtml(
+                                formatTons(
+                                    composition.currentLoadTons
+                                )
+                            )}/24 т.
+                            —
+                            свободни
+                            ${escapeHtml(
+                                formatTons(
+                                    composition.freeTons
+                                )
+                            )}
+                            т.
+                        </option>
+                    `
+                )
+                .join("")
+        }
+    `;
+
+
+    select.value =
+        previousValue;
+
+
+    if (
+        select.value !==
+        previousValue
+    ) {
+        selectedTruckId =
+            null;
+    }
+
+
+    const selectedTruckFilter =
+        document.querySelector<
+            HTMLButtonElement
+        >(
+            "#k3SelectedTruckFilter"
+        );
+
+
+    if (
+        selectedTruckFilter
+    ) {
+        selectedTruckFilter.disabled =
+            !selectedTruckId;
+    }
+}
+
+
+function renderFilterState():
+void {
+
+    const buttons =
+        document.querySelectorAll<
+            HTMLButtonElement
+        >(
+            "[data-orders-filter]"
+        );
+
+
+    for (
+        const button
+        of buttons
+    ) {
+
+        button.classList.toggle(
+            "orders-dispatch-filter-active",
+
+            button.dataset
+                .ordersFilter ===
+                orderFilter
+        );
+    }
+}
+
+
+function renderSelectedOrder():
+void {
+
+    const container =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3SelectedOrder"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    const order =
+        selectedOrderId
+            ? getOperationalOrder(
+                selectedOrderId
+            )
+            : null;
+
+
+    if (!order) {
+
+        container.innerHTML = `
+            <div
+                class="orders-selected-empty"
+            >
+                👆 Избери адрес от картата
+                или от списъка.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    const composition =
+        selectedComposition();
+
+
+    const allowed =
+        composition
+            ? Math.min(
+                order.remainingTons,
+                composition.freeTons
+            )
+            : 0;
+
+
+    const assignments =
+        currentOrderAssignments(
+            order
+        );
+
+
+    const canAssign =
+        Boolean(
+            composition &&
+            allowed > 0
+        );
+
+
+    container.innerHTML = `
+        <div
+            class="orders-selected-header"
+        >
+            <div>
+                <strong>
+                    🏢
+                    ${escapeHtml(
+                        order.companyName
+                    )}
+                </strong>
+
+                <span>
+                    Заявка
+                    #${escapeHtml(
+                        order.orderNumber
+                    )}
+                    ·
+                    ${escapeHtml(
+                        statusLabel(
+                            order.status
+                        )
+                    )}
+                </span>
+            </div>
+
+            <span
+                class="orders-selected-badge"
+            >
+                ${escapeHtml(
+                    formatTons(
+                        order.remainingTons
+                    )
+                )}
+                т. остатък
+            </span>
+        </div>
+
+
+        <div
+            class="orders-selected-address"
+        >
+            📍
+            <strong>
+                ${escapeHtml(
+                    order.siteName
+                )}
+            </strong>
+            —
+            ${escapeHtml(
+                order.siteAddress
+            )}
+        </div>
+
+
+        <div
+            class="orders-selected-stats"
+        >
+            <div
+                class="orders-selected-stat"
+            >
+                <span>
+                    Заявени
+                </span>
+
+                <strong>
+                    ${escapeHtml(
+                        formatTons(
+                            order.requestedTons
+                        )
+                    )}
+                    т.
+                </strong>
+            </div>
+
+            <div
+                class="orders-selected-stat"
+            >
+                <span>
+                    Зачислени
+                </span>
+
+                <strong>
+                    ${escapeHtml(
+                        formatTons(
+                            order.assignedTons
+                        )
+                    )}
+                    т.
+                </strong>
+            </div>
+
+            <div
+                class="orders-selected-stat"
+            >
+                <span>
+                    Остатък
+                </span>
+
+                <strong>
+                    ${escapeHtml(
+                        formatTons(
+                            order.remainingTons
+                        )
+                    )}
+                    т.
+                </strong>
+            </div>
+        </div>
+
+
+        ${
+            order.remainingTons > 0
+
+                ? `
+                    <div
+                        class="orders-selected-assignment"
+                    >
+                        <label>
+                            Тонове
+
+                            <input
+                                id="k3SelectedOrderTons"
+                                type="number"
+                                min="0.001"
+                                step="0.001"
+                                max="${escapeHtml(
+                                    String(
+                                        allowed ||
+                                        order.remainingTons
+                                    )
+                                )}"
+                                value="${
+                                    allowed > 0
+                                        ? escapeHtml(
+                                            formatTons(
+                                                allowed
+                                            )
+                                        )
+                                        : ""
+                                }"
+                                ${
+                                    canAssign
+                                        ? ""
+                                        : "disabled"
+                                }
+                            />
+                        </label>
+
+                        <button
+                            type="button"
+                            class="orders-selected-assign-button"
+                            data-orders-action="assign-selected"
+                            ${
+                                canAssign
+                                    ? ""
+                                    : "disabled"
+                            }
+                        >
+                            🚛 Зачисли
+                        </button>
+                    </div>
+
+
+                    <div
+                        class="orders-selected-capacity"
+                    >
+                        ${
+                            composition
+
+                                ? `
+                                    🚛
+                                    ${escapeHtml(
+                                        composition.truckNumber
+                                    )}
+                                    · свободни
+                                    ${escapeHtml(
+                                        formatTons(
+                                            composition.freeTons
+                                        )
+                                    )}
+                                    т.
+                                    · максимум тук
+                                    ${escapeHtml(
+                                        formatTons(
+                                            allowed
+                                        )
+                                    )}
+                                    т.
+                                `
+
+                                : `
+                                    Избери камион
+                                    от падащото меню горе.
+                                `
+                        }
+                    </div>
+                `
+
+                : `
+                    <div
+                        class="orders-selected-capacity"
+                    >
+                        ✅ По тази заявка
+                        няма оставащ тонаж
+                        за зачисляване.
+                    </div>
+                `
+        }
+
+
+        ${
+            assignments.length
+
+                ? `
+                    <details
+                        class="orders-selected-history"
+                    >
+                        <summary>
+                            🚛 Зачислявания
+                            (${assignments.length})
+                        </summary>
+
+                        <div
+                            class="orders-selected-history-list"
+                        >
+                            ${assignments
+                                .map(
+                                    assignment => `
+                                        <div
+                                            class="orders-selected-history-row"
+                                        >
+                                            <div>
+                                                <strong>
+                                                    ${escapeHtml(
+                                                        assignment.truckNumber ||
+                                                        "Камион"
+                                                    )}
+                                                </strong>
+
+                                                <span>
+                                                    ${escapeHtml(
+                                                        assignment.driverName ||
+                                                        "-"
+                                                    )}
+                                                </span>
+                                            </div>
+
+                                            <strong>
+                                                ${escapeHtml(
+                                                    formatTons(
+                                                        assignment.assignedTons
+                                                    )
+                                                )}
+                                                т.
+                                            </strong>
+                                        </div>
+                                    `
+                                )
+                                .join("")}
+                        </div>
+                    </details>
+                `
+
+                : ""
+        }
+    `;
+}
+
+
+function renderCompactOrders():
+void {
+
+    const list =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3ActiveOrdersList"
+        );
+
+    const totalCount =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3ActiveOrdersCount"
+        );
+
+    const visibleCount =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3VisibleOrdersCount"
+        );
+
+
+    if (
+        !list ||
+        !totalCount ||
+        !visibleCount
+    ) {
+        return;
+    }
+
+
+    const visible =
+        visibleOperationalOrders();
+
+
+    totalCount.textContent =
+        String(
+            mapOrders.length
+        );
+
+    visibleCount.textContent =
+        String(
+            visible.length
+        );
+
+
+    if (
+        selectedOrderId &&
+        !mapOrders.some(
+            order =>
+                order.id ===
+                selectedOrderId
+        )
+    ) {
+        selectedOrderId =
+            null;
+    }
+
+
+    if (
+        visible.length ===
+        0
+    ) {
+
+        list.innerHTML = `
+            <div
+                class="orders-compact-empty"
+            >
+                Няма заявки,
+                които отговарят
+                на текущия филтър.
+            </div>
+        `;
+
+        renderSelectedOrder();
+
+        return;
+    }
+
+
+    list.innerHTML =
+        visible
+            .map(
+                order => {
+
+                    const assignments =
+                        currentOrderAssignments(
+                            order
+                        );
+
+
+                    const trucks =
+                        Array.from(
+                            new Set(
+                                assignments
+                                    .map(
+                                        assignment =>
+                                            assignment
+                                                .truckNumber
+                                    )
+                                    .filter(
+                                        Boolean
+                                    )
+                            )
+                        );
+
+
+                    return `
+                        <button
+                            type="button"
+                            class="
+                                orders-compact-item
+                                ${
+                                    selectedOrderId ===
+                                        order.id
+
+                                        ? "orders-compact-item-active"
+
+                                        : ""
+                                }
+                            "
+                            data-orders-action="select-order"
+                            data-order-id="${escapeHtml(
+                                order.id
+                            )}"
+                        >
+                            <div
+                                class="orders-compact-main"
+                            >
+                                <strong>
+                                    ${escapeHtml(
+                                        order.companyName
+                                    )}
+                                </strong>
+
+                                <span>
+                                    📍
+                                    ${escapeHtml(
+                                        order.siteAddress
+                                    )}
+                                </span>
+
+                                <small>
+                                    ${
+                                        trucks.length
+
+                                            ? `🚛 ${escapeHtml(
+                                                trucks.join(
+                                                    ", "
+                                                )
+                                            )}`
+
+                                            : "⚠️ Няма камион"
+                                    }
+                                </small>
+                            </div>
+
+                            <div
+                                class="
+                                    orders-compact-tons
+                                    ${
+                                        order.remainingTons <=
+                                            0
+
+                                            ? "orders-compact-tons-zero"
+
+                                            : ""
+                                    }
+                                "
+                            >
+                                ${
+                                    order.remainingTons >
+                                    0
+
+                                        ? `${escapeHtml(
+                                            formatTons(
+                                                order.remainingTons
+                                            )
+                                        )} т.`
+
+                                        : "✓"
+                                }
+                            </div>
+                        </button>
+                    `;
+                }
+            )
+            .join("");
+
+
+    renderSelectedOrder();
+}
+
+
+async function renderDispatchMap():
+Promise<void> {
+
+    const visible =
+        visibleOperationalOrders();
+
+
+    await renderAdminOrdersMap(
+        visible,
+        fixedLocations,
+        {
+            selectedOrderId,
+            selectedTruckId,
+
+            onSelectOrder:
+                orderId => {
+
+                    selectedOrderId =
+                        orderId;
+
+                    renderCompactOrders();
+                }
+        }
+    );
+}
+
+
+async function renderDispatchWorkspace():
+Promise<void> {
+
+    renderTruckSelector();
+
+    renderFilterState();
+
+    renderCompactOrders();
+
+    await renderDispatchMap();
+}
+
+
+async function submitSelectedAssignment(
+    button:
+        HTMLButtonElement
+): Promise<void> {
+
+    const order =
+        selectedOrderId
+            ? getOperationalOrder(
+                selectedOrderId
+            )
+            : null;
+
+    const composition =
+        selectedComposition();
+
+    const input =
+        document.querySelector<
+            HTMLInputElement
+        >(
+            "#k3SelectedOrderTons"
+        );
+
+
+    if (
+        !order ||
+        !composition ||
+        !input
+    ) {
+
+        setPageMessage(
+            "Избери заявка и камион.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const tons =
+        Number(
+            input.value
+        );
+
+
+    const allowed =
+        Math.min(
+            order.remainingTons,
+            composition.freeTons
+        );
+
+
+    if (
+        !Number.isFinite(
+            tons
+        ) ||
+        tons <= 0
+    ) {
+
+        setPageMessage(
+            "Въведи валиден тонаж.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    if (
+        tons >
+        allowed
+    ) {
+
+        setPageMessage(
+            `Може да зачислиш максимум ${formatTons(
+                allowed
+            )} т.`,
+            "error"
+        );
+
+        return;
+    }
+
+
+    button.disabled =
+        true;
+
+    button.textContent =
+        "Зачисляване...";
+
+
+    try {
+
+        await assignOrderLoad(
+            order.id,
+            composition.truckId,
+            tons
+        );
+
+
+        await refreshPage();
+
+
+        setPageMessage(
+            `✅ ${formatTons(
+                tons
+            )} т. от ${order.companyName} са зачислени към ${composition.truckNumber}.`,
+            "success"
+        );
+
+
+    } catch (error) {
+
+        setPageMessage(
+            errorMessage(
+                error
+            ),
+            "error"
+        );
+
+
+        button.disabled =
+            false;
+
+        button.textContent =
+            "🚛 Зачисли";
+    }
 }
 
 
@@ -862,59 +1906,7 @@ function renderOrderCard(
 function renderOrders():
 void {
 
-    const list =
-        document.querySelector<
-            HTMLElement
-        >(
-            "#k3ActiveOrdersList"
-        );
-
-    const count =
-        document.querySelector<
-            HTMLElement
-        >(
-            "#k3ActiveOrdersCount"
-        );
-
-
-    if (
-        !list ||
-        !count
-    ) {
-        return;
-    }
-
-
-    count.textContent =
-        String(
-            orders.length
-        );
-
-
-    if (
-        orders.length === 0
-    ) {
-
-        list.innerHTML = `
-            <div
-                class="orders-empty"
-            >
-                В момента няма заявки
-                с оставащо количество
-                за зачисляване.
-            </div>
-        `;
-
-        return;
-    }
-
-
-    list.innerHTML =
-        orders
-            .map(
-                renderOrderCard
-            )
-            .join("");
+    renderCompactOrders();
 }
 
 
@@ -1512,14 +2504,43 @@ Promise<void> {
             orderWorkspace.compositions;
 
 
-        renderOrders();
+        if (
+            selectedTruckId &&
+            !compositions.some(
+                composition =>
+                    composition.truckId ===
+                    selectedTruckId
+            )
+        ) {
+            selectedTruckId =
+                null;
+
+            if (
+                orderFilter ===
+                "selected-truck"
+            ) {
+                orderFilter =
+                    "assignable";
+            }
+        }
+
+
+        if (
+            selectedOrderId &&
+            !mapOrders.some(
+                order =>
+                    order.id ===
+                    selectedOrderId
+            )
+        ) {
+            selectedOrderId =
+                null;
+        }
+
 
         renderClientManagement();
 
-        await renderAdminOrdersMap(
-            mapOrders,
-            fixedLocations
-        );
+        await renderDispatchWorkspace();
 
 
     } catch (error) {
@@ -1569,17 +2590,77 @@ async function handleClick(
 
 
     const action =
-        button.dataset.ordersAction;
+        button.dataset
+            .ordersAction;
 
 
     if (
         action ===
-        "assign-load"
+        "select-order"
     ) {
 
-        await submitAssignment(
+        const orderId =
+            button.dataset
+                .orderId;
+
+
+        if (orderId) {
+
+            selectedOrderId =
+                orderId;
+
+            renderCompactOrders();
+
+            await renderDispatchMap();
+        }
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "assign-selected"
+    ) {
+
+        await submitSelectedAssignment(
             button
         );
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "set-filter"
+    ) {
+
+        const filter =
+            button.dataset
+                .ordersFilter;
+
+
+        if (
+            filter === "all" ||
+            filter === "assignable" ||
+            filter === "selected-truck"
+        ) {
+
+            if (
+                filter ===
+                    "selected-truck" &&
+                !selectedTruckId
+            ) {
+                return;
+            }
+
+
+            orderFilter =
+                filter;
+
+            await renderDispatchWorkspace();
+        }
     }
 }
 
@@ -1593,24 +2674,71 @@ function handleChange(
 
 
     if (
-        !(target instanceof
-            HTMLSelectElement)
+        !(
+            target instanceof
+            HTMLSelectElement
+        )
     ) {
         return;
     }
 
 
-    const orderId =
-        target.dataset
-            .orderTruckSelect;
+    if (
+        target.id ===
+        "k3DispatchTruckSelect"
+    ) {
+
+        selectedTruckId =
+            target.value ||
+            null;
 
 
-    if (orderId) {
+        if (
+            orderFilter ===
+                "selected-truck" &&
+            !selectedTruckId
+        ) {
+            orderFilter =
+                "assignable";
+        }
 
-        updateAssignmentLimit(
-            orderId
-        );
+
+        void renderDispatchWorkspace();
     }
+}
+
+
+function handleInput(
+    event: Event
+): void {
+
+    const target =
+        event.target;
+
+
+    if (
+        !(
+            target instanceof
+            HTMLInputElement
+        )
+    ) {
+        return;
+    }
+
+
+    if (
+        target.id !==
+        "k3DispatchOrderSearch"
+    ) {
+        return;
+    }
+
+
+    orderSearch =
+        target.value;
+
+
+    void renderDispatchWorkspace();
 }
 
 
@@ -1626,11 +2754,6 @@ Promise<void> {
     }
 
 
-    initializeAdminOrdersMapControls(
-        root
-    );
-
-
     root.addEventListener(
         "click",
         event => {
@@ -1644,6 +2767,12 @@ Promise<void> {
     root.addEventListener(
         "change",
         handleChange
+    );
+
+
+    root.addEventListener(
+        "input",
+        handleInput
     );
 
 

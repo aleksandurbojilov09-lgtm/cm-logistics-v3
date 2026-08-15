@@ -21,21 +21,17 @@ import {
 } from "../../../shared/lib/leaflet-loader";
 
 
-type OrdersMapFilter =
-    | "all"
-    | "assignable"
-    | `truck:${string}`;
+export type AdminOrdersMapOptions = {
+    selectedOrderId:
+        string | null;
 
+    selectedTruckId:
+        string | null;
 
-type TruckSummary = {
-    truckId: string;
-    truckNumber: string;
-    driverName: string;
-
-    assignedTons: number;
-
-    orderIds:
-        Set<string>;
+    onSelectOrder:
+        (
+            orderId: string
+        ) => void;
 };
 
 
@@ -51,113 +47,27 @@ let layer:
     LeafletLayerGroup | null =
     null;
 
-let currentFilter:
-    OrdersMapFilter =
-    "all";
-
-let latestOrders:
-    AdminOrderListItem[] =
-    [];
-
-let latestFixedLocations:
-    FixedLocation[] =
-    [];
-
 
 function formatTons(
     value: number
 ): string {
 
     if (
-        !Number.isFinite(
-            value
-        )
+        !Number.isFinite(value)
     ) {
         return "0";
     }
 
     if (
-        Number.isInteger(
-            value
-        )
+        Number.isInteger(value)
     ) {
-        return String(
-            value
-        );
+        return String(value);
     }
 
     return value
         .toFixed(3)
-        .replace(
-            /0+$/,
-            ""
-        )
-        .replace(
-            /\.$/,
-            ""
-        );
-}
-
-
-function orderStatusLabel(
-    order: AdminOrderListItem
-): string {
-
-    switch (
-        order.status
-    ) {
-
-        case "pending":
-            return "Необработена";
-
-        case "partial":
-            return "Частично зачислена";
-
-        case "assigned":
-            return "Зачислена";
-
-        case "in_progress":
-            return "В курс";
-
-        case "completed":
-            return "Приключена";
-
-        case "cancelled":
-            return "Отказана";
-    }
-}
-
-
-function assignmentStatusLabel(
-    assignment:
-        AdminOrderAssignment
-): string {
-
-    switch (
-        assignment.status
-    ) {
-
-        case "assigned":
-            return "Зачислено";
-
-        case "accepted":
-            return "Прието";
-
-        case "en_route":
-            return "На път";
-
-        case "arrived":
-            return "Пристигнал";
-
-        case "loaded":
-            return "Натоварено";
-
-        case "completed":
-            return "Приключено";
-
-        case "cancelled":
-            return "Отказано";
-    }
+        .replace(/0+$/, "")
+        .replace(/\.$/, "");
 }
 
 
@@ -188,140 +98,38 @@ function currentAssignments(
 }
 
 
-function truckSummaries(
-    orders:
-        AdminOrderListItem[]
-): TruckSummary[] {
-
-    const summaries =
-        new Map<
-            string,
-            TruckSummary
-        >();
-
-
-    for (
-        const order
-        of orders
-    ) {
-
-        for (
-            const assignment
-            of currentAssignments(
-                order
-            )
-        ) {
-
-            if (
-                !assignment.truckId
-            ) {
-                continue;
-            }
-
-
-            let summary =
-                summaries.get(
-                    assignment.truckId
-                );
-
-
-            if (!summary) {
-
-                summary = {
-                    truckId:
-                        assignment.truckId,
-
-                    truckNumber:
-                        assignment.truckNumber ||
-                        "Камион",
-
-                    driverName:
-                        assignment.driverName ||
-                        "-",
-
-                    assignedTons:
-                        0,
-
-                    orderIds:
-                        new Set<string>()
-                };
-
-
-                summaries.set(
-                    assignment.truckId,
-                    summary
-                );
-            }
-
-
-            summary.assignedTons +=
-                assignment.assignedTons;
-
-
-            summary.orderIds.add(
-                order.id
-            );
-        }
-    }
-
-
-    return Array
-        .from(
-            summaries.values()
-        )
-        .sort(
-            (
-                first,
-                second
-            ) =>
-                first
-                    .truckNumber
-                    .localeCompare(
-                        second.truckNumber,
-                        "bg"
-                    )
-        );
-}
-
-
 function truckColorIndex(
-    summaries:
-        TruckSummary[],
-
-    truckId:
-        string
+    truckId: string
 ): number {
 
-    const index =
-        summaries.findIndex(
-            summary =>
-                summary.truckId ===
-                truckId
-        );
+    let hash =
+        0;
 
+    for (
+        let index = 0;
+        index < truckId.length;
+        index += 1
+    ) {
+        hash =
+            (
+                hash * 31 +
+                truckId.charCodeAt(
+                    index
+                )
+            ) >>> 0;
+    }
 
-    return index >=
-        0
-
-        ? index %
-            8
-
-        : 7;
+    return hash % 8;
 }
 
 
 function truckColorClass(
-    summaries:
-        TruckSummary[],
-
-    truckId:
-        string
+    truckId: string
 ): string {
 
     return (
         `orders-map-color-${
             truckColorIndex(
-                summaries,
                 truckId
             )
         }`
@@ -329,195 +137,18 @@ function truckColorClass(
 }
 
 
-function filterOrders(
-    orders:
-        AdminOrderListItem[]
-): AdminOrderListItem[] {
-
-    if (
-        currentFilter ===
-        "all"
-    ) {
-        return orders;
-    }
-
-
-    if (
-        currentFilter ===
-        "assignable"
-    ) {
-
-        return orders.filter(
-            order =>
-                order.remainingTons >
-                0
-        );
-    }
-
-
-    const truckId =
-        currentFilter.replace(
-            "truck:",
-            ""
-        );
-
-
-    return orders.filter(
-        order =>
-            currentAssignments(
-                order
-            )
-                .some(
-                    assignment =>
-                        assignment
-                            .truckId ===
-                        truckId
-                )
-    );
-}
-
-
-function filterButton(
-    value: OrdersMapFilter,
-    label: string
-): string {
-
-    return `
-        <button
-            type="button"
-            class="
-                orders-map-filter
-                ${
-                    currentFilter ===
-                        value
-
-                        ? "orders-map-filter-active"
-
-                        : ""
-                }
-            "
-            data-orders-map-filter="${escapeHtml(
-                value
-            )}"
-        >
-            ${label}
-        </button>
-    `;
-}
-
-
-function renderToolbar(
-    orders:
-        AdminOrderListItem[],
-
-    summaries:
-        TruckSummary[]
-): void {
-
-    const toolbar =
-        document.querySelector<
-            HTMLElement
-        >(
-            "#k3OrdersMapToolbar"
-        );
-
-
-    if (!toolbar) {
-        return;
-    }
-
-
-    const assignableCount =
-        orders.filter(
-            order =>
-                order.remainingTons >
-                0
-        ).length;
-
-
-    toolbar.innerHTML = `
-        ${filterButton(
-            "all",
-            `🗺 Всички ${orders.length}`
-        )}
-
-        ${filterButton(
-            "assignable",
-            `⚠️ За зачисляване ${assignableCount}`
-        )}
-
-        ${
-            summaries
-                .map(
-                    (
-                        summary,
-                        index
-                    ) => `
-                        <button
-                            type="button"
-                            class="
-                                orders-map-truck-filter
-                                ${
-                                    currentFilter ===
-                                        `truck:${summary.truckId}`
-
-                                        ? "orders-map-truck-filter-active"
-
-                                        : ""
-                                }
-                            "
-                            data-orders-map-filter="truck:${escapeHtml(
-                                summary.truckId
-                            )}"
-                        >
-                            <span
-                                class="
-                                    orders-map-color-dot
-                                    orders-map-color-${
-                                        index % 8
-                                    }
-                                "
-                            ></span>
-
-                            <strong>
-                                ${escapeHtml(
-                                    summary.truckNumber
-                                )}
-                            </strong>
-
-                            <span>
-                                ${summary.orderIds.size}
-                                адреса
-                                ·
-                                ${escapeHtml(
-                                    formatTons(
-                                        summary.assignedTons
-                                    )
-                                )}
-                                т.
-                            </span>
-                        </button>
-                    `
-                )
-                .join("")
-        }
-    `;
-}
-
-
-function orderPinHtml(
+function markerClass(
     order:
         AdminOrderListItem,
 
-    summaries:
-        TruckSummary[]
+    options:
+        AdminOrdersMapOptions
 ): string {
 
     const assignments =
         currentAssignments(
             order
         );
-
 
     const truckIds =
         Array.from(
@@ -534,99 +165,118 @@ function orderPinHtml(
         );
 
 
-    let className =
-        "orders-map-pin-unassigned";
-
-    let mainLabel =
-        "ЗА ЗАЧИСЛЯВАНЕ";
+    const classes =
+        [
+            "orders-map-pin"
+        ];
 
 
     if (
-        truckIds.length ===
-        1
+        truckIds.length === 0
     ) {
-
-        className =
+        classes.push(
+            "orders-map-pin-unassigned"
+        );
+    } else if (
+        truckIds.length === 1
+    ) {
+        classes.push(
             truckColorClass(
-                summaries,
                 truckIds[0]
-            );
-
-
-        mainLabel =
-            assignments.find(
-                assignment =>
-                    assignment.truckId ===
-                    truckIds[0]
             )
-                ?.truckNumber ||
-            "КАМИОН";
+        );
+    } else {
+        classes.push(
+            "orders-map-pin-mixed"
+        );
     }
 
 
     if (
-        truckIds.length >
-        1
+        options.selectedOrderId ===
+        order.id
     ) {
-
-        className =
-            "orders-map-pin-mixed";
-
-        mainLabel =
-            `${truckIds.length} КАМИОНА`;
+        classes.push(
+            "orders-map-pin-selected"
+        );
     }
-
-
-    let secondLabel =
-        `${formatTons(
-            order.remainingTons
-        )} т. остатък`;
 
 
     if (
-        order.remainingTons <=
-        0
+        options.selectedTruckId &&
+        truckIds.length > 0 &&
+        !truckIds.includes(
+            options.selectedTruckId
+        )
     ) {
-
-        secondLabel =
-            order.status ===
-                "in_progress"
-
-                ? "В КУРС"
-
-                : "ЗАЧИСЛЕНА";
+        classes.push(
+            "orders-map-pin-muted"
+        );
     }
 
 
-    return `
-        <div
-            class="
-                orders-map-pin
-                ${className}
-            "
-        >
-            <strong>
-                ${escapeHtml(
-                    mainLabel
-                )}
-            </strong>
-
-            <span>
-                ${escapeHtml(
-                    secondLabel
-                )}
-            </span>
-        </div>
-    `;
+    return classes.join(" ");
 }
 
 
-function orderPopupHtml(
+function markerLabel(
     order:
-        AdminOrderListItem,
+        AdminOrderListItem
+): string {
 
-    summaries:
-        TruckSummary[]
+    if (
+        order.remainingTons >
+        0
+    ) {
+        return formatTons(
+            order.remainingTons
+        );
+    }
+
+    if (
+        order.status ===
+        "in_progress"
+    ) {
+        return "▶";
+    }
+
+    return "✓";
+}
+
+
+function statusLabel(
+    order:
+        AdminOrderListItem
+): string {
+
+    switch (
+        order.status
+    ) {
+
+        case "pending":
+            return "Необработена";
+
+        case "partial":
+            return "Частично зачислена";
+
+        case "assigned":
+            return "Зачислена";
+
+        case "in_progress":
+            return "В курс";
+
+        case "completed":
+            return "Приключена";
+
+        case "cancelled":
+            return "Отказана";
+    }
+}
+
+
+function popupHtml(
+    order:
+        AdminOrderListItem
 ): string {
 
     const assignments =
@@ -639,7 +289,6 @@ function orderPopupHtml(
         <div
             class="orders-map-popup"
         >
-
             <strong
                 class="orders-map-popup-title"
             >
@@ -649,12 +298,11 @@ function orderPopupHtml(
                 )}
             </strong>
 
-
             <div
                 class="orders-map-popup-address"
             >
-                📍
                 <strong>
+                    📍
                     ${escapeHtml(
                         order.siteName
                     )}
@@ -667,24 +315,20 @@ function orderPopupHtml(
                 </span>
             </div>
 
-
             <div
                 class="orders-map-popup-meta"
             >
+                ${escapeHtml(
+                    statusLabel(
+                        order
+                    )
+                )}
+                ·
                 Заявка
                 #${escapeHtml(
                     order.orderNumber
                 )}
-
-                ·
-
-                ${escapeHtml(
-                    orderStatusLabel(
-                        order
-                    )
-                )}
             </div>
-
 
             <div
                 class="orders-map-popup-tons"
@@ -726,7 +370,6 @@ function orderPopupHtml(
                 </span>
             </div>
 
-
             ${
                 assignments.length
 
@@ -734,7 +377,6 @@ function orderPopupHtml(
                         <div
                             class="orders-map-popup-assignments"
                         >
-
                             ${assignments
                                 .map(
                                     assignment => `
@@ -746,12 +388,9 @@ function orderPopupHtml(
                                                     orders-map-color-dot
                                                     ${
                                                         assignment.truckId
-
                                                             ? truckColorClass(
-                                                                summaries,
                                                                 assignment.truckId
                                                             )
-
                                                             : "orders-map-color-7"
                                                     }
                                                 "
@@ -766,47 +405,24 @@ function orderPopupHtml(
                                                     )}
                                                 </strong>
 
-                                                <span>
+                                                <small>
                                                     ${escapeHtml(
                                                         assignment.driverName ||
                                                         "-"
                                                     )}
-                                                </span>
-
-                                                <small>
+                                                    ·
                                                     ${escapeHtml(
                                                         formatTons(
                                                             assignment.assignedTons
                                                         )
                                                     )}
                                                     т.
-                                                    ·
-                                                    ${escapeHtml(
-                                                        assignmentStatusLabel(
-                                                            assignment
-                                                        )
-                                                    )}
-
-                                                    ${
-                                                        assignment.trailerNumber
-
-                                                            ? `
-                                                                ·
-                                                                🛻
-                                                                ${escapeHtml(
-                                                                    assignment.trailerNumber
-                                                                )}
-                                                            `
-
-                                                            : ""
-                                                    }
                                                 </small>
                                             </div>
                                         </div>
                                     `
                                 )
                                 .join("")}
-
                         </div>
                     `
 
@@ -814,11 +430,17 @@ function orderPopupHtml(
                         <div
                             class="orders-map-popup-unassigned"
                         >
-                            ⚠️ Няма текущо зачислен камион.
+                            ⚠️ Няма текущо зачислен камион
                         </div>
                     `
             }
 
+            <div
+                class="orders-map-popup-hint"
+            >
+                Кликни маркера, за да работиш
+                със заявката в панела вдясно.
+            </div>
         </div>
     `;
 }
@@ -872,28 +494,31 @@ function addFixedLocations(
                                     : "orders-map-fixed-bioexis"
                             }
                         "
+                        title="${escapeHtml(
+                            location.name
+                        )}"
                     >
                         ${
                             isBase
-                                ? "🏠 БАЗА"
-                                : "🏁 BIOEXIS"
+                                ? "🏠"
+                                : "🏁"
                         }
                     </div>
                 `,
 
                 iconSize: [
-                    92,
-                    42
+                    36,
+                    36
                 ],
 
                 iconAnchor: [
-                    46,
-                    42
+                    18,
+                    36
                 ],
 
                 popupAnchor: [
                     0,
-                    -38
+                    -32
                 ]
             });
 
@@ -903,7 +528,6 @@ function addFixedLocations(
                 coordinates,
                 {
                     icon,
-
                     title:
                         location.name
                 }
@@ -926,17 +550,9 @@ function addFixedLocations(
 
                         ${
                             location.address
-
-                                ? `
-                                    <div
-                                        class="orders-map-popup-meta"
-                                    >
-                                        ${escapeHtml(
-                                            location.address
-                                        )}
-                                    </div>
-                                `
-
+                                ? escapeHtml(
+                                    location.address
+                                )
                                 : ""
                         }
                     </div>
@@ -954,146 +570,17 @@ function addFixedLocations(
 }
 
 
-function setSummary(
-    filteredOrders:
-        AdminOrderListItem[],
-
-    allSummaries:
-        TruckSummary[],
-
-    missingCoordinates:
-        number
-): void {
-
-    const summary =
-        document.querySelector<
-            HTMLElement
-        >(
-            "#k3OrdersMapSummary"
-        );
-
-
-    if (!summary) {
-        return;
-    }
-
-
-    const assignedTons =
-        filteredOrders.reduce(
-            (
-                total,
-                order
-            ) =>
-                total +
-                currentAssignments(
-                    order
-                )
-                    .reduce(
-                        (
-                            subtotal,
-                            assignment
-                        ) =>
-                            subtotal +
-                            assignment
-                                .assignedTons,
-
-                        0
-                    ),
-
-            0
-        );
-
-
-    const visibleTruckIds =
-        new Set<string>();
-
-
-    for (
-        const order
-        of filteredOrders
-    ) {
-
-        for (
-            const assignment
-            of currentAssignments(
-                order
-            )
-        ) {
-
-            if (
-                assignment.truckId
-            ) {
-                visibleTruckIds.add(
-                    assignment.truckId
-                );
-            }
-        }
-    }
-
-
-    summary.innerHTML = `
-        <strong>
-            ${filteredOrders.length}
-            адреса
-        </strong>
-
-        <span>
-            ${visibleTruckIds.size}
-            камиона
-        </span>
-
-        <span>
-            ${escapeHtml(
-                formatTons(
-                    assignedTons
-                )
-            )}
-            т. текущо зачислени
-        </span>
-
-        ${
-            missingCoordinates >
-            0
-
-                ? `
-                    <span
-                        class="orders-map-summary-warning"
-                    >
-                        ⚠️
-                        ${missingCoordinates}
-                        без GPS
-                    </span>
-                `
-
-                : ""
-        }
-
-        <small>
-            Картата показва зачислявания,
-            не GPS позицията на камиона.
-        </small>
-    `;
-
-
-    void allSummaries;
-}
-
-
 export async function
 renderAdminOrdersMap(
     orders:
         AdminOrderListItem[],
 
     fixedLocations:
-        FixedLocation[]
+        FixedLocation[],
+
+    options:
+        AdminOrdersMapOptions
 ): Promise<void> {
-
-    latestOrders =
-        orders;
-
-    latestFixedLocations =
-        fixedLocations;
-
 
     const element =
         document.querySelector<
@@ -1106,18 +593,6 @@ renderAdminOrdersMap(
     if (!element) {
         return;
     }
-
-
-    const summaries =
-        truckSummaries(
-            orders
-        );
-
-
-    renderToolbar(
-        orders,
-        summaries
-    );
 
 
     if (map) {
@@ -1197,24 +672,14 @@ renderAdminOrdersMap(
             );
 
 
-        const filteredOrders =
-            filterOrders(
-                orders
-            );
-
-
         const orderPoints:
             LeafletCoordinate[] =
             [];
 
 
-        let missingCoordinates =
-            0;
-
-
         for (
             const order
-            of filteredOrders
+            of orders
         ) {
 
             if (
@@ -1223,10 +688,6 @@ renderAdminOrdersMap(
                 order.siteLongitude ===
                     null
             ) {
-
-                missingCoordinates +=
-                    1;
-
                 continue;
             }
 
@@ -1243,48 +704,73 @@ renderAdminOrdersMap(
                     className:
                         "orders-map-div-icon",
 
-                    html:
-                        orderPinHtml(
-                            order,
-                            summaries
-                        ),
+                    html: `
+                        <div
+                            class="${escapeHtml(
+                                markerClass(
+                                    order,
+                                    options
+                                )
+                            )}"
+                            title="${escapeHtml(
+                                `${order.companyName} — ${order.siteName}`
+                            )}"
+                        >
+                            ${escapeHtml(
+                                markerLabel(
+                                    order
+                                )
+                            )}
+                        </div>
+                    `,
 
                     iconSize: [
-                        110,
-                        52
+                        40,
+                        40
                     ],
 
                     iconAnchor: [
-                        55,
-                        52
+                        20,
+                        40
                     ],
 
                     popupAnchor: [
                         0,
-                        -48
+                        -36
                     ]
                 });
 
 
-            leaflet
-                .marker(
-                    coordinates,
-                    {
-                        icon,
+            const marker =
+                leaflet
+                    .marker(
+                        coordinates,
+                        {
+                            icon,
 
-                        title:
-                            `${order.companyName} — ${order.siteName}`
-                    }
-                )
-                .addTo(
-                    layer
-                )
-                .bindPopup(
-                    orderPopupHtml(
-                        order,
-                        summaries
+                            title:
+                                `${order.companyName} — ${order.siteName}`
+                        }
                     )
-                );
+                    .addTo(
+                        layer
+                    )
+                    .bindPopup(
+                        popupHtml(
+                            order
+                        )
+                    );
+
+
+            marker.on(
+                "click",
+                () => {
+                    options
+                        .onSelectOrder(
+                            order.id
+                        );
+                }
+            );
 
 
             orderPoints.push(
@@ -1295,9 +781,7 @@ renderAdminOrdersMap(
 
         const fitPoints =
             orderPoints.length
-
                 ? orderPoints
-
                 : fixedPoints;
 
 
@@ -1320,13 +804,6 @@ renderAdminOrdersMap(
         }
 
 
-        setSummary(
-            filteredOrders,
-            summaries,
-            missingCoordinates
-        );
-
-
         window.setTimeout(
             () => {
                 map?.invalidateSize();
@@ -1344,161 +821,12 @@ renderAdminOrdersMap(
                 ⚠️
                 ${
                     error instanceof Error
-
                         ? escapeHtml(
                             error.message
                         )
-
                         : "Картата не можа да бъде заредена."
                 }
             </div>
         `;
     }
-}
-
-
-async function focusOrder(
-    orderId: string
-): Promise<void> {
-
-    const order =
-        latestOrders.find(
-            item =>
-                item.id ===
-                orderId
-        );
-
-
-    if (
-        !order ||
-        order.siteLatitude ===
-            null ||
-        order.siteLongitude ===
-            null
-    ) {
-        return;
-    }
-
-
-    currentFilter =
-        "all";
-
-
-    await renderAdminOrdersMap(
-        latestOrders,
-        latestFixedLocations
-    );
-
-
-    map?.setView(
-        [
-            order.siteLatitude,
-            order.siteLongitude
-        ],
-        13
-    );
-
-
-    document
-        .querySelector(
-            "#k3OrdersOperationalMap"
-        )
-        ?.scrollIntoView({
-            behavior:
-                "smooth",
-
-            block:
-                "center"
-        });
-}
-
-
-export function
-initializeAdminOrdersMapControls(
-    root: HTMLElement
-): void {
-
-    root.addEventListener(
-        "click",
-        event => {
-
-            const target =
-                event.target;
-
-
-            if (
-                !(
-                    target instanceof
-                    Element
-                )
-            ) {
-                return;
-            }
-
-
-            const filterButton =
-                target.closest<
-                    HTMLButtonElement
-                >(
-                    "[data-orders-map-filter]"
-                );
-
-
-            if (
-                filterButton
-            ) {
-
-                const value =
-                    filterButton
-                        .dataset
-                        .ordersMapFilter;
-
-
-                if (!value) {
-                    return;
-                }
-
-
-                currentFilter =
-                    value as
-                    OrdersMapFilter;
-
-
-                void renderAdminOrdersMap(
-                    latestOrders,
-                    latestFixedLocations
-                );
-
-
-                return;
-            }
-
-
-            const focusButton =
-                target.closest<
-                    HTMLButtonElement
-                >(
-                    "[data-orders-map-focus]"
-                );
-
-
-            if (
-                focusButton
-            ) {
-
-                const orderId =
-                    focusButton
-                        .dataset
-                        .ordersMapFocus;
-
-
-                if (orderId) {
-
-                    void focusOrder(
-                        orderId
-                    );
-                }
-            }
-        }
-    );
 }

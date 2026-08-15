@@ -79,7 +79,9 @@ export type LeafletMarker = {
         LeafletLatLng;
 
     on(
-        event: "dragend",
+        event:
+            | "dragend"
+            | "click",
         handler: () => void
     ): LeafletMarker;
 };
