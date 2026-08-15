@@ -26,15 +26,17 @@ import {
 } from "../../features/trips/driver-truck-change-service";
 
 import {
-    loadTripDestination
-} from "../../features/trips/trip-destination-service";
-
-import type {
-    FixedLocation
+    FIXED_LOCATION_CODES,
+    type FixedLocation
 } from "../../entities/location/fixed-location";
 
 import {
-    addDriverDestinationToMap,
+    findFixedLocation,
+    loadFixedLocations
+} from "../../entities/location/fixed-location-service";
+
+import {
+    addDriverFixedLocationsToMap,
     renderDriverDestinationPanel
 } from "./driver-destination";
 
@@ -77,9 +79,9 @@ let pendingTruckChange:
     null;
 
 
-let destination:
-    FixedLocation | null =
-    null;
+let fixedLocations:
+    FixedLocation[] =
+    [];
 
 
 let renderedTruckChangeRequestId:
@@ -1386,7 +1388,10 @@ void {
 
                 ? `
                     ${renderDriverDestinationPanel(
-                        destination
+                        findFixedLocation(
+                            fixedLocations,
+                            FIXED_LOCATION_CODES.BIOEXIS
+                        )
                     )}
 
 
@@ -1780,19 +1785,13 @@ Promise<void> {
             [];
 
 
-        const destinationPoint =
-            addDriverDestinationToMap(
+        points.push(
+            ...addDriverFixedLocationsToMap(
                 leaflet,
                 routeLayer,
-                destination
-            );
-
-
-        if (destinationPoint) {
-            points.push(
-                destinationPoint
-            );
-        }
+                fixedLocations
+            )
+        );
 
 
         const stops =
@@ -3686,13 +3685,13 @@ Promise<void> {
 
     try {
 
-        destination =
-            await loadTripDestination();
+        fixedLocations =
+            await loadFixedLocations();
 
     } catch (error) {
 
-        destination =
-            null;
+        fixedLocations =
+            [];
 
         setMessage(
             errorMessage(

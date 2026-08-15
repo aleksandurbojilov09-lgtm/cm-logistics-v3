@@ -1,7 +1,8 @@
 import "../../../styles/pages/driver-destination.css";
 
-import type {
-    FixedLocation
+import {
+    FIXED_LOCATION_CODES,
+    type FixedLocation
 } from "../../entities/location/fixed-location";
 
 import {
@@ -52,12 +53,13 @@ renderDriverDestinationPanel(
             <span
                 class="driver-destination-label"
             >
-                🏁 Крайна точка
+                ✅ Всички фирми са натоварени
             </span>
 
             <strong
                 class="driver-destination-name"
             >
+                🇬🇷 Продължете към
                 ${escapeHtml(
                     destination.name
                 )}
@@ -81,9 +83,8 @@ renderDriverDestinationPanel(
             }
 
             <p>
-                Всички фирми са натоварени.
-                Продължи към BIOEXIS и
-                приключи курса там.
+                Това е крайната точка.
+                За BIOEXIS не се изпраща известие.
             </p>
 
             ${
@@ -112,146 +113,207 @@ renderDriverDestinationPanel(
 }
 
 
+function markerHtml(
+    location:
+        FixedLocation
+): string {
+
+    if (
+        location.code ===
+        FIXED_LOCATION_CODES.TRUCK_BASE
+    ) {
+        return `
+            <div
+                class="
+                    driver-map-marker
+                    driver-map-marker-base
+                "
+            >
+                🏠
+            </div>
+        `;
+    }
+
+
+    return `
+        <div
+            class="
+                driver-map-marker
+                driver-map-marker-destination
+            "
+        >
+            🏁
+        </div>
+    `;
+}
+
+
 export function
-addDriverDestinationToMap(
+addDriverFixedLocationsToMap(
     leaflet:
         LeafletNamespace,
 
     layer:
         LeafletLayerGroup,
 
-    destination:
-        FixedLocation | null
-): LeafletCoordinate | null {
+    locations:
+        FixedLocation[]
+): LeafletCoordinate[] {
 
-    if (!destination) {
-        return null;
+    const points:
+        LeafletCoordinate[] =
+        [];
+
+
+    for (
+        const location
+        of locations
+    ) {
+
+        const coordinates:
+            LeafletCoordinate =
+            [
+                location.latitude,
+                location.longitude
+            ];
+
+
+        const navigationUrl =
+            location.code ===
+                FIXED_LOCATION_CODES.BIOEXIS
+
+                ? buildGoogleMapsNavigationUrl(
+                    location.latitude,
+                    location.longitude
+                )
+
+                : null;
+
+
+        const icon =
+            leaflet.divIcon({
+                className:
+                    "",
+
+                html:
+                    markerHtml(
+                        location
+                    ),
+
+                iconSize:
+                    [
+                        44,
+                        44
+                    ],
+
+                iconAnchor:
+                    [
+                        22,
+                        22
+                    ],
+
+                popupAnchor:
+                    [
+                        0,
+                        -20
+                    ]
+            });
+
+
+        const description =
+            location.code ===
+                FIXED_LOCATION_CODES.BIOEXIS
+
+                ? "Крайна точка на курса"
+
+                : "База на камионите";
+
+
+        const popup =
+            `
+                <div
+                    class="driver-map-popup"
+                >
+                    <strong>
+                        ${
+                            location.code ===
+                                FIXED_LOCATION_CODES.BIOEXIS
+                                ? "🏁"
+                                : "🏠"
+                        }
+
+                        ${escapeHtml(
+                            location.name
+                        )}
+                    </strong>
+
+                    <div>
+                        ${escapeHtml(
+                            description
+                        )}
+                    </div>
+
+                    ${
+                        location.address
+
+                            ? `
+                                <div>
+                                    ${escapeHtml(
+                                        location.address
+                                    )}
+                                </div>
+                            `
+
+                            : ""
+                    }
+
+                    ${
+                        navigationUrl
+
+                            ? `
+                                <a
+                                    href="${escapeHtml(
+                                        navigationUrl
+                                    )}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    🧭 Навигирай към BIOEXIS
+                                </a>
+                            `
+
+                            : ""
+                    }
+                </div>
+            `;
+
+
+        leaflet
+            .marker(
+                coordinates,
+                {
+                    icon,
+
+                    title:
+                        location.name,
+
+                    alt:
+                        location.name
+                }
+            )
+            .addTo(
+                layer
+            )
+            .bindPopup(
+                popup
+            );
+
+
+        points.push(
+            coordinates
+        );
     }
 
 
-    const coordinates:
-        LeafletCoordinate =
-        [
-            destination.latitude,
-            destination.longitude
-        ];
-
-
-    const navigationUrl =
-        buildGoogleMapsNavigationUrl(
-            destination.latitude,
-            destination.longitude
-        );
-
-
-    const icon =
-        leaflet.divIcon({
-            className:
-                "",
-
-            html:
-                `
-                    <div
-                        class="
-                            driver-map-marker
-                            driver-map-marker-destination
-                        "
-                    >
-                        🏁
-                    </div>
-                `,
-
-            iconSize:
-                [
-                    44,
-                    44
-                ],
-
-            iconAnchor:
-                [
-                    22,
-                    22
-                ],
-
-            popupAnchor:
-                [
-                    0,
-                    -20
-                ]
-        });
-
-
-    const popup =
-        `
-            <div
-                class="driver-map-popup"
-            >
-                <strong>
-                    🏁
-                    ${escapeHtml(
-                        destination.name
-                    )}
-                </strong>
-
-                <div>
-                    Крайна точка на курса
-                </div>
-
-                ${
-                    destination.address
-
-                        ? `
-                            <div>
-                                ${escapeHtml(
-                                    destination.address
-                                )}
-                            </div>
-                        `
-
-                        : ""
-                }
-
-                ${
-                    navigationUrl
-
-                        ? `
-                            <a
-                                href="${escapeHtml(
-                                    navigationUrl
-                                )}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                🧭 Навигирай към BIOEXIS
-                            </a>
-                        `
-
-                        : ""
-                }
-            </div>
-        `;
-
-
-    leaflet
-        .marker(
-            coordinates,
-            {
-                icon,
-
-                title:
-                    destination.name,
-
-                alt:
-                    `Крайна точка ${destination.name}`
-            }
-        )
-        .addTo(
-            layer
-        )
-        .bindPopup(
-            popup
-        );
-
-
-    return coordinates;
+    return points;
 }
