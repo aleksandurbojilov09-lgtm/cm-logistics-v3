@@ -1168,6 +1168,14 @@ void {
         allStopsLoaded();
 
 
+    const isFirstActiveStop =
+        Boolean(
+            active &&
+            trip.stops[0]?.id ===
+                active.id
+        );
+
+
     const activeInteraction =
         active
 
@@ -1282,7 +1290,11 @@ void {
                         <div
                             class="
                                 driver-current-actions
-                                driver-current-actions-four
+                                ${
+                                    isFirstActiveStop
+                                        ? "driver-current-actions-three"
+                                        : "driver-current-actions-four"
+                                }
                             "
                         >
 
@@ -1308,26 +1320,34 @@ void {
                             }
 
 
-                            <button
-                                type="button"
-                                class="driver-eta-button"
-                                data-driver-action="eta-current"
-                                data-stop-id="${escapeHtml(
-                                    active.id ||
-                                    ""
-                                )}"
-                                ${
-                                    etaAlreadySent
-                                        ? "disabled"
-                                        : ""
-                                }
-                            >
-                                ${
-                                    etaAlreadySent
-                                        ? "🔔 Изпратено"
-                                        : "🔔 ~1 час"
-                                }
-                            </button>
+                            ${
+                                !isFirstActiveStop
+
+                                    ? `
+                                        <button
+                                            type="button"
+                                            class="driver-eta-button"
+                                            data-driver-action="eta-current"
+                                            data-stop-id="${escapeHtml(
+                                                active.id ||
+                                                ""
+                                            )}"
+                                            ${
+                                                etaAlreadySent
+                                                    ? "disabled"
+                                                    : ""
+                                            }
+                                        >
+                                            ${
+                                                etaAlreadySent
+                                                    ? "🔔 Изпратено"
+                                                    : "🔔 ~1 час"
+                                            }
+                                        </button>
+                                    `
+
+                                    : ""
+                            }
 
 
                             <button
@@ -1367,9 +1387,15 @@ void {
                         </div>
 
 
-                        ${etaStatusHtml(
-                            activeInteraction
-                        )}
+                        ${
+                            !isFirstActiveStop
+
+                                ? etaStatusHtml(
+                                    activeInteraction
+                                )
+
+                                : ""
+                        }
 
 
                         ${discrepancyStatusHtml(

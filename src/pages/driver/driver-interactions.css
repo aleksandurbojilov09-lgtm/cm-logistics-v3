@@ -554,3 +554,48 @@
     }
 
 }
+
+
+/* =========================================================
+   FIRST ACTIVE STOP
+
+   Началният километраж се въвежда при първия клиент,
+   затова след стартиране на курса там няма ETA действие.
+   ========================================================= */
+
+
+.driver-current-actions-three {
+    grid-template-columns: 1fr;
+}
+
+
+@media (min-width: 620px) {
+
+    .driver-current-actions-three {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+    }
+
+}
+
+
+@media (min-width: 1100px) {
+
+    .driver-current-actions-three {
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+    }
+
+}
