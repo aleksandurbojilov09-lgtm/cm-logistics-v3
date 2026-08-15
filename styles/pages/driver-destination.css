@@ -1,0 +1,100 @@
+.driver-destination-panel {
+    margin-top: 16px;
+    padding: 18px;
+
+    border: 1px solid
+        rgba(
+            34,
+            197,
+            94,
+            0.55
+        );
+
+    border-radius: 16px;
+
+    background:
+        rgba(
+            20,
+            83,
+            45,
+            0.28
+        );
+}
+
+
+.driver-destination-label {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #86efac;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+
+.driver-destination-name {
+    display: block;
+
+    color: #f0fdf4;
+
+    font-size: 23px;
+}
+
+
+.driver-destination-address {
+    margin-top: 7px;
+
+    color: #dcfce7;
+}
+
+
+.driver-destination-panel p {
+    margin:
+        10px
+        0
+        0;
+
+    color: #bbf7d0;
+
+    line-height: 1.5;
+}
+
+
+.driver-destination-navigation {
+    display: inline-flex;
+
+    margin-top: 15px;
+}
+
+
+.driver-destination-warning {
+    margin-top: 16px;
+    padding: 15px;
+
+    border: 1px solid #b45309;
+    border-radius: 12px;
+
+    background:
+        rgba(
+            120,
+            53,
+            15,
+            0.25
+        );
+
+    color: #fde68a;
+}
+
+
+.driver-map-marker-destination {
+    background: #16a34a;
+
+    color: #ffffff;
+
+    font-size: 20px;
+}

@@ -26,6 +26,19 @@ import {
 } from "../../features/trips/driver-truck-change-service";
 
 import {
+    loadTripDestination
+} from "../../features/trips/trip-destination-service";
+
+import type {
+    FixedLocation
+} from "../../entities/location/fixed-location";
+
+import {
+    addDriverDestinationToMap,
+    renderDriverDestinationPanel
+} from "./driver-destination";
+
+import {
     logoutCurrentSession
 } from "../../features/auth/logout";
 
@@ -61,6 +74,11 @@ let interactions:
 
 let pendingTruckChange:
     DriverTruckChange | null =
+    null;
+
+
+let destination:
+    FixedLocation | null =
     null;
 
 
@@ -1367,18 +1385,9 @@ void {
             loaded
 
                 ? `
-                    <div
-                        class="driver-finished-clients"
-                    >
-                        <strong>
-                            ✅ Всички фирми са натоварени
-                        </strong>
-
-                        <p>
-                            Продължи до крайната точка
-                            и въведи крайния километраж.
-                        </p>
-                    </div>
+                    ${renderDriverDestinationPanel(
+                        destination
+                    )}
 
 
                     <form
@@ -1387,7 +1396,7 @@ void {
                     >
 
                         <label>
-                            Краен километраж
+                            Краен километраж в BIOEXIS
 
                             <input
                                 id="k3DriverEndKm"
@@ -1769,6 +1778,21 @@ Promise<void> {
                 number
             ][] =
             [];
+
+
+        const destinationPoint =
+            addDriverDestinationToMap(
+                leaflet,
+                routeLayer,
+                destination
+            );
+
+
+        if (destinationPoint) {
+            points.push(
+                destinationPoint
+            );
+        }
 
 
         const stops =
@@ -3658,6 +3682,25 @@ Promise<void> {
         "input",
         handleInput
     );
+
+
+    try {
+
+        destination =
+            await loadTripDestination();
+
+    } catch (error) {
+
+        destination =
+            null;
+
+        setMessage(
+            errorMessage(
+                error
+            ),
+            "error"
+        );
+    }
 
 
     await refresh();
