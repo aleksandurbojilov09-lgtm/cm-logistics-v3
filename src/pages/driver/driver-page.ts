@@ -975,6 +975,16 @@ void {
             );
 
 
+        const firstStopMapsUrl =
+            firstStop
+
+                ? navigationUrl(
+                    firstStop
+                )
+
+                : null;
+
+
         container.innerHTML = `
             <header
                 class="driver-panel-header"
@@ -1042,6 +1052,29 @@ void {
                                 )}
                                 т.
                             </div>
+
+
+                            ${
+                                firstStopMapsUrl
+
+                                    ? `
+                                        <a
+                                            href="${escapeHtml(
+                                                firstStopMapsUrl
+                                            )}"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="
+                                                driver-navigation-button
+                                                driver-first-stop-navigation
+                                            "
+                                        >
+                                            🧭 Навигирай с Google Maps
+                                        </a>
+                                    `
+
+                                    : ""
+                            }
 
 
                             <button
@@ -1292,14 +1325,15 @@ void {
                                 driver-current-actions
                                 ${
                                     isFirstActiveStop
-                                        ? "driver-current-actions-three"
+                                        ? "driver-current-actions-two"
                                         : "driver-current-actions-four"
                                 }
                             "
                         >
 
                             ${
-                                navigationUrl(active)
+                                navigationUrl(active) &&
+                                !isFirstActiveStop
 
                                     ? `
                                         <a
@@ -1506,6 +1540,17 @@ void {
     }
 
 
+    const activeTrip =
+        state?.hasActiveTrip
+            ? state.trip
+            : null;
+
+
+    const firstActiveStopId =
+        activeTrip?.stops[0]?.id ??
+        null;
+
+
     container.innerHTML =
         stops
             .map(
@@ -1517,6 +1562,30 @@ void {
                     const mapsUrl =
                         navigationUrl(
                             stop
+                        );
+
+
+                    const isReachedFirstStop =
+                        Boolean(
+                            firstActiveStopId &&
+                            stop.id ===
+                                firstActiveStopId &&
+                            stop.status ===
+                                "en_route"
+                        );
+
+
+                    const showMapsNavigation =
+                        Boolean(
+                            mapsUrl &&
+                            !isReachedFirstStop
+                        );
+
+
+                    const showMissingGps =
+                        Boolean(
+                            !mapsUrl &&
+                            !isReachedFirstStop
                         );
 
 
@@ -1654,6 +1723,7 @@ void {
 
 
                                 ${
+                                    showMapsNavigation &&
                                     mapsUrl
 
                                         ? `
@@ -1672,13 +1742,17 @@ void {
                                             </a>
                                         `
 
-                                        : `
-                                            <div
-                                                class="driver-gps-missing"
-                                            >
-                                                ⚠️ Липсват GPS координати
-                                            </div>
-                                        `
+                                        : showMissingGps
+
+                                            ? `
+                                                <div
+                                                    class="driver-gps-missing"
+                                                >
+                                                    ⚠️ Липсват GPS координати
+                                                </div>
+                                            `
+
+                                            : ""
                                 }
 
                             </div>
