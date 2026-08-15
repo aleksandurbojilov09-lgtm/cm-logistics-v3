@@ -1,5 +1,6 @@
 import "./driver-page.css";
 import "./driver-interactions.css";
+import "./driver-truck-change.css";
 
 import {
     finishDriverTrip,
@@ -17,6 +18,12 @@ import {
     sendDriverEtaCurrent,
     type DriverInteraction
 } from "../../features/trips/driver-interaction-service";
+
+import {
+    confirmDriverTruckChange,
+    loadDriverTruckChange,
+    type DriverTruckChange
+} from "../../features/trips/driver-truck-change-service";
 
 import {
     logoutCurrentSession
@@ -46,6 +53,16 @@ let state:
 let interactions:
     DriverInteraction[] =
     [];
+
+
+let pendingTruckChange:
+    DriverTruckChange | null =
+    null;
+
+
+let renderedTruckChangeRequestId:
+    string | null =
+    null;
 
 
 let map:
@@ -1980,6 +1997,498 @@ Promise<void> {
 
 
 /* =========================================================
+   TRUCK CHANGE
+   ========================================================= */
+
+
+function truckChangeModeLabel(
+    request: DriverTruckChange
+): string {
+
+    return request.changeMode ===
+        "permanent"
+        ? "Постоянна промяна"
+        : "Само за този курс";
+}
+
+
+function truckChangeModeDescription(
+    request: DriverTruckChange
+): string {
+
+    return request.changeMode ===
+        "permanent"
+
+        ? "След края на курса новата композиция остава активна."
+
+        : "Смяната е временна. След края на курса композицията се възстановява автоматично.";
+}
+
+
+function ensureTruckChangeDialog():
+HTMLDialogElement | null {
+
+    const root =
+        document.querySelector<HTMLElement>(
+            "#k3DriverPortal"
+        );
+
+    if (!root) {
+        return null;
+    }
+
+
+    let dialog =
+        document.querySelector<HTMLDialogElement>(
+            "#k3DriverTruckChangeDialog"
+        );
+
+
+    if (dialog) {
+        return dialog;
+    }
+
+
+    dialog =
+        document.createElement(
+            "dialog"
+        );
+
+    dialog.id =
+        "k3DriverTruckChangeDialog";
+
+    dialog.className =
+        "driver-truck-change-dialog";
+
+
+    dialog.addEventListener(
+        "cancel",
+        event => {
+            event.preventDefault();
+        }
+    );
+
+
+    root.append(
+        dialog
+    );
+
+    return dialog;
+}
+
+
+function setTruckChangeMessage(
+    message: string
+): void {
+
+    const element =
+        document.querySelector<HTMLElement>(
+            "#k3DriverTruckChangeMessage"
+        );
+
+    if (!element) {
+        return;
+    }
+
+    element.textContent =
+        message;
+
+    if (message) {
+        element.dataset.status =
+            "error";
+    } else {
+        delete element.dataset.status;
+    }
+}
+
+
+function renderTruckChangeDialog():
+void {
+
+    const dialog =
+        ensureTruckChangeDialog();
+
+    if (!dialog) {
+        return;
+    }
+
+
+    const request =
+        pendingTruckChange;
+
+
+    if (!request) {
+
+        renderedTruckChangeRequestId =
+            null;
+
+        if (dialog.open) {
+            dialog.close();
+        }
+
+        dialog.innerHTML =
+            "";
+
+        return;
+    }
+
+
+    if (
+        renderedTruckChangeRequestId ===
+            request.id &&
+        dialog.open
+    ) {
+        return;
+    }
+
+
+    renderedTruckChangeRequestId =
+        request.id;
+
+
+    const temporary =
+        request.changeMode ===
+        "temporary_for_trip";
+
+
+    dialog.innerHTML = `
+        <form
+            id="k3DriverTruckChangeForm"
+            class="driver-truck-change-card"
+        >
+            <header
+                class="driver-truck-change-header"
+            >
+                <div>🔄</div>
+
+                <h2>
+                    Смяна на камион
+                </h2>
+
+                <p>
+                    Администраторът е задал нов камион.
+                    Въведи двата километража.
+                </p>
+            </header>
+
+
+            <div
+                class="driver-truck-change-body"
+            >
+                <div
+                    class="
+                        driver-truck-change-mode
+                        ${
+                            temporary
+                                ? "driver-truck-change-temporary"
+                                : "driver-truck-change-permanent"
+                        }
+                    "
+                >
+                    <span>
+                        Вид на смяната
+                    </span>
+
+                    <strong>
+                        ${
+                            temporary
+                                ? "🔁"
+                                : "🔒"
+                        }
+                        ${escapeHtml(
+                            truckChangeModeLabel(
+                                request
+                            )
+                        )}
+                    </strong>
+
+                    <small>
+                        ${escapeHtml(
+                            truckChangeModeDescription(
+                                request
+                            )
+                        )}
+                    </small>
+                </div>
+
+
+                <div
+                    class="driver-truck-change-trucks"
+                >
+                    <div
+                        class="
+                            driver-truck-change-truck
+                            driver-truck-change-old
+                        "
+                    >
+                        <span>
+                            Стар камион
+                        </span>
+
+                        <strong>
+                            🚛
+                            ${escapeHtml(
+                                request.fromTruckNumber ||
+                                "Стар камион"
+                            )}
+                        </strong>
+                    </div>
+
+
+                    <div
+                        class="driver-truck-change-arrow"
+                    >
+                        →
+                    </div>
+
+
+                    <div
+                        class="
+                            driver-truck-change-truck
+                            driver-truck-change-new
+                        "
+                    >
+                        <span>
+                            Нов камион
+                        </span>
+
+                        <strong>
+                            🚛
+                            ${escapeHtml(
+                                request.toTruckNumber ||
+                                "Нов камион"
+                            )}
+                        </strong>
+                    </div>
+                </div>
+
+
+                ${
+                    request.trailerNumber ||
+                    request.positionNumber
+
+                        ? `
+                            <div
+                                class="driver-truck-change-trailer"
+                            >
+                                <span>
+                                    Ремаркето остава същото
+                                </span>
+
+                                <strong>
+                                    🛻
+                                    ${escapeHtml(
+                                        request.trailerNumber ||
+                                        "Ремарке"
+                                    )}
+
+                                    ${
+                                        request.positionNumber
+
+                                            ? ` • Позиция ${escapeHtml(
+                                                request.positionNumber
+                                            )}`
+
+                                            : ""
+                                    }
+                                </strong>
+                            </div>
+                        `
+
+                        : ""
+                }
+
+
+                <div
+                    class="driver-truck-change-km"
+                >
+                    <label>
+                        Краен километраж на
+                        ${escapeHtml(
+                            request.fromTruckNumber
+                        )}
+
+                        <input
+                            id="k3OldTruckEndKm"
+                            type="number"
+                            min="${request.segmentStartKm}"
+                            step="1"
+                            inputmode="numeric"
+                            required
+                        />
+
+                        <small>
+                            Начало на отсечката:
+                            ${escapeHtml(
+                                request.segmentStartKm
+                                    .toLocaleString(
+                                        "bg-BG"
+                                    )
+                            )}
+                            км
+                        </small>
+                    </label>
+
+
+                    <label>
+                        Начален километраж на
+                        ${escapeHtml(
+                            request.toTruckNumber
+                        )}
+
+                        <input
+                            id="k3NewTruckStartKm"
+                            type="number"
+                            min="0"
+                            step="1"
+                            inputmode="numeric"
+                            required
+                        />
+                    </label>
+                </div>
+
+
+                <div
+                    id="k3DriverTruckChangeMessage"
+                    class="driver-truck-change-message"
+                    aria-live="polite"
+                ></div>
+
+
+                <button
+                    type="submit"
+                    class="driver-truck-change-submit"
+                >
+                    ✅ Потвърди смяната и продължи курса
+                </button>
+            </div>
+        </form>
+    `;
+
+
+    if (!dialog.open) {
+        dialog.showModal();
+    }
+}
+
+
+async function submitTruckChange(
+    form: HTMLFormElement
+): Promise<void> {
+
+    const request =
+        pendingTruckChange;
+
+    const oldKmInput =
+        form.querySelector<HTMLInputElement>(
+            "#k3OldTruckEndKm"
+        );
+
+    const newKmInput =
+        form.querySelector<HTMLInputElement>(
+            "#k3NewTruckStartKm"
+        );
+
+    const button =
+        form.querySelector<HTMLButtonElement>(
+            '[type="submit"]'
+        );
+
+
+    if (
+        !request ||
+        !oldKmInput ||
+        !newKmInput ||
+        !button
+    ) {
+        return;
+    }
+
+
+    const oldEndKm =
+        Number(
+            oldKmInput.value
+        );
+
+    const newStartKm =
+        Number(
+            newKmInput.value
+        );
+
+
+    if (
+        !Number.isInteger(oldEndKm) ||
+        oldEndKm <
+            request.segmentStartKm
+    ) {
+        setTruckChangeMessage(
+            `Крайният километраж не може да е под ${request.segmentStartKm.toLocaleString("bg-BG")} км.`
+        );
+
+        return;
+    }
+
+
+    if (
+        !Number.isInteger(newStartKm) ||
+        newStartKm < 0
+    ) {
+        setTruckChangeMessage(
+            "Въведи валиден начален километраж на новия камион."
+        );
+
+        return;
+    }
+
+
+    setTruckChangeMessage(
+        ""
+    );
+
+
+    button.disabled =
+        true;
+
+    button.textContent =
+        "Потвърждаване...";
+
+
+    try {
+
+        await confirmDriverTruckChange(
+            request.id,
+            oldEndKm,
+            newStartKm
+        );
+
+
+        await refresh();
+
+
+        setMessage(
+            `🔄 Камионът е сменен успешно с ${request.toTruckNumber}.`,
+            "success"
+        );
+
+
+    } catch (error) {
+
+        setTruckChangeMessage(
+            errorMessage(
+                error
+            )
+        );
+
+        button.disabled =
+            false;
+
+        button.textContent =
+            "✅ Потвърди смяната и продължи курса";
+    }
+}
+
+
+/* =========================================================
    REFRESH
    ========================================================= */
 
@@ -1995,11 +2504,13 @@ Promise<void> {
 
         const [
             nextState,
-            nextInteractions
+            nextInteractions,
+            nextTruckChange
         ] =
             await Promise.all([
                 loadDriverTripState(),
-                loadDriverInteractions()
+                loadDriverInteractions(),
+                loadDriverTruckChange()
             ]);
 
 
@@ -2030,11 +2541,17 @@ Promise<void> {
             nextInteractions;
 
 
+        pendingTruckChange =
+            nextTruckChange;
+
+
         renderSummary();
 
         renderTripControl();
 
         renderStops();
+
+        renderTruckChangeDialog();
 
         await renderMap();
 
@@ -2070,11 +2587,27 @@ Promise<void> {
 
     try {
 
+        const [
+            nextInteractions,
+            nextTruckChange
+        ] =
+            await Promise.all([
+                loadDriverInteractions(),
+                loadDriverTruckChange()
+            ]);
+
+
         interactions =
-            await loadDriverInteractions();
+            nextInteractions;
+
+
+        pendingTruckChange =
+            nextTruckChange;
 
 
         renderTripControl();
+
+        renderTruckChangeDialog();
 
 
     } catch (error) {
@@ -2875,6 +3408,21 @@ async function handleSubmit(
         event.preventDefault();
 
         await submitFinish(
+            form
+        );
+
+        return;
+    }
+
+
+    if (
+        form.id ===
+        "k3DriverTruckChangeForm"
+    ) {
+
+        event.preventDefault();
+
+        await submitTruckChange(
             form
         );
 
