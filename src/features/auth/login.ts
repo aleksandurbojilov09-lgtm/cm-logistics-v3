@@ -46,7 +46,9 @@ export async function login(
     }
 
     const email =
-        loginIdToAuthEmail(loginId);
+        loginId.includes("@")
+            ? loginId
+            : loginIdToAuthEmail(loginId);
 
     const {
         error
