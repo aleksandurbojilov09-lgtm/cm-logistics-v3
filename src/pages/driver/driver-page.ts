@@ -1575,17 +1575,24 @@ void {
                         );
 
 
+                    const stopIsCompleted =
+                        stop.status ===
+                            "loaded";
+
+
                     const showMapsNavigation =
                         Boolean(
                             mapsUrl &&
-                            !isReachedFirstStop
+                            !isReachedFirstStop &&
+                            !stopIsCompleted
                         );
 
 
                     const showMissingGps =
                         Boolean(
                             !mapsUrl &&
-                            !isReachedFirstStop
+                            !isReachedFirstStop &&
+                            !stopIsCompleted
                         );
 
 
