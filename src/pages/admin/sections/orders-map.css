@@ -2245,3 +2245,323 @@
     }
 
 }
+
+
+/* =========================================================
+   K3 COMPACT SELECTED ORDER PANEL
+   ========================================================= */
+
+.orders-selected-order {
+    padding: 10px 11px;
+}
+
+
+.orders-selected-empty {
+    min-height: 78px;
+
+    padding: 12px;
+
+    font-size: 10px;
+}
+
+
+.orders-selected-header {
+    gap: 7px;
+}
+
+
+.orders-selected-header strong {
+    font-size: 14px;
+}
+
+
+.orders-selected-header span {
+    margin-top: 2px;
+
+    font-size: 9px;
+}
+
+
+.orders-selected-badge {
+    padding: 4px 6px;
+
+    font-size: 8px;
+}
+
+
+.orders-selected-address {
+    margin-top: 6px;
+
+    padding: 7px 8px;
+
+    font-size: 9px;
+}
+
+
+/* -----------------------------------------
+   COLLAPSIBLE DETAILS
+   ----------------------------------------- */
+
+.orders-selected-details {
+    margin-top: 7px;
+
+    overflow: hidden;
+
+    border:
+        1px solid
+        #293548;
+
+    border-radius: 8px;
+
+    background:
+        #0b1220;
+}
+
+
+.orders-selected-details > summary {
+    display: flex;
+
+    min-height: 34px;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 8px;
+
+    padding: 6px 8px;
+
+    cursor: pointer;
+
+    list-style: none;
+}
+
+
+.orders-selected-details
+> summary::-webkit-details-marker {
+    display: none;
+}
+
+
+.orders-selected-details
+> summary span {
+    color: #cbd5e1;
+
+    font-size: 9px;
+
+    font-weight: 900;
+}
+
+
+.orders-selected-details
+> summary small {
+    color: #64748b;
+
+    font-size: 8px;
+
+    text-align: right;
+}
+
+
+.orders-selected-details
+> summary::after {
+    content: "▼";
+
+    flex: 0 0 auto;
+
+    color: #64748b;
+
+    font-size: 8px;
+}
+
+
+.orders-selected-details[open]
+> summary::after {
+    content: "▲";
+}
+
+
+.orders-selected-details
+.orders-selected-stats {
+    grid-template-columns:
+        repeat(
+            4,
+            minmax(0, 1fr)
+        );
+
+    gap: 4px;
+
+    margin-top: 0;
+
+    padding:
+        0
+        7px
+        7px;
+}
+
+
+.orders-selected-details
+.orders-selected-stat {
+    padding: 6px;
+}
+
+
+.orders-selected-details
+.orders-selected-stat span {
+    font-size: 7px;
+}
+
+
+.orders-selected-details
+.orders-selected-stat strong {
+    font-size: 10px;
+}
+
+
+/* -----------------------------------------
+   CURRENT ASSIGNMENT
+   ----------------------------------------- */
+
+.orders-current-assignments {
+    margin-top: 7px !important;
+
+    padding-top: 7px !important;
+}
+
+
+.orders-current-assignments-title {
+    font-size: 9px !important;
+}
+
+
+.orders-current-assignment {
+    margin-top: 5px !important;
+
+    padding: 6px 7px !important;
+
+    gap: 6px !important;
+}
+
+
+.orders-current-assignment-info strong {
+    font-size: 10px !important;
+}
+
+
+.orders-current-assignment-info span {
+    font-size: 8px !important;
+}
+
+
+.orders-current-assignment-tons {
+    font-size: 9px !important;
+}
+
+
+/* -----------------------------------------
+   ASSIGNMENT FORM
+   ----------------------------------------- */
+
+.orders-selected-assignment {
+    margin-top: 7px;
+}
+
+
+.orders-selected-assignment label {
+    font-size: 8px;
+}
+
+
+.orders-selected-assignment input {
+    min-height: 36px;
+
+    padding: 6px 8px;
+}
+
+
+.orders-selected-assign-button {
+    min-height: 36px;
+
+    padding: 6px 10px;
+
+    font-size: 9px;
+}
+
+
+.orders-selected-capacity {
+    margin-top: 4px;
+
+    font-size: 8px;
+}
+
+
+/* -----------------------------------------
+   HISTORY
+   ----------------------------------------- */
+
+.orders-selected-history {
+    margin-top: 7px;
+
+    padding-top: 6px;
+}
+
+
+.orders-selected-history summary {
+    font-size: 9px;
+}
+
+
+.orders-selected-history-list {
+    max-height: 130px;
+
+    margin-top: 5px;
+}
+
+
+.orders-selected-history-row {
+    padding: 5px 6px;
+
+    font-size: 8px;
+}
+
+
+/* -----------------------------------------
+   PHONE
+   ----------------------------------------- */
+
+@media (max-width: 650px) {
+
+    .orders-selected-order {
+        padding: 8px;
+    }
+
+
+    .orders-selected-details
+    .orders-selected-stats {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+
+    .orders-selected-details
+    > summary {
+        min-height: 40px;
+    }
+
+
+    .orders-selected-assignment {
+        grid-template-columns:
+            minmax(0, 1fr)
+            auto;
+    }
+
+
+    .orders-selected-assignment input,
+    .orders-selected-assign-button {
+        min-height: 42px;
+    }
+
+}

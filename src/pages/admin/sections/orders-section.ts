@@ -1596,9 +1596,35 @@ void {
         </div>
 
 
-        <div
-            class="orders-selected-stats"
+        <details
+            class="orders-selected-details"
         >
+            <summary>
+                <span>
+                    📊 Подробности
+                </span>
+
+                <small>
+                    ${escapeHtml(
+                        formatTons(
+                            order.requestedTons
+                        )
+                    )}
+                    т. заявени
+                    ·
+                    ${escapeHtml(
+                        formatTons(
+                            order.completedTons
+                        )
+                    )}
+                    т. изпълнени
+                </small>
+            </summary>
+
+
+            <div
+                class="orders-selected-stats"
+            >
             <div
                 class="orders-selected-stat"
             >
@@ -1667,6 +1693,7 @@ void {
                 </strong>
             </div>
         </div>
+        </details>
 
 
         ${
