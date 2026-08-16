@@ -2632,6 +2632,13 @@ function openQuickAssignDialog(
             "#k3QuickAssignTons"
         );
 
+    const submitButton =
+        document.querySelector<
+            HTMLButtonElement
+        >(
+            ".orders-quick-assign-submit"
+        );
+
 
     if (
         !dialog ||
@@ -2642,7 +2649,8 @@ function openQuickAssignDialog(
         !remaining ||
         !free ||
         !max ||
-        !input
+        !input ||
+        !submitButton
     ) {
 
         setPageMessage(
@@ -2690,6 +2698,22 @@ function openQuickAssignDialog(
         formatTons(
             allowed
         );
+
+
+    /*
+     * Popup-ът се използва повторно.
+     * След успешно предишно зачисляване
+     * бутонът е останал disabled +
+     * "Зачисляване...".
+     *
+     * Всеки нов open започва от чисто
+     * интерактивно състояние.
+     */
+    submitButton.disabled =
+        false;
+
+    submitButton.textContent =
+        "➕ Зачисли";
 
 
     if (
