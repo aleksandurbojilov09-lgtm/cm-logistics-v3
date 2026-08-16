@@ -61,6 +61,9 @@ let selectedOrderId:
     string | null =
     null;
 
+let selectedOrderMinimized =
+    false;
+
 let orderSearch =
     "";
 
@@ -1517,12 +1520,64 @@ void {
 
     if (!order) {
 
+        container.hidden =
+            true;
+
+        container.innerHTML =
+            "";
+
+        return;
+    }
+
+
+    container.hidden =
+        false;
+
+
+    if (
+        selectedOrderMinimized
+    ) {
+
         container.innerHTML = `
             <div
-                class="orders-selected-empty"
+                class="orders-selected-minimized"
             >
-                👆 Избери адрес от картата
-                или от списъка.
+                <button
+                    type="button"
+                    class="orders-selected-minimized-main"
+                    data-orders-action="expand-selected-order"
+                >
+                    <span>
+                        🏢
+                        <strong>
+                            ${escapeHtml(
+                                order.companyName
+                            )}
+                        </strong>
+                    </span>
+
+                    <small>
+                        ${escapeHtml(
+                            formatTons(
+                                order.remainingTons
+                            )
+                        )}
+                        т. остатък
+                        ·
+                        Натисни за отваряне
+                    </small>
+                </button>
+
+
+                <button
+                    type="button"
+                    class="orders-selected-panel-close"
+                    data-orders-action="close-selected-order"
+                    aria-label="Затвори заявката"
+                    title="Затвори"
+                >
+                    ✕
+                </button>
             </div>
         `;
 
@@ -1589,16 +1644,45 @@ void {
                 </span>
             </div>
 
-            <span
-                class="orders-selected-badge"
+            <div
+                class="orders-selected-header-actions"
             >
-                ${escapeHtml(
-                    formatTons(
-                        order.remainingTons
-                    )
-                )}
-                т. остатък
-            </span>
+                <span
+                    class="orders-selected-badge"
+                >
+                    ${escapeHtml(
+                        formatTons(
+                            order.remainingTons
+                        )
+                    )}
+                    т. остатък
+                </span>
+
+
+                <button
+                    type="button"
+                    class="orders-selected-panel-control"
+                    data-orders-action="minimize-selected-order"
+                    aria-label="Минимизирай заявката"
+                    title="Минимизирай"
+                >
+                    —
+                </button>
+
+
+                <button
+                    type="button"
+                    class="
+                        orders-selected-panel-control
+                        orders-selected-panel-close
+                    "
+                    data-orders-action="close-selected-order"
+                    aria-label="Затвори заявката"
+                    title="Затвори"
+                >
+                    ✕
+                </button>
+            </div>
         </div>
 
 
@@ -2340,6 +2424,9 @@ Promise<void> {
 
                     selectedOrderId =
                         orderId;
+
+                    selectedOrderMinimized =
+                        false;
 
                     renderCompactOrders();
                 }
@@ -3273,6 +3360,9 @@ Promise<void> {
         ) {
             selectedOrderId =
                 null;
+
+            selectedOrderMinimized =
+                false;
         }
 
 
@@ -3347,12 +3437,68 @@ async function handleClick(
             selectedOrderId =
                 orderId;
 
+            selectedOrderMinimized =
+                false;
+
             renderCompactOrders();
 
             closeAddressesDialog();
 
             await renderDispatchMap();
         }
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "minimize-selected-order"
+    ) {
+
+        if (selectedOrderId) {
+
+            selectedOrderMinimized =
+                true;
+
+            renderSelectedOrder();
+        }
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "expand-selected-order"
+    ) {
+
+        if (selectedOrderId) {
+
+            selectedOrderMinimized =
+                false;
+
+            renderSelectedOrder();
+        }
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "close-selected-order"
+    ) {
+
+        selectedOrderId =
+            null;
+
+        selectedOrderMinimized =
+            false;
+
+        renderCompactOrders();
+
+        await renderDispatchMap();
 
         return;
     }

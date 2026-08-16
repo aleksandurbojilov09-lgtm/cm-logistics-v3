@@ -2900,3 +2900,278 @@
     }
 
 }
+
+
+/* =========================================================
+   K3 COLLAPSIBLE SELECTED ORDER
+   ========================================================= */
+
+.orders-selected-order[hidden] {
+    display: none !important;
+}
+
+
+/* -----------------------------------------
+   FULL PANEL HEADER CONTROLS
+   ----------------------------------------- */
+
+.orders-selected-header-actions {
+    display: flex;
+
+    flex: 0 0 auto;
+
+    align-items: center;
+
+    gap: 5px;
+}
+
+
+.orders-selected-panel-control {
+    display: grid;
+
+    width: 28px;
+
+    height: 28px;
+
+    flex: 0 0 auto;
+
+    place-items: center;
+
+    padding: 0;
+
+    border:
+        1px solid
+        #334155;
+
+    border-radius: 7px;
+
+    background:
+        #172033;
+
+    color:
+        #cbd5e1;
+
+    cursor: pointer;
+
+    font-size: 11px;
+
+    font-weight: 900;
+}
+
+
+.orders-selected-panel-control:hover {
+    border-color:
+        #64748b;
+
+    background:
+        #1e293b;
+
+    color:
+        #ffffff;
+}
+
+
+.orders-selected-panel-close {
+    color:
+        #fca5a5;
+}
+
+
+.orders-selected-panel-close:hover {
+    border-color:
+        #991b1b;
+
+    background:
+        rgba(
+            127,
+            29,
+            29,
+            0.3
+        );
+
+    color:
+        #fecaca;
+}
+
+
+/* -----------------------------------------
+   MINIMIZED PANEL
+   ----------------------------------------- */
+
+.orders-selected-minimized {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto;
+
+    align-items: stretch;
+
+    gap: 6px;
+}
+
+
+.orders-selected-minimized-main {
+    display: flex;
+
+    min-width: 0;
+
+    min-height: 38px;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 10px;
+
+    padding:
+        6px
+        8px;
+
+    border:
+        1px solid
+        #293548;
+
+    border-radius: 8px;
+
+    background:
+        #0b1220;
+
+    color:
+        inherit;
+
+    cursor: pointer;
+
+    font: inherit;
+
+    text-align: left;
+}
+
+
+.orders-selected-minimized-main:hover {
+    border-color:
+        #3b82f6;
+
+    background:
+        #111827;
+}
+
+
+.orders-selected-minimized-main span {
+    min-width: 0;
+
+    overflow: hidden;
+
+    color:
+        #cbd5e1;
+
+    font-size: 9px;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+
+.orders-selected-minimized-main strong {
+    color:
+        #ffffff;
+
+    font-size: 11px;
+}
+
+
+.orders-selected-minimized-main small {
+    flex: 0 0 auto;
+
+    color:
+        #64748b;
+
+    font-size: 8px;
+
+    white-space: nowrap;
+}
+
+
+.orders-selected-minimized
+.orders-selected-panel-close {
+    width: 38px;
+
+    min-height: 38px;
+
+    border:
+        1px solid
+        #334155;
+
+    border-radius: 8px;
+
+    background:
+        #172033;
+
+    cursor: pointer;
+}
+
+
+/* -----------------------------------------
+   DESKTOP: ROUTE KEEPS THE SPACE
+   ----------------------------------------- */
+
+.orders-dispatch-sidebar {
+    grid-template-rows:
+        auto
+        auto;
+}
+
+
+/* -----------------------------------------
+   PHONE
+   ----------------------------------------- */
+
+@media (max-width: 767px) {
+
+    .orders-selected-header {
+        align-items: flex-start;
+    }
+
+
+    .orders-selected-header-actions {
+        gap: 4px;
+    }
+
+
+    .orders-selected-panel-control {
+        width: 32px;
+
+        height: 32px;
+    }
+
+
+    .orders-selected-minimized-main {
+        min-height: 44px;
+    }
+
+
+    .orders-selected-minimized-main {
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        justify-content: center;
+
+        gap: 2px;
+    }
+
+
+    .orders-selected-minimized-main small {
+        white-space: normal;
+    }
+
+
+    .orders-selected-minimized
+    .orders-selected-panel-close {
+        width: 42px;
+
+        min-height: 44px;
+    }
+
+}
