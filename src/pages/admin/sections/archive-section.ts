@@ -1,12 +1,10 @@
 import "./archive-section.css";
 
-
 import {
     loadAdminDriverArchiveMonth,
     type AdminDriverArchiveMonth,
     type AdminDriverArchiveSegment
 } from "../../../features/trips/admin-archive-service";
-
 
 import {
     escapeHtml
@@ -16,51 +14,54 @@ import {
 const BUSINESS_TIMEZONE =
     "Europe/Sofia";
 
+const WEEKDAY_LABELS = [
+    "Пн",
+    "Вт",
+    "Ср",
+    "Чт",
+    "Пт",
+    "Сб",
+    "Нд"
+];
+
 
 let archiveMonth:
     AdminDriverArchiveMonth | null =
     null;
 
-
 let selectedDriverId:
     string | null =
     null;
 
-
 let selectedMonthStart =
     businessMonthStart();
 
+let selectedDate:
+    string | null =
+    null;
 
 let refreshVersion =
     0;
 
 
-/* =========================================================
-   TYPES
-   ========================================================= */
-
-
 type DriverArchiveView = {
     id: string;
-
     name: string;
-
     payableKm: number;
-
     tripCount: number;
-
-    segmentCount: number;
-
-    workDays: number;
-
     segments:
         AdminDriverArchiveSegment[];
 };
 
 
-/* =========================================================
-   ROOT
-   ========================================================= */
+type CalendarCell = {
+    date: string;
+    dayNumber: number;
+    payableKm: number;
+    tripCount: number;
+    segments:
+        AdminDriverArchiveSegment[];
+};
 
 
 function getRoot():
@@ -71,11 +72,6 @@ HTMLElement | null {
             "#k3ArchiveSection"
         );
 }
-
-
-/* =========================================================
-   DATES
-   ========================================================= */
 
 
 function businessMonthStart(
@@ -100,28 +96,21 @@ function businessMonthStart(
                 date
             );
 
-
     const year =
         parts.find(
             part =>
                 part.type ===
                 "year"
-        )?.value ||
-        "1970";
-
+        )?.value || "1970";
 
     const month =
         parts.find(
             part =>
                 part.type ===
                 "month"
-        )?.value ||
-        "01";
+        )?.value || "01";
 
-
-    return (
-        `${year}-${month}-01`
-    );
+    return `${year}-${month}-01`;
 }
 
 
@@ -138,7 +127,6 @@ function shiftMonth(
             .split("-")
             .map(Number);
 
-
     const date =
         new Date(
             Date.UTC(
@@ -148,7 +136,6 @@ function shiftMonth(
                 12
             )
         );
-
 
     return (
         `${date
@@ -179,7 +166,6 @@ function monthLabel(
             `${monthStart}T12:00:00Z`
         );
 
-
     const label =
         new Intl.DateTimeFormat(
             "bg-BG",
@@ -194,10 +180,7 @@ function monthLabel(
                     "numeric"
             }
         )
-            .format(
-                date
-            );
-
+            .format(date);
 
     return (
         label.charAt(0)
@@ -216,13 +199,15 @@ function dayLabel(
             `${value}T12:00:00Z`
         );
 
-
-    return (
-        new Intl.DateTimeFormat(
+    return new Intl
+        .DateTimeFormat(
             "bg-BG",
             {
                 timeZone:
                     BUSINESS_TIMEZONE,
+
+                weekday:
+                    "long",
 
                 day:
                     "numeric",
@@ -231,46 +216,10 @@ function dayLabel(
                     "long",
 
                 year:
-                    "numeric",
-
-                weekday:
-                    "long"
+                    "numeric"
             }
         )
-            .format(
-                date
-            )
-    );
-}
-
-
-function timeLabel(
-    value: string
-): string {
-
-    if (!value) {
-        return "-";
-    }
-
-
-    return (
-        new Intl.DateTimeFormat(
-            "bg-BG",
-            {
-                timeZone:
-                    BUSINESS_TIMEZONE,
-
-                hour:
-                    "2-digit",
-
-                minute:
-                    "2-digit"
-            }
-        )
-            .format(
-                new Date(value)
-            )
-    );
+        .format(date);
 }
 
 
@@ -283,9 +232,8 @@ function dateTimeLabel(
         return "-";
     }
 
-
-    return (
-        new Intl.DateTimeFormat(
+    return new Intl
+        .DateTimeFormat(
             "bg-BG",
             {
                 timeZone:
@@ -307,16 +255,109 @@ function dateTimeLabel(
                     "2-digit"
             }
         )
-            .format(
-                new Date(value)
-            )
+        .format(
+            new Date(value)
+        );
+}
+
+
+function timeLabel(
+    value: string
+): string {
+
+    return new Intl
+        .DateTimeFormat(
+            "bg-BG",
+            {
+                timeZone:
+                    BUSINESS_TIMEZONE,
+
+                hour:
+                    "2-digit",
+
+                minute:
+                    "2-digit"
+            }
+        )
+        .format(
+            new Date(value)
+        );
+}
+
+
+function daysInMonth(
+    monthStart: string
+): number {
+
+    const [
+        year,
+        month
+    ] =
+        monthStart
+            .split("-")
+            .map(Number);
+
+    return new Date(
+        Date.UTC(
+            year,
+            month,
+            0,
+            12
+        )
+    ).getUTCDate();
+}
+
+
+function dayOfWeekIndex(
+    value: string
+): number {
+
+    const weekday =
+        new Date(
+            `${value}T12:00:00Z`
+        ).getUTCDay();
+
+    return weekday === 0
+        ? 6
+        : weekday - 1;
+}
+
+
+function padDay(
+    value: number
+): string {
+
+    return value
+        .toString()
+        .padStart(2, "0");
+}
+
+
+function dateForDay(
+    monthStart: string,
+    day: number
+): string {
+
+    return (
+        `${monthStart.slice(0, 8)}${padDay(day)}`
     );
 }
 
 
-/* =========================================================
-   FORMAT
-   ========================================================= */
+function formatNumber(
+    value: number
+): string {
+
+    return new Intl
+        .NumberFormat(
+            "bg-BG",
+            {
+                maximumFractionDigits:
+                    0
+            }
+        )
+        .format(value);
+}
 
 
 function formatKm(
@@ -324,16 +365,7 @@ function formatKm(
 ): string {
 
     return (
-        new Intl.NumberFormat(
-            "bg-BG",
-            {
-                maximumFractionDigits:
-                    0
-            }
-        )
-            .format(
-                value
-            )
+        `${formatNumber(value)} км`
     );
 }
 
@@ -342,8 +374,8 @@ function formatTons(
     value: number
 ): string {
 
-    return (
-        new Intl.NumberFormat(
+    return new Intl
+        .NumberFormat(
             "bg-BG",
             {
                 minimumFractionDigits:
@@ -353,10 +385,7 @@ function formatTons(
                     3
             }
         )
-            .format(
-                value
-            )
-    );
+        .format(value);
 }
 
 
@@ -365,58 +394,50 @@ function endReasonLabel(
 ): string {
 
     switch (value) {
-
         case "driver_handoff":
-            return (
-                "Смяна на шофьор"
-            );
+            return "Смяна на шофьор";
 
         case "truck_change":
-            return (
-                "Смяна на камион"
-            );
+            return "Смяна на камион";
 
         case "trip_completed":
-            return (
-                "Курсът е приключен"
-            );
+            return "Курсът е приключен";
 
         default:
-            return (
-                value ||
-                "Приключен сегмент"
-            );
+            return value ||
+                "Приключен сегмент";
     }
 }
 
 
-function tripStatusLabel(
-    value: string
-): string {
+function setMessage(
+    message: string,
+    type:
+        | "error"
+        | null
+): void {
 
-    switch (value) {
+    const element =
+        document.querySelector<HTMLElement>(
+            "#k3ArchiveMessage"
+        );
 
-        case "active":
-            return "Активен";
+    if (!element) {
+        return;
+    }
 
-        case "completed":
-            return "Приключен";
+    element.textContent =
+        message;
 
-        case "planned":
-            return "Планиран";
+    element.className =
+        "archive-message";
 
-        case "cancelled":
-            return "Отказан";
-
-        default:
-            return value;
+    if (type) {
+        element.classList.add(
+            `archive-message-${type}`
+        );
     }
 }
-
-
-/* =========================================================
-   DRIVER VIEW MODEL
-   ========================================================= */
 
 
 function buildDriverViews():
@@ -426,18 +447,15 @@ DriverArchiveView[] {
         return [];
     }
 
-
     const grouped =
         new Map<
             string,
             {
                 name: string;
-
                 segments:
                     AdminDriverArchiveSegment[];
             }
         >();
-
 
     for (
         const segment
@@ -449,30 +467,27 @@ DriverArchiveView[] {
                 segment.driverId
             );
 
-
         if (existing) {
-
             existing.segments.push(
                 segment
             );
 
-            /*
-             * Prefer the most recent
-             * historical snapshot name.
-             */
-            existing.name =
-                segment.driverName ||
-                existing.name;
+            if (
+                segment.driverName
+            ) {
+                existing.name =
+                    segment.driverName;
+            }
 
             continue;
         }
-
 
         grouped.set(
             segment.driverId,
             {
                 name:
-                    segment.driverName,
+                    segment.driverName ||
+                    "Шофьор",
 
                 segments: [
                     segment
@@ -481,67 +496,41 @@ DriverArchiveView[] {
         );
     }
 
-
     return Array
         .from(
             grouped.entries()
         )
         .map(
-            (
-                [
-                    id,
-                    data
-                ]
-            ) => {
+            ([
+                id,
+                data
+            ]) => {
 
                 const payableKm =
-                    data.segments
-                        .reduce(
-                            (
-                                sum,
-                                segment
-                            ) =>
-                                sum +
-                                segment.totalKm,
-                            0
-                        );
-
+                    data.segments.reduce(
+                        (
+                            sum,
+                            segment
+                        ) =>
+                            sum +
+                            segment.totalKm,
+                        0
+                    );
 
                 const tripCount =
                     new Set(
-                        data.segments
-                            .map(
-                                segment =>
-                                    segment.tripId
-                            )
+                        data.segments.map(
+                            segment =>
+                                segment.tripId
+                        )
                     ).size;
-
-
-                const workDays =
-                    new Set(
-                        data.segments
-                            .map(
-                                segment =>
-                                    segment.workDate
-                            )
-                    ).size;
-
 
                 return {
                     id,
-
                     name:
                         data.name,
-
                     payableKm,
-
                     tripCount,
-
-                    segmentCount:
-                        data.segments.length,
-
-                    workDays,
-
                     segments:
                         [...data.segments]
                             .sort(
@@ -569,32 +558,191 @@ DriverArchiveView[] {
                     first.payableKm !==
                     second.payableKm
                 ) {
-
                     return (
                         second.payableKm -
                         first.payableKm
                     );
                 }
 
-
-                return (
-                    first.name
-                        .localeCompare(
-                            second.name,
-                            "bg"
-                        )
-                );
+                return first.name
+                    .localeCompare(
+                        second.name,
+                        "bg"
+                    );
             }
         );
 }
 
 
-/* =========================================================
-   ROOT HTML
-   ========================================================= */
+function getSelectedDriver():
+DriverArchiveView | null {
+
+    const drivers =
+        buildDriverViews();
+
+    if (
+        drivers.length === 0
+    ) {
+        return null;
+    }
+
+    if (
+        !selectedDriverId ||
+        !drivers.some(
+            driver =>
+                driver.id ===
+                selectedDriverId
+        )
+    ) {
+        selectedDriverId =
+            drivers[0].id;
+    }
+
+    return (
+        drivers.find(
+            driver =>
+                driver.id ===
+                selectedDriverId
+        ) || null
+    );
+}
 
 
-export function renderSection():
+function buildCalendarCells(
+    driver:
+        DriverArchiveView | null
+): CalendarCell[] {
+
+    const grouped =
+        new Map<
+            string,
+            AdminDriverArchiveSegment[]
+        >();
+
+    if (driver) {
+        for (
+            const segment
+            of driver.segments
+        ) {
+            const list =
+                grouped.get(
+                    segment.workDate
+                ) || [];
+
+            list.push(segment);
+
+            grouped.set(
+                segment.workDate,
+                list
+            );
+        }
+    }
+
+    const result:
+        CalendarCell[] = [];
+
+    const totalDays =
+        daysInMonth(
+            selectedMonthStart
+        );
+
+    for (
+        let day = 1;
+        day <= totalDays;
+        day += 1
+    ) {
+        const date =
+            dateForDay(
+                selectedMonthStart,
+                day
+            );
+
+        const segments =
+            (
+                grouped.get(date) ||
+                []
+            ).sort(
+                (
+                    first,
+                    second
+                ) =>
+                    Date.parse(
+                        second.endedAt
+                    ) -
+                    Date.parse(
+                        first.endedAt
+                    )
+            );
+
+        const tripCount =
+            new Set(
+                segments.map(
+                    segment =>
+                        segment.tripId
+                )
+            ).size;
+
+        const payableKm =
+            segments.reduce(
+                (
+                    sum,
+                    segment
+                ) =>
+                    sum +
+                    segment.totalKm,
+                0
+            );
+
+        result.push({
+            date,
+            dayNumber: day,
+            payableKm,
+            tripCount,
+            segments
+        });
+    }
+
+    return result;
+}
+
+
+function ensureSelectedDate():
+void {
+
+    const driver =
+        getSelectedDriver();
+
+    const cells =
+        buildCalendarCells(
+            driver
+        );
+
+    const valid =
+        selectedDate !== null &&
+        cells.some(
+            cell =>
+                cell.date ===
+                selectedDate
+        );
+
+    if (valid) {
+        return;
+    }
+
+    const firstWithData =
+        cells.find(
+            cell =>
+                cell.segments.length > 0
+        );
+
+    selectedDate =
+        firstWithData?.date ||
+        cells[0]?.date ||
+        null;
+}
+
+
+function renderSection():
 string {
 
     return `
@@ -609,29 +757,26 @@ string {
                 aria-live="polite"
             ></div>
 
-
             <header
                 class="archive-toolbar"
             >
-
                 <div
                     class="archive-toolbar-heading"
                 >
                     <span>
-                        📊 DRIVER ARCHIVE
+                        📅 ARCHIVE
                     </span>
 
                     <strong>
-                        Километри за плащане
+                        Архив по шофьор
                     </strong>
 
                     <small>
-                        Всеки приключен сегмент
-                        влиза в месеца, в който
-                        е приключил.
+                        Календарен изглед.
+                        Натисни ден, за да видиш
+                        курсовете за него.
                     </small>
                 </div>
-
 
                 <div
                     class="archive-month-control"
@@ -669,111 +814,21 @@ string {
                         Текущ месец
                     </button>
                 </div>
-
             </header>
-
-
-            <section
-                id="k3ArchiveSummary"
-                class="archive-summary"
-            >
-                <article
-                    class="archive-summary-card"
-                >
-                    <span>
-                        Приключени курсове
-                    </span>
-
-                    <strong>
-                        —
-                    </strong>
-
-                    <small>
-                        приключили през месеца
-                    </small>
-                </article>
-
-                <article
-                    class="
-                        archive-summary-card
-                        archive-summary-payable
-                    "
-                >
-                    <span>
-                        Км за плащане
-                    </span>
-
-                    <strong>
-                        —
-                    </strong>
-
-                    <small>
-                        всички приключени сегменти
-                    </small>
-                </article>
-
-                <article
-                    class="archive-summary-card"
-                >
-                    <span>
-                        Реално натоварени
-                    </span>
-
-                    <strong>
-                        —
-                    </strong>
-
-                    <small>
-                        от приключилите курсове
-                    </small>
-                </article>
-
-                <article
-                    class="archive-summary-card"
-                >
-                    <span>
-                        Несъответствия
-                    </span>
-
-                    <strong>
-                        —
-                    </strong>
-
-                    <small>
-                        от приключилите курсове
-                    </small>
-                </article>
-            </section>
-
 
             <div
                 class="archive-layout"
             >
-
                 <aside
-                    class="archive-drivers-panel"
+                    class="archive-sidebar"
                 >
                     <header
                         class="archive-panel-header"
                     >
-                        <div>
-                            <strong>
-                                👨‍✈️ Шофьори
-                            </strong>
-
-                            <span>
-                                Общо за месеца
-                            </span>
-                        </div>
-
-                        <span
-                            id="k3ArchiveDriverCount"
-                            class="archive-count"
-                        >
-                            0
-                        </span>
+                        <strong>
+                            👨‍✈️ Шофьори
+                        </strong>
                     </header>
-
 
                     <div
                         id="k3ArchiveDriversList"
@@ -787,10 +842,9 @@ string {
                     </div>
                 </aside>
 
-
                 <main
-                    id="k3ArchiveDriverDetails"
-                    class="archive-driver-details"
+                    id="k3ArchiveMain"
+                    class="archive-main"
                 >
                     <div
                         class="archive-loading"
@@ -798,7 +852,6 @@ string {
                         Зареждане...
                     </div>
                 </main>
-
             </div>
 
         </section>
@@ -806,241 +859,31 @@ string {
 }
 
 
-/* =========================================================
-   MESSAGE
-   ========================================================= */
-
-
-function setMessage(
-    message: string,
-    type:
-        | "error"
-        | null
-): void {
-
-    const element =
-        document.querySelector<
-            HTMLElement
-        >(
-            "#k3ArchiveMessage"
-        );
-
-
-    if (!element) {
-        return;
-    }
-
-
-    element.textContent =
-        message;
-
-
-    element.className =
-        "archive-message";
-
-
-    if (type) {
-
-        element.classList.add(
-            `archive-message-${type}`
-        );
-    }
-}
-
-
-/* =========================================================
-   SUMMARY
-   ========================================================= */
-
-
-function renderSummary():
-void {
-
-    const container =
-        document.querySelector<
-            HTMLElement
-        >(
-            "#k3ArchiveSummary"
-        );
-
-
-    if (
-        !container ||
-        !archiveMonth
-    ) {
-        return;
-    }
-
-
-    const summary =
-        archiveMonth.summary;
-
-
-    container.innerHTML = `
-        <article
-            class="archive-summary-card"
-        >
-            <span>
-                Приключени курсове
-            </span>
-
-            <strong>
-                ${escapeHtml(
-                    formatKm(
-                        summary.completedTrips
-                    )
-                )}
-            </strong>
-
-            <small>
-                приключили през месеца
-            </small>
-        </article>
-
-
-        <article
-            class="
-                archive-summary-card
-                archive-summary-payable
-            "
-        >
-            <span>
-                Км за плащане
-            </span>
-
-            <strong>
-                ${escapeHtml(
-                    formatKm(
-                        summary.payableKm
-                    )
-                )}
-                км
-            </strong>
-
-            <small>
-                всички приключени сегменти
-            </small>
-        </article>
-
-
-        <article
-            class="archive-summary-card"
-        >
-            <span>
-                Реално натоварени
-            </span>
-
-            <strong>
-                ${escapeHtml(
-                    formatTons(
-                        summary.loadedTons
-                    )
-                )}
-                т.
-            </strong>
-
-            <small>
-                товарът се брои веднъж на курс
-            </small>
-        </article>
-
-
-        <article
-            class="archive-summary-card"
-        >
-            <span>
-                Несъответствия
-            </span>
-
-            <strong>
-                ${
-                    summary.discrepancyCount ===
-                    null
-
-                        ? "—"
-
-                        : escapeHtml(
-                            formatKm(
-                                summary
-                                    .discrepancyCount
-                            )
-                        )
-                }
-            </strong>
-
-            <small>
-                ${
-                    summary.discrepancyCount ===
-                    null
-
-                        ? "няма право за преглед"
-
-                        : "от приключилите курсове"
-                }
-            </small>
-        </article>
-    `;
-}
-
-
-/* =========================================================
-   DRIVER LIST
-   ========================================================= */
-
-
 function renderDrivers():
 void {
 
     const list =
-        document.querySelector<
-            HTMLElement
-        >(
+        document.querySelector<HTMLElement>(
             "#k3ArchiveDriversList"
         );
 
-    const count =
-        document.querySelector<
-            HTMLElement
-        >(
-            "#k3ArchiveDriverCount"
-        );
-
-
-    if (
-        !list ||
-        !count
-    ) {
+    if (!list) {
         return;
     }
-
 
     const drivers =
         buildDriverViews();
 
-
-    count.textContent =
-        String(
-            drivers.length
-        );
-
-
     if (
-        drivers.length ===
-        0
+        drivers.length === 0
     ) {
-
         list.innerHTML = `
-            <div
-                class="archive-empty"
-            >
-                Няма записани километри
-                за този месец.
+            <div class="archive-empty">
+                Няма данни за този месец.
             </div>
         `;
-
         return;
     }
-
 
     if (
         !selectedDriverId ||
@@ -1050,11 +893,9 @@ void {
                 selectedDriverId
         )
     ) {
-
         selectedDriverId =
             drivers[0].id;
     }
-
 
     list.innerHTML =
         drivers
@@ -1062,17 +903,12 @@ void {
                 driver => `
                     <button
                         type="button"
-                        class="
-                            archive-driver-button
-                            ${
-                                driver.id ===
-                                selectedDriverId
-
-                                    ? "archive-driver-button-active"
-
-                                    : ""
-                            }
-                        "
+                        class="archive-driver-button ${
+                            driver.id ===
+                            selectedDriverId
+                                ? "archive-driver-button-active"
+                                : ""
+                        }"
                         data-archive-action="select-driver"
                         data-driver-id="${escapeHtml(
                             driver.id
@@ -1089,50 +925,22 @@ void {
 
                             <small>
                                 ${escapeHtml(
-                                    formatKm(
+                                    formatNumber(
                                         driver.tripCount
                                     )
-                                )}
-                                ${
-                                    driver.tripCount ===
-                                    1
-
-                                        ? "курс"
-
-                                        : "курса"
-                                }
-                                ·
-                                ${escapeHtml(
-                                    formatKm(
-                                        driver.workDays
-                                    )
-                                )}
-                                ${
-                                    driver.workDays ===
-                                    1
-
-                                        ? "ден"
-
-                                        : "дни"
-                                }
+                                )} курса
                             </small>
                         </span>
 
-                        <span
+                        <strong
                             class="archive-driver-km"
                         >
-                            <strong>
-                                ${escapeHtml(
-                                    formatKm(
-                                        driver.payableKm
-                                    )
-                                )}
-                            </strong>
-
-                            <small>
-                                км
-                            </small>
-                        </span>
+                            ${escapeHtml(
+                                formatNumber(
+                                    driver.payableKm
+                                )
+                            )}
+                        </strong>
                     </button>
                 `
             )
@@ -1140,80 +948,68 @@ void {
 }
 
 
-/* =========================================================
-   DRIVER DETAILS
-   ========================================================= */
-
-
-function renderDriverDetails():
+function renderMain():
 void {
 
     const container =
-        document.querySelector<
-            HTMLElement
-        >(
-            "#k3ArchiveDriverDetails"
+        document.querySelector<HTMLElement>(
+            "#k3ArchiveMain"
         );
-
 
     if (!container) {
         return;
     }
 
-
     const driver =
-        buildDriverViews()
-            .find(
-                item =>
-                    item.id ===
-                    selectedDriverId
-            );
-
+        getSelectedDriver();
 
     if (!driver) {
-
         container.innerHTML = `
-            <div
-                class="archive-empty archive-empty-large"
-            >
-                Избери шофьор,
-                за да видиш
-                месечния му архив.
+            <div class="archive-empty archive-empty-large">
+                Няма записани километри за този месец.
             </div>
         `;
-
         return;
     }
 
+    ensureSelectedDate();
 
-    const dates =
-        Array.from(
-            new Set(
-                driver.segments
-                    .map(
-                        segment =>
-                            segment.workDate
-                    )
+    const cells =
+        buildCalendarCells(
+            driver
+        );
+
+    const activeCell =
+        cells.find(
+            cell =>
+                cell.date ===
+                selectedDate
+        ) || null;
+
+    const firstWeekday =
+        dayOfWeekIndex(
+            selectedMonthStart
+        );
+
+    const blankCells =
+        Array
+            .from({
+                length:
+                    firstWeekday
+            })
+            .map(
+                () =>
+                    `<div class="archive-calendar-blank"></div>`
             )
-        )
-            .sort(
-                (
-                    first,
-                    second
-                ) =>
-                    second.localeCompare(
-                        first
-                    )
-            );
-
+            .join("");
 
     container.innerHTML = `
-        <header
-            class="archive-driver-header"
+        <section
+            class="archive-selected-driver"
         >
             <div>
                 <span>
-                    👨‍✈️ Шофьор
+                    Шофьор
                 </span>
 
                 <strong>
@@ -1231,12 +1027,11 @@ void {
                 </small>
             </div>
 
-
             <div
-                class="archive-driver-total"
+                class="archive-selected-total"
             >
                 <span>
-                    Общо за плащане
+                    Общо км
                 </span>
 
                 <strong>
@@ -1245,68 +1040,241 @@ void {
                             driver.payableKm
                         )
                     )}
-                    км
-                </strong>
-            </div>
-        </header>
-
-
-        <section
-            class="archive-driver-mini-summary"
-        >
-            <div>
-                <span>
-                    Курсове
-                </span>
-
-                <strong>
-                    ${escapeHtml(
-                        formatKm(
-                            driver.tripCount
-                        )
-                    )}
-                </strong>
-            </div>
-
-            <div>
-                <span>
-                    Сегменти
-                </span>
-
-                <strong>
-                    ${escapeHtml(
-                        formatKm(
-                            driver.segmentCount
-                        )
-                    )}
-                </strong>
-            </div>
-
-            <div>
-                <span>
-                    Работни дни
-                </span>
-
-                <strong>
-                    ${escapeHtml(
-                        formatKm(
-                            driver.workDays
-                        )
-                    )}
                 </strong>
             </div>
         </section>
 
+        <section
+            class="archive-calendar-panel"
+        >
+            <div
+                class="archive-weekdays"
+            >
+                ${WEEKDAY_LABELS
+                    .map(
+                        label => `
+                            <div class="archive-weekday">
+                                ${escapeHtml(
+                                    label
+                                )}
+                            </div>
+                        `
+                    )
+                    .join("")}
+            </div>
+
+            <div
+                class="archive-calendar-grid"
+            >
+                ${blankCells}
+                ${cells
+                    .map(
+                        cell =>
+                            renderCalendarCell(
+                                cell
+                            )
+                    )
+                    .join("")}
+            </div>
+        </section>
+
+        <section
+            class="archive-day-panel"
+        >
+            ${renderSelectedDay(
+                activeCell
+            )}
+        </section>
+    `;
+}
+
+
+function renderCalendarCell(
+    cell: CalendarCell
+): string {
+
+    const isSelected =
+        cell.date ===
+        selectedDate;
+
+    const hasData =
+        cell.segments.length > 0;
+
+    return `
+        <button
+            type="button"
+            class="archive-calendar-cell ${
+                hasData
+                    ? "archive-calendar-cell-has-data"
+                    : "archive-calendar-cell-empty"
+            } ${
+                isSelected
+                    ? "archive-calendar-cell-selected"
+                    : ""
+            }"
+            data-archive-action="select-date"
+            data-date="${escapeHtml(
+                cell.date
+            )}"
+        >
+            <span
+                class="archive-calendar-day"
+            >
+                ${escapeHtml(
+                    String(
+                        cell.dayNumber
+                    )
+                )}
+            </span>
+
+            ${
+                hasData
+                    ? `
+                        <strong class="archive-calendar-km">
+                            ${escapeHtml(
+                                formatNumber(
+                                    cell.payableKm
+                                )
+                            )} км
+                        </strong>
+
+                        <small class="archive-calendar-trips">
+                            ${escapeHtml(
+                                formatNumber(
+                                    cell.tripCount
+                                )
+                            )} курса
+                        </small>
+                    `
+                    : `
+                        <strong class="archive-calendar-km archive-calendar-km-empty">
+                            —
+                        </strong>
+                    `
+            }
+        </button>
+    `;
+}
+
+
+function renderSelectedDay(
+    cell: CalendarCell | null
+): string {
+
+    if (!cell) {
+        return `
+            <div class="archive-empty archive-empty-large">
+                Избери ден от календара.
+            </div>
+        `;
+    }
+
+    if (
+        cell.segments.length === 0
+    ) {
+        return `
+            <header class="archive-day-header">
+                <div>
+                    <strong>
+                        ${escapeHtml(
+                            dayLabel(
+                                cell.date
+                            )
+                        )}
+                    </strong>
+
+                    <small>
+                        Няма записани курсове.
+                    </small>
+                </div>
+            </header>
+
+            <div class="archive-empty">
+                Няма дейност за този ден.
+            </div>
+        `;
+    }
+
+    const grouped =
+        new Map<
+            string,
+            AdminDriverArchiveSegment[]
+        >();
+
+    for (
+        const segment
+        of cell.segments
+    ) {
+        const list =
+            grouped.get(
+                segment.tripId
+            ) || [];
+
+        list.push(segment);
+
+        grouped.set(
+            segment.tripId,
+            list
+        );
+    }
+
+    const trips =
+        Array
+            .from(
+                grouped.values()
+            )
+            .sort(
+                (
+                    first,
+                    second
+                ) =>
+                    Date.parse(
+                        second[0].endedAt
+                    ) -
+                    Date.parse(
+                        first[0].endedAt
+                    )
+            );
+
+    return `
+        <header class="archive-day-header">
+            <div>
+                <strong>
+                    ${escapeHtml(
+                        dayLabel(
+                            cell.date
+                        )
+                    )}
+                </strong>
+
+                <small>
+                    ${escapeHtml(
+                        formatNumber(
+                            trips.length
+                        )
+                    )} курса
+                </small>
+            </div>
+
+            <strong
+                class="archive-day-total"
+            >
+                ${escapeHtml(
+                    formatKm(
+                        cell.payableKm
+                    )
+                )}
+            </strong>
+        </header>
 
         <div
-            class="archive-days"
+            class="archive-day-content"
         >
-            ${dates
+            ${trips
                 .map(
-                    date =>
-                        renderDriverDay(
-                            driver,
-                            date
+                    segments =>
+                        renderTripCard(
+                            segments
                         )
                 )
                 .join("")}
@@ -1315,130 +1283,12 @@ void {
 }
 
 
-function renderDriverDay(
-    driver: DriverArchiveView,
-    date: string
-): string {
-
-    const daySegments =
-        driver.segments
-            .filter(
-                segment =>
-                    segment.workDate ===
-                    date
-            )
-            .sort(
-                (
-                    first,
-                    second
-                ) =>
-                    Date.parse(
-                        second.endedAt
-                    ) -
-                    Date.parse(
-                        first.endedAt
-                    )
-            );
-
-
-    const dayKm =
-        daySegments
-            .reduce(
-                (
-                    sum,
-                    segment
-                ) =>
-                    sum +
-                    segment.totalKm,
-                0
-            );
-
-
-    const tripIds =
-        Array.from(
-            new Set(
-                daySegments
-                    .map(
-                        segment =>
-                            segment.tripId
-                    )
-            )
-        );
-
-
-    return `
-        <section
-            class="archive-day"
-        >
-
-            <header
-                class="archive-day-header"
-            >
-                <div>
-                    <strong>
-                        📅
-                        ${escapeHtml(
-                            dayLabel(
-                                date
-                            )
-                        )}
-                    </strong>
-
-                    <span>
-                        ${tripIds.length}
-                        ${
-                            tripIds.length ===
-                            1
-
-                                ? "курс"
-
-                                : "курса"
-                        }
-                    </span>
-                </div>
-
-                <strong
-                    class="archive-day-km"
-                >
-                    ${escapeHtml(
-                        formatKm(
-                            dayKm
-                        )
-                    )}
-                    км
-                </strong>
-            </header>
-
-
-            <div
-                class="archive-day-trips"
-            >
-                ${tripIds
-                    .map(
-                        tripId =>
-                            renderDriverTrip(
-                                daySegments
-                                    .filter(
-                                        segment =>
-                                            segment.tripId ===
-                                            tripId
-                                    )
-                            )
-                    )
-                    .join("")}
-            </div>
-
-        </section>
-    `;
-}
-
-
-function renderDriverTrip(
+function renderTripCard(
     segments:
         AdminDriverArchiveSegment[]
 ): string {
 
-    const orderedSegments =
+    const ordered =
         [...segments]
             .sort(
                 (
@@ -1449,140 +1299,90 @@ function renderDriverTrip(
                     second.segmentNumber
             );
 
-
     const first =
-        orderedSegments[0];
+        ordered[0];
 
-
-    const payableKm =
-        orderedSegments
-            .reduce(
-                (
-                    sum,
-                    segment
-                ) =>
-                    sum +
-                    segment.totalKm,
-                0
-            );
-
-
-    const discrepancy =
-        first.tripDiscrepancyCount;
-
+    const totalKm =
+        ordered.reduce(
+            (
+                sum,
+                segment
+            ) =>
+                sum +
+                segment.totalKm,
+            0
+        );
 
     return `
         <article
             class="archive-trip-card"
         >
-
             <header
                 class="archive-trip-header"
             >
                 <div>
                     <strong>
-                        Курс
-                        #${escapeHtml(
+                        Курс #${escapeHtml(
                             String(
                                 first.tripNumber
                             )
                         )}
                     </strong>
 
-                    <span>
+                    <small>
                         ${escapeHtml(
-                            tripStatusLabel(
-                                first.tripStatus
+                            dateTimeLabel(
+                                first.tripCompletedAt
                             )
                         )}
-
-                        ${
-                            first.tripCompletedAt
-
-                                ? `· ${escapeHtml(
-                                    dateTimeLabel(
-                                        first.tripCompletedAt
-                                    )
-                                )}`
-
-                                : ""
-                        }
-                    </span>
+                    </small>
                 </div>
 
-
                 <strong
-                    class="archive-trip-km"
+                    class="archive-trip-total"
                 >
                     ${escapeHtml(
                         formatKm(
-                            payableKm
+                            totalKm
                         )
                     )}
-                    км
                 </strong>
             </header>
-
 
             <div
                 class="archive-trip-meta"
             >
                 <span>
-                    ⚖️ Товар на курса
+                    Товар:
                     <strong>
                         ${escapeHtml(
                             formatTons(
                                 first.tripLoadedTons
                             )
-                        )}
-                        т.
+                        )} т.
                     </strong>
                 </span>
 
                 ${
-                    discrepancy ===
-                    null
-
-                        ? ""
-
-                        : discrepancy > 0
-
-                            ? `
-                                <span
-                                    class="archive-trip-warning"
-                                >
-                                    ⚠️
-                                    ${escapeHtml(
-                                        String(
-                                            discrepancy
-                                        )
-                                    )}
-                                    ${
-                                        discrepancy ===
-                                        1
-
-                                            ? "несъответствие"
-
-                                            : "несъответствия"
-                                    }
-                                </span>
-                            `
-
-                            : `
-                                <span
-                                    class="archive-trip-ok"
-                                >
-                                    ✓ Без несъответствия
-                                </span>
-                            `
+                    first.tripDiscrepancyCount &&
+                    first.tripDiscrepancyCount > 0
+                        ? `
+                            <span class="archive-trip-warning">
+                                ⚠️ ${escapeHtml(
+                                    formatNumber(
+                                        first.tripDiscrepancyCount
+                                    )
+                                )} несъответствия
+                            </span>
+                        `
+                        : ""
                 }
             </div>
 
-
             <div
-                class="archive-segments"
+                class="archive-trip-segments"
             >
-                ${orderedSegments
+                ${ordered
                     .map(
                         segment =>
                             renderSegment(
@@ -1591,7 +1391,6 @@ function renderDriverTrip(
                     )
                     .join("")}
             </div>
-
         </article>
     `;
 }
@@ -1606,74 +1405,50 @@ function renderSegment(
         <div
             class="archive-segment-row"
         >
-
-            <div
-                class="archive-segment-number"
-            >
-                ${escapeHtml(
-                    String(
-                        segment.segmentNumber
-                    )
-                )}
-            </div>
-
-
             <div
                 class="archive-segment-main"
             >
                 <strong>
-                    🚛
-                    ${escapeHtml(
+                    🚛 ${escapeHtml(
                         segment.truckNumber
                     )}
-
                     ${
                         segment.trailerNumber
-
                             ? ` · 🛻 ${escapeHtml(
                                 segment.trailerNumber
                             )}`
-
                             : ""
                     }
                 </strong>
 
-                <span>
+                <small>
                     ${escapeHtml(
                         timeLabel(
                             segment.startedAt
                         )
-                    )}
-                    →
-                    ${escapeHtml(
+                    )} → ${escapeHtml(
                         timeLabel(
                             segment.endedAt
                         )
-                    )}
-                    ·
-                    ${escapeHtml(
+                    )} · ${escapeHtml(
                         endReasonLabel(
                             segment.endReason
                         )
                     )}
-                </span>
+                </small>
 
                 <small>
-                    Километраж:
                     ${escapeHtml(
-                        formatKm(
+                        formatNumber(
                             segment.startKm
                         )
-                    )}
-                    →
-                    ${escapeHtml(
-                        formatKm(
+                    )} → ${escapeHtml(
+                        formatNumber(
                             segment.endKm
                         )
-                    )}
+                    )} км
                 </small>
             </div>
-
 
             <strong
                 class="archive-segment-km"
@@ -1683,58 +1458,38 @@ function renderSegment(
                         segment.totalKm
                     )
                 )}
-                км
             </strong>
-
         </div>
     `;
 }
-
-
-/* =========================================================
-   HEADER STATE
-   ========================================================= */
 
 
 function renderMonthHeader():
 void {
 
     const label =
-        document.querySelector<
-            HTMLElement
-        >(
+        document.querySelector<HTMLElement>(
             "#k3ArchiveMonthLabel"
         );
 
     const nextButton =
-        document.querySelector<
-            HTMLButtonElement
-        >(
+        document.querySelector<HTMLButtonElement>(
             "#k3ArchiveNextMonth"
         );
 
-
     if (label) {
-
         label.textContent =
             monthLabel(
                 selectedMonthStart
             );
     }
 
-
     if (nextButton) {
-
         nextButton.disabled =
             selectedMonthStart >=
             businessMonthStart();
     }
 }
-
-
-/* =========================================================
-   REFRESH
-   ========================================================= */
 
 
 async function refreshArchive():
@@ -1743,62 +1498,41 @@ Promise<void> {
     const currentVersion =
         ++refreshVersion;
 
-
-    setMessage(
-        "",
-        null
-    );
-
+    setMessage("", null);
 
     renderMonthHeader();
 
-
-    const list =
-        document.querySelector<
-            HTMLElement
-        >(
+    const driversList =
+        document.querySelector<HTMLElement>(
             "#k3ArchiveDriversList"
         );
 
-    const details =
-        document.querySelector<
-            HTMLElement
-        >(
-            "#k3ArchiveDriverDetails"
+    const main =
+        document.querySelector<HTMLElement>(
+            "#k3ArchiveMain"
         );
 
-
-    if (list) {
-
-        list.innerHTML = `
-            <div
-                class="archive-loading"
-            >
-                Зареждане на архива...
-            </div>
-        `;
-    }
-
-
-    if (details) {
-
-        details.innerHTML = `
-            <div
-                class="archive-loading"
-            >
+    if (driversList) {
+        driversList.innerHTML = `
+            <div class="archive-loading">
                 Зареждане...
             </div>
         `;
     }
 
+    if (main) {
+        main.innerHTML = `
+            <div class="archive-loading">
+                Зареждане...
+            </div>
+        `;
+    }
 
     try {
-
         const result =
             await loadAdminDriverArchiveMonth(
                 selectedMonthStart
             );
-
 
         if (
             currentVersion !==
@@ -1807,10 +1541,8 @@ Promise<void> {
             return;
         }
 
-
         const root =
             getRoot();
-
 
         if (
             !root?.isConnected
@@ -1818,14 +1550,11 @@ Promise<void> {
             return;
         }
 
-
         archiveMonth =
             result;
 
-
         const drivers =
             buildDriverViews();
-
 
         if (
             !selectedDriverId ||
@@ -1835,20 +1564,15 @@ Promise<void> {
                     selectedDriverId
             )
         ) {
-
             selectedDriverId =
                 drivers[0]?.id ||
                 null;
         }
 
-
-        renderSummary();
-
-        renderDrivers();
-
-        renderDriverDetails();
-
+        ensureSelectedDate();
         renderMonthHeader();
+        renderDrivers();
+        renderMain();
 
     } catch (error) {
 
@@ -1859,40 +1583,28 @@ Promise<void> {
             return;
         }
 
-
         const message =
             error instanceof Error &&
             error.message
-
                 ? error.message
-
                 : "Архивът не можа да бъде зареден.";
-
 
         setMessage(
             message,
             "error"
         );
 
-
-        if (list) {
-
-            list.innerHTML = `
-                <div
-                    class="archive-empty"
-                >
-                    Няма заредени данни.
+        if (driversList) {
+            driversList.innerHTML = `
+                <div class="archive-empty">
+                    Няма данни.
                 </div>
             `;
         }
 
-
-        if (details) {
-
-            details.innerHTML = `
-                <div
-                    class="archive-empty archive-empty-large"
-                >
+        if (main) {
+            main.innerHTML = `
+                <div class="archive-empty archive-empty-large">
                     ${escapeHtml(
                         message
                     )}
@@ -1903,11 +1615,6 @@ Promise<void> {
 }
 
 
-/* =========================================================
-   EVENTS
-   ========================================================= */
-
-
 function handleClick(
     event: MouseEvent
 ): void {
@@ -1915,64 +1622,51 @@ function handleClick(
     const target =
         event.target;
 
-
     if (
-        !(target instanceof
-            Element)
+        !(target instanceof Element)
     ) {
         return;
     }
 
-
     const button =
-        target.closest<
-            HTMLButtonElement
-        >(
+        target.closest<HTMLButtonElement>(
             "[data-archive-action]"
         );
-
 
     if (!button) {
         return;
     }
 
-
     const action =
         button.dataset
             .archiveAction;
-
 
     if (
         action ===
         "previous-month"
     ) {
-
         selectedMonthStart =
             shiftMonth(
                 selectedMonthStart,
                 -1
             );
 
-        selectedDriverId =
+        selectedDate =
             null;
 
         void refreshArchive();
-
         return;
     }
-
 
     if (
         action ===
         "next-month"
     ) {
-
         const next =
             shiftMonth(
                 selectedMonthStart,
                 1
             );
-
 
         if (
             next >
@@ -1981,57 +1675,63 @@ function handleClick(
             return;
         }
 
-
         selectedMonthStart =
             next;
 
-        selectedDriverId =
+        selectedDate =
             null;
 
         void refreshArchive();
-
         return;
     }
-
 
     if (
         action ===
         "current-month"
     ) {
-
         selectedMonthStart =
             businessMonthStart();
 
-        selectedDriverId =
+        selectedDate =
             null;
 
         void refreshArchive();
-
         return;
     }
-
 
     if (
         action ===
         "select-driver"
     ) {
-
         selectedDriverId =
-            button.dataset
-                .driverId ||
+            button.dataset.driverId ||
             null;
 
+        selectedDate =
+            null;
 
+        ensureSelectedDate();
         renderDrivers();
+        renderMain();
+        return;
+    }
 
-        renderDriverDetails();
+    if (
+        action ===
+        "select-date"
+    ) {
+        selectedDate =
+            button.dataset.date ||
+            null;
+
+        renderMain();
     }
 }
 
 
-/* =========================================================
-   INITIALIZE
-   ========================================================= */
+export {
+    renderSection
+};
 
 
 export async function
@@ -2041,17 +1741,14 @@ Promise<void> {
     const root =
         getRoot();
 
-
     if (!root) {
         return;
     }
-
 
     root.addEventListener(
         "click",
         handleClick
     );
-
 
     await refreshArchive();
 }
