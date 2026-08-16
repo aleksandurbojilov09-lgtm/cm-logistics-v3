@@ -51,6 +51,25 @@ export type AdminOrderAssignment = {
 };
 
 
+export type AdminOrderLatestLoadingWarning = {
+    discrepancyId: string;
+
+    orderAssignmentId: string;
+
+    loadedAt: string;
+
+    assignedTons: number;
+    actualLoadedTons: number;
+    differenceTons: number;
+
+    note: string | null;
+
+    status:
+        | "reported"
+        | "reviewed";
+};
+
+
 export type AdminOrderListItem = {
     id: string;
     orderNumber: string;
@@ -84,6 +103,9 @@ export type AdminOrderListItem = {
 
     note: string | null;
     createdAt: string;
+
+    latestLoadingWarning:
+        AdminOrderLatestLoadingWarning | null;
 
     assignments:
         AdminOrderAssignment[];
@@ -516,6 +538,9 @@ function mapOrder(
                 value.created_at
             ),
 
+        latestLoadingWarning:
+            null,
+
         assignments
     };
 }
@@ -618,6 +643,351 @@ Promise<AdminOrderListItem[]> {
             order.remainingTons >
                 0
     );
+}
+
+
+async function
+loadLatestLoadingWarnings(
+    orders:
+        AdminOrderListItem[]
+): Promise<
+    Map<
+        string,
+        AdminOrderLatestLoadingWarning
+    >
+> {
+
+    const result =
+        new Map<
+            string,
+            AdminOrderLatestLoadingWarning
+        >();
+
+
+    if (
+        orders.length ===
+        0
+    ) {
+        return result;
+    }
+
+
+    const orderIds =
+        orders.map(
+            order =>
+                order.id
+        );
+
+
+    const stopResult =
+        await supabase
+            .from(
+                "trip_stops"
+            )
+            .select(
+                `
+                order_id,
+                order_assignment_id,
+                loaded_at
+                `
+            )
+            .in(
+                "order_id",
+                orderIds
+            )
+            .not(
+                "loaded_at",
+                "is",
+                null
+            )
+            .order(
+                "loaded_at",
+                {
+                    ascending:
+                        false
+                }
+            );
+
+
+    if (
+        stopResult.error
+    ) {
+
+        throw new Error(
+            stopResult.error.message ||
+            "Последните товарения не можаха да бъдат заредени."
+        );
+    }
+
+
+    type LatestStop = {
+        orderId: string;
+        orderAssignmentId: string;
+        loadedAt: string;
+    };
+
+
+    const latestByOrder =
+        new Map<
+            string,
+            LatestStop
+        >();
+
+
+    for (
+        const row
+        of stopResult.data || []
+    ) {
+
+        if (!isRecord(row)) {
+            continue;
+        }
+
+
+        const orderId =
+            stringValue(
+                row.order_id
+            );
+
+        const orderAssignmentId =
+            stringValue(
+                row.order_assignment_id
+            );
+
+        const loadedAt =
+            stringValue(
+                row.loaded_at
+            );
+
+
+        if (
+            !orderId ||
+            !orderAssignmentId ||
+            !loadedAt ||
+            latestByOrder.has(
+                orderId
+            )
+        ) {
+            continue;
+        }
+
+
+        latestByOrder.set(
+            orderId,
+            {
+                orderId,
+                orderAssignmentId,
+                loadedAt
+            }
+        );
+    }
+
+
+    const assignmentIds =
+        Array.from(
+            new Set(
+                Array.from(
+                    latestByOrder.values()
+                ).map(
+                    stop =>
+                        stop.orderAssignmentId
+                )
+            )
+        );
+
+
+    if (
+        assignmentIds.length ===
+        0
+    ) {
+        return result;
+    }
+
+
+    const discrepancyResult =
+        await supabase
+            .from(
+                "discrepancies"
+            )
+            .select(
+                `
+                id,
+                order_assignment_id,
+                assigned_tons_snapshot,
+                actual_loaded_tons,
+                difference_tons,
+                note,
+                status,
+                created_at
+                `
+            )
+            .in(
+                "order_assignment_id",
+                assignmentIds
+            )
+            .order(
+                "created_at",
+                {
+                    ascending:
+                        false
+                }
+            );
+
+
+    if (
+        discrepancyResult.error
+    ) {
+
+        throw new Error(
+            discrepancyResult.error.message ||
+            "Несъответствията при последните товарения не можаха да бъдат заредени."
+        );
+    }
+
+
+    type DiscrepancyCandidate = {
+        discrepancyId: string;
+
+        orderAssignmentId: string;
+
+        assignedTons: number;
+        actualLoadedTons: number;
+        differenceTons: number;
+
+        note: string | null;
+
+        status:
+            | "reported"
+            | "reviewed";
+    };
+
+
+    const discrepancyByAssignment =
+        new Map<
+            string,
+            DiscrepancyCandidate
+        >();
+
+
+    for (
+        const row
+        of discrepancyResult.data ||
+        []
+    ) {
+
+        if (!isRecord(row)) {
+            continue;
+        }
+
+
+        const discrepancyId =
+            stringValue(
+                row.id
+            );
+
+        const orderAssignmentId =
+            stringValue(
+                row.order_assignment_id
+            );
+
+        const status =
+            stringValue(
+                row.status
+            );
+
+
+        if (
+            !discrepancyId ||
+            !orderAssignmentId ||
+            (
+                status !==
+                    "reported" &&
+                status !==
+                    "reviewed"
+            ) ||
+            discrepancyByAssignment.has(
+                orderAssignmentId
+            )
+        ) {
+            continue;
+        }
+
+
+        discrepancyByAssignment.set(
+            orderAssignmentId,
+            {
+                discrepancyId,
+
+                orderAssignmentId,
+
+                assignedTons:
+                    numberValue(
+                        row.assigned_tons_snapshot
+                    ),
+
+                actualLoadedTons:
+                    numberValue(
+                        row.actual_loaded_tons
+                    ),
+
+                differenceTons:
+                    numberValue(
+                        row.difference_tons
+                    ),
+
+                note:
+                    nullableString(
+                        row.note
+                    ),
+
+                status
+            }
+        );
+    }
+
+
+    for (
+        const [
+            orderId,
+            stop
+        ]
+        of latestByOrder
+    ) {
+
+        const discrepancy =
+            discrepancyByAssignment.get(
+                stop.orderAssignmentId
+            );
+
+
+        /*
+         * Критично правило:
+         *
+         * гледаме САМО последния
+         * реално loaded trip_stop.
+         *
+         * Ако той няма discrepancy,
+         * старо предупреждение НЕ се
+         * наследява.
+         */
+        if (!discrepancy) {
+            continue;
+        }
+
+
+        result.set(
+            orderId,
+            {
+                ...discrepancy,
+
+                loadedAt:
+                    stop.loadedAt
+            }
+        );
+    }
+
+
+    return result;
 }
 
 
@@ -840,13 +1210,54 @@ loadAdminOrdersWorkspace():
 Promise<AdminOrdersWorkspace> {
 
     const [
-        mapOrders,
+        rawMapOrders,
         compositions
     ] =
         await Promise.all([
             loadAdminOperationalOrders(),
             loadReadyOrderCompositions()
         ]);
+
+
+    /*
+     * Warning-ът е вторична информация.
+     * Ако четенето му се провали,
+     * не блокираме основната работа
+     * по зачисляване на заявки.
+     */
+    const warningByOrder =
+        await loadLatestLoadingWarnings(
+            rawMapOrders
+        )
+            .catch(
+                error => {
+
+                    console.error(
+                        "Latest loading warnings could not be loaded.",
+                        error
+                    );
+
+
+                    return new Map<
+                        string,
+                        AdminOrderLatestLoadingWarning
+                    >();
+                }
+            );
+
+
+    const mapOrders =
+        rawMapOrders.map(
+            order => ({
+                ...order,
+
+                latestLoadingWarning:
+                    warningByOrder.get(
+                        order.id
+                    ) ||
+                    null
+            })
+        );
 
 
     const orders =

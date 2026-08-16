@@ -523,6 +523,23 @@ function formatTons(
 }
 
 
+function formatSignedTons(
+    value: number
+): string {
+
+    const sign =
+        value > 0
+            ? "+"
+            : "";
+
+    return (
+        `${sign}${formatTons(
+            value
+        )}`
+    );
+}
+
+
 function statusLabel(
     status: AdminOrderStatus
 ): string {
@@ -1718,6 +1735,69 @@ void {
         </div>
 
 
+        ${
+            order.latestLoadingWarning
+
+                ? `
+                    <div
+                        class="orders-selected-discrepancy"
+                    >
+                        <strong>
+                            ⚠️ Последното товарене е с несъответствие
+                        </strong>
+
+                        <span>
+                            Зачислени
+                            ${escapeHtml(
+                                formatTons(
+                                    order.latestLoadingWarning
+                                        .assignedTons
+                                )
+                            )}
+                            т.
+                            ·
+                            Реално
+                            ${escapeHtml(
+                                formatTons(
+                                    order.latestLoadingWarning
+                                        .actualLoadedTons
+                                )
+                            )}
+                            т.
+                            ·
+                            Разлика
+                            ${escapeHtml(
+                                formatSignedTons(
+                                    order.latestLoadingWarning
+                                        .differenceTons
+                                )
+                            )}
+                            т.
+                        </span>
+
+                        ${
+                            order.latestLoadingWarning
+                                .note
+
+                                ? `
+                                    <small>
+                                        📝
+                                        ${escapeHtml(
+                                            order.latestLoadingWarning
+                                                .note
+                                        )}
+                                    </small>
+                                `
+
+                                : ""
+                        }
+                    </div>
+                `
+
+                : ""
+        }
+
+
         <details
             class="orders-selected-details"
         >
@@ -2282,6 +2362,29 @@ void {
 
                                         : ""
                                 }
+
+                                ${
+                                    order.latestLoadingWarning
+
+                                        ? `
+                                            <small
+                                                class="orders-compact-discrepancy"
+                                            >
+                                                ⚠️ Последно товарене:
+                                                разлика
+                                                ${escapeHtml(
+                                                    formatSignedTons(
+                                                        order.latestLoadingWarning
+                                                            .differenceTons
+                                                    )
+                                                )}
+                                                т.
+                                            </small>
+                                        `
+
+                                        : ""
+                                }
+
 
                                 <small>
                                     ${

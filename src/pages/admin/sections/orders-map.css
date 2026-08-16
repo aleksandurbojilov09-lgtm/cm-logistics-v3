@@ -3175,3 +3175,243 @@
     }
 
 }
+
+
+/* =========================================================
+   K3 LATEST LOADING DISCREPANCY WARNING
+   ========================================================= */
+
+/*
+ * Малък warning badge върху картата.
+ * Route number / tons label остава непокътнат.
+ */
+.orders-map-pin-discrepancy::before {
+    content: "⚠";
+
+    position: absolute;
+
+    top: -10px;
+    left: -10px;
+
+    display: grid;
+
+    width: 20px;
+    height: 20px;
+
+    place-items: center;
+
+    border:
+        2px solid
+        #ffffff;
+
+    border-radius:
+        50%;
+
+    background:
+        #dc2626;
+
+    color:
+        #ffffff;
+
+    box-shadow:
+        0 3px 8px
+        rgba(
+            0,
+            0,
+            0,
+            0.42
+        );
+
+    font-size: 10px;
+
+    line-height: 1;
+
+    z-index: 2;
+}
+
+
+.orders-map-pin-discrepancy {
+    box-shadow:
+        0 0 0 4px
+        rgba(
+            220,
+            38,
+            38,
+            0.28
+        ),
+        0 5px 14px
+        rgba(
+            0,
+            0,
+            0,
+            0.4
+        );
+}
+
+
+/* -----------------------------------------
+   MAP POPUP
+   ----------------------------------------- */
+
+.orders-map-popup-discrepancy {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+
+    margin-top: 8px;
+
+    padding: 7px 8px;
+
+    border:
+        1px solid
+        #dc2626;
+
+    border-radius: 7px;
+
+    background:
+        rgba(
+            127,
+            29,
+            29,
+            0.28
+        );
+}
+
+
+.orders-map-popup-discrepancy strong {
+    color:
+        #fecaca;
+
+    font-size: 9px;
+}
+
+
+.orders-map-popup-discrepancy span {
+    color:
+        #fca5a5;
+
+    font-size: 8px;
+}
+
+
+/* -----------------------------------------
+   SELECTED ORDER
+   ----------------------------------------- */
+
+.orders-selected-discrepancy {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+
+    margin-top: 7px;
+
+    padding: 8px;
+
+    border:
+        1px solid
+        #dc2626;
+
+    border-radius: 8px;
+
+    background:
+        rgba(
+            127,
+            29,
+            29,
+            0.22
+        );
+}
+
+
+.orders-selected-discrepancy strong {
+    color:
+        #fecaca;
+
+    font-size: 10px;
+}
+
+
+.orders-selected-discrepancy span {
+    color:
+        #fca5a5;
+
+    font-size: 9px;
+}
+
+
+.orders-selected-discrepancy small {
+    color:
+        #cbd5e1;
+
+    font-size: 8px;
+}
+
+
+/* -----------------------------------------
+   ADDRESS DRAWER
+   ----------------------------------------- */
+
+.orders-compact-discrepancy {
+    display: block;
+
+    width: fit-content;
+
+    margin-top: 4px;
+
+    padding: 3px 6px;
+
+    border:
+        1px solid
+        rgba(
+            220,
+            38,
+            38,
+            0.65
+        );
+
+    border-radius: 999px;
+
+    background:
+        rgba(
+            127,
+            29,
+            29,
+            0.24
+        );
+
+    color:
+        #fca5a5 !important;
+
+    font-size: 8px !important;
+
+    font-weight: 900;
+}
+
+
+@media (max-width: 767px) {
+
+    .orders-selected-discrepancy {
+        padding: 7px;
+    }
+
+
+    .orders-selected-discrepancy strong {
+        font-size: 9px;
+    }
+
+
+    .orders-map-pin-discrepancy::before {
+        width: 18px;
+        height: 18px;
+
+        top: -8px;
+        left: -8px;
+
+        font-size: 9px;
+    }
+
+}

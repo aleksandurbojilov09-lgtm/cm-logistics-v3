@@ -80,6 +80,23 @@ function formatTons(
 }
 
 
+function formatSignedTons(
+    value: number
+): string {
+
+    const sign =
+        value > 0
+            ? "+"
+            : "";
+
+    return (
+        `${sign}${formatTons(
+            value
+        )}`
+    );
+}
+
+
 function isCurrentAssignment(
     assignment:
         AdminOrderAssignment
@@ -206,6 +223,15 @@ function markerClass(
     ) {
         classes.push(
             "orders-map-pin-ramp"
+        );
+    }
+
+
+    if (
+        order.latestLoadingWarning
+    ) {
+        classes.push(
+            "orders-map-pin-discrepancy"
         );
     }
 
@@ -482,6 +508,52 @@ function popupHtml(
 
                     : ""
             }
+
+            ${
+                order.latestLoadingWarning
+
+                    ? `
+                        <div
+                            class="orders-map-popup-discrepancy"
+                        >
+                            <strong>
+                                ⚠️ Последното товарене е с несъответствие
+                            </strong>
+
+                            <span>
+                                Зачислени
+                                ${escapeHtml(
+                                    formatTons(
+                                        order.latestLoadingWarning
+                                            .assignedTons
+                                    )
+                                )}
+                                т.
+                                ·
+                                Реално
+                                ${escapeHtml(
+                                    formatTons(
+                                        order.latestLoadingWarning
+                                            .actualLoadedTons
+                                    )
+                                )}
+                                т.
+                                ·
+                                Разлика
+                                ${escapeHtml(
+                                    formatSignedTons(
+                                        order.latestLoadingWarning
+                                            .differenceTons
+                                    )
+                                )}
+                                т.
+                            </span>
+                        </div>
+                    `
+
+                    : ""
+            }
+
 
             <div
                 class="orders-map-popup-meta"
