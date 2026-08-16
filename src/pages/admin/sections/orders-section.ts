@@ -26,6 +26,14 @@ import {
 } from "../../../entities/location/fixed-location-service";
 
 import {
+    loadFleetSnapshot
+} from "../../../features/fleet/fleet-service";
+
+import {
+    loadAdminActiveTrips
+} from "../../../features/trips/admin-trip-service";
+
+import {
     renderAdminOrdersMap
 } from "./orders-map";
 
@@ -52,6 +60,23 @@ let compositions:
 
 let refreshVersion =
     0;
+
+
+type AdminDashboardCounters = {
+    unfinishedOrders: number;
+    activeTrips: number;
+    activeDrivers: number;
+    activeTrucks: number;
+};
+
+
+let dashboardCounters:
+    AdminDashboardCounters = {
+        unfinishedOrders: 0,
+        activeTrips: 0,
+        activeDrivers: 0,
+        activeTrucks: 0
+    };
 
 let selectedTruckId:
     string | null =
@@ -88,6 +113,83 @@ string {
                 class="orders-page-message"
                 aria-live="polite"
             ></div>
+
+
+            <div
+                class="admin-stats orders-dashboard-stats"
+                aria-label="Обобщение"
+            >
+                <article
+                    class="admin-stat-card"
+                >
+                    <div
+                        class="admin-stat-label"
+                    >
+                        📦 Незавършени заявки
+                    </div>
+
+                    <div
+                        id="k3DashboardUnfinishedOrders"
+                        class="admin-stat-value"
+                    >
+                        0
+                    </div>
+                </article>
+
+
+                <article
+                    class="admin-stat-card"
+                >
+                    <div
+                        class="admin-stat-label"
+                    >
+                        🗺️ Активни курсове
+                    </div>
+
+                    <div
+                        id="k3DashboardActiveTrips"
+                        class="admin-stat-value"
+                    >
+                        0
+                    </div>
+                </article>
+
+
+                <article
+                    class="admin-stat-card"
+                >
+                    <div
+                        class="admin-stat-label"
+                    >
+                        👨‍✈️ Активни шофьори
+                    </div>
+
+                    <div
+                        id="k3DashboardActiveDrivers"
+                        class="admin-stat-value"
+                    >
+                        0
+                    </div>
+                </article>
+
+
+                <article
+                    class="admin-stat-card"
+                >
+                    <div
+                        class="admin-stat-label"
+                    >
+                        🚛 Активни камиони
+                    </div>
+
+                    <div
+                        id="k3DashboardActiveTrucks"
+                        class="admin-stat-value"
+                    >
+                        0
+                    </div>
+                </article>
+            </div>
 
 
             <section
@@ -484,6 +586,75 @@ HTMLElement | null {
     return document.querySelector(
         "#k3OrdersSection"
     );
+}
+
+
+function renderDashboardCounters():
+void {
+
+    const unfinishedOrders =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3DashboardUnfinishedOrders"
+        );
+
+    const activeTrips =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3DashboardActiveTrips"
+        );
+
+    const activeDrivers =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3DashboardActiveDrivers"
+        );
+
+    const activeTrucks =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3DashboardActiveTrucks"
+        );
+
+
+    if (unfinishedOrders) {
+        unfinishedOrders.textContent =
+            String(
+                dashboardCounters
+                    .unfinishedOrders
+            );
+    }
+
+
+    if (activeTrips) {
+        activeTrips.textContent =
+            String(
+                dashboardCounters
+                    .activeTrips
+            );
+    }
+
+
+    if (activeDrivers) {
+        activeDrivers.textContent =
+            String(
+                dashboardCounters
+                    .activeDrivers
+            );
+    }
+
+
+    if (activeTrucks) {
+        activeTrucks.textContent =
+            String(
+                dashboardCounters
+                    .activeTrucks
+            );
+    }
 }
 
 
@@ -3420,7 +3591,9 @@ Promise<void> {
         const [
             clientSnapshot,
             orderWorkspace,
-            locationSnapshot
+            locationSnapshot,
+            activeTripsSnapshot,
+            fleetSnapshot
         ] =
             await Promise.all([
                 loadClientManagementSnapshot(),
@@ -3429,7 +3602,11 @@ Promise<void> {
                 loadFixedLocations()
                     .catch(
                         () => []
-                    )
+                    ),
+
+                loadAdminActiveTrips(),
+
+                loadFleetSnapshot()
             ]);
 
 
@@ -3453,6 +3630,39 @@ Promise<void> {
 
         compositions =
             orderWorkspace.compositions;
+
+
+        dashboardCounters = {
+            unfinishedOrders:
+                orderWorkspace
+                    .mapOrders
+                    .length,
+
+            activeTrips:
+                activeTripsSnapshot
+                    .length,
+
+            activeDrivers:
+                fleetSnapshot
+                    .drivers
+                    .filter(
+                        driver =>
+                            driver.isActive
+                    )
+                    .length,
+
+            activeTrucks:
+                fleetSnapshot
+                    .trucks
+                    .filter(
+                        truck =>
+                            truck.isActive
+                    )
+                    .length
+        };
+
+
+        renderDashboardCounters();
 
 
         if (

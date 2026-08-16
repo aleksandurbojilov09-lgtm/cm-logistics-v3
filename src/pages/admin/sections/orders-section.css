@@ -550,3 +550,55 @@
     }
 
 }
+
+
+
+/* =========================================================
+   K3 ADMIN DASHBOARD COUNTERS
+   ========================================================= */
+
+.orders-dashboard-stats {
+    margin-bottom: 2px;
+}
+
+
+.orders-dashboard-stats
+.admin-stat-card {
+    min-width: 0;
+}
+
+
+.orders-dashboard-stats
+.admin-stat-label {
+    line-height: 1.35;
+}
+
+
+@media (max-width: 767px) {
+
+    .orders-dashboard-stats {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+
+        gap: 8px;
+    }
+
+
+    .orders-dashboard-stats
+    .admin-stat-card {
+        padding: 11px;
+    }
+
+
+    .orders-dashboard-stats
+    .admin-stat-value {
+        margin-top: 4px;
+    }
+
+}
