@@ -213,3 +213,323 @@
     }
 
 }
+
+
+/* =========================================================
+   K3 QUICK ASSIGN DIALOG
+   ========================================================= */
+
+.orders-quick-assign-dialog {
+    width:
+        min(
+            440px,
+            calc(100vw - 28px)
+        );
+
+    padding: 0;
+
+    overflow: hidden;
+
+    border:
+        1px solid
+        #334155;
+
+    border-radius:
+        16px;
+
+    background:
+        #0f172a;
+
+    color:
+        #f8fafc;
+
+    box-shadow:
+        0 24px 80px
+        rgba(
+            0,
+            0,
+            0,
+            0.55
+        );
+}
+
+
+.orders-quick-assign-dialog::backdrop {
+    background:
+        rgba(
+            2,
+            6,
+            23,
+            0.82
+        );
+
+    backdrop-filter:
+        blur(3px);
+}
+
+
+.orders-quick-assign-form {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 12px;
+
+    padding: 15px;
+}
+
+
+.orders-quick-assign-header {
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+    gap: 12px;
+}
+
+
+.orders-quick-assign-header span,
+.orders-quick-assign-header strong {
+    display: block;
+}
+
+
+.orders-quick-assign-header span {
+    color: #60a5fa;
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    text-transform: uppercase;
+}
+
+
+.orders-quick-assign-header strong {
+    margin-top: 3px;
+
+    font-size: 18px;
+}
+
+
+.orders-quick-assign-close {
+    display: grid;
+
+    width: 36px;
+
+    height: 36px;
+
+    flex: 0 0 auto;
+
+    place-items: center;
+
+    border:
+        1px solid
+        #334155;
+
+    border-radius: 9px;
+
+    background:
+        #1e293b;
+
+    color:
+        #f8fafc;
+}
+
+
+.orders-quick-assign-site {
+    padding: 9px 10px;
+
+    border:
+        1px solid
+        #1e293b;
+
+    border-radius: 9px;
+
+    background:
+        #111827;
+
+    color:
+        #cbd5e1;
+
+    font-size: 11px;
+}
+
+
+.orders-quick-assign-stats {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+    gap: 7px;
+}
+
+
+.orders-quick-assign-stats > div {
+    padding: 9px;
+
+    border:
+        1px solid
+        #1e293b;
+
+    border-radius: 9px;
+
+    background:
+        #020617;
+}
+
+
+.orders-quick-assign-stats span,
+.orders-quick-assign-stats strong {
+    display: block;
+}
+
+
+.orders-quick-assign-stats span {
+    color:
+        #64748b;
+
+    font-size: 9px;
+}
+
+
+.orders-quick-assign-stats strong {
+    margin-top: 3px;
+
+    font-size: 13px;
+}
+
+
+.orders-quick-assign-field {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 6px;
+
+    color:
+        #cbd5e1;
+
+    font-size: 11px;
+
+    font-weight: 800;
+}
+
+
+.orders-quick-assign-field input {
+    width: 100%;
+
+    min-height: 48px;
+
+    padding: 8px 11px;
+
+    border:
+        1px solid
+        #475569;
+
+    border-radius: 10px;
+
+    outline: none;
+
+    background:
+        #1e293b;
+
+    color:
+        #ffffff;
+
+    font: inherit;
+
+    font-size: 18px;
+
+    font-weight: 900;
+}
+
+
+.orders-quick-assign-field input:focus {
+    border-color:
+        #3b82f6;
+}
+
+
+.orders-quick-assign-submit {
+    min-height: 48px;
+
+    padding: 9px 12px;
+
+    border: 0;
+
+    border-radius: 10px;
+
+    background:
+        #2563eb;
+
+    color:
+        #ffffff;
+
+    font-weight: 900;
+}
+
+
+.orders-quick-assign-submit:disabled {
+    opacity: 0.55;
+}
+
+
+@media (max-width: 767px) {
+
+    .orders-quick-assign-dialog {
+        position: fixed;
+
+        inset:
+            auto
+            8px
+            max(
+                8px,
+                env(
+                    safe-area-inset-bottom
+                )
+            )
+            8px;
+
+        width: auto;
+
+        max-width: none;
+
+        margin: 0;
+
+        border-radius:
+            18px
+            18px
+            12px
+            12px;
+    }
+
+
+    .orders-quick-assign-form {
+        gap: 9px;
+
+        padding: 12px;
+    }
+
+
+    .orders-quick-assign-header strong {
+        font-size: 16px;
+    }
+
+
+    .orders-quick-assign-stats > div {
+        padding: 7px;
+    }
+
+
+    .orders-quick-assign-field input,
+    .orders-quick-assign-submit {
+        min-height: 46px;
+    }
+}

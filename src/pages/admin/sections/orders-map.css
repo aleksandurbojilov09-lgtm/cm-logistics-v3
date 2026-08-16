@@ -1623,3 +1623,79 @@
             1 / -1;
     }
 }
+
+
+/* =========================================================
+   K3 ORDERS MAP QUICK ASSIGN
+   ========================================================= */
+
+.orders-map-popup-quick-action {
+    margin-top: 9px;
+}
+
+
+.orders-map-popup-quick-assign {
+    display: flex;
+
+    width: 100%;
+
+    min-height: 44px;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 8px;
+
+    padding: 8px 10px;
+
+    border: 1px solid #2563eb;
+
+    border-radius: 8px;
+
+    background: #1d4ed8;
+
+    color: #ffffff;
+
+    cursor: pointer;
+
+    text-align: left;
+}
+
+
+.orders-map-popup-quick-assign strong {
+    font-size: 10px;
+}
+
+
+.orders-map-popup-quick-assign span {
+    flex: 0 0 auto;
+
+    color: #bfdbfe;
+
+    font-size: 9px;
+
+    font-weight: 800;
+}
+
+
+.orders-map-popup-quick-assign:hover {
+    background: #2563eb;
+}
+
+
+.orders-map-popup-quick-state {
+    padding: 8px 9px;
+
+    border: 1px solid #334155;
+
+    border-radius: 8px;
+
+    background: #111827;
+
+    color: #94a3b8;
+
+    font-size: 9px;
+
+    font-weight: 800;
+}

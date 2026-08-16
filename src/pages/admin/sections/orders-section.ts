@@ -256,6 +256,129 @@ string {
             </section>
 
 
+            <dialog
+                id="k3QuickAssignDialog"
+                class="orders-quick-assign-dialog"
+            >
+                <form
+                    id="k3QuickAssignForm"
+                    class="orders-quick-assign-form"
+                >
+                    <header
+                        class="orders-quick-assign-header"
+                    >
+                        <div>
+                            <span>
+                                Бързо зачисляване
+                            </span>
+
+                            <strong
+                                id="k3QuickAssignCompany"
+                            >
+                                -
+                            </strong>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="orders-quick-assign-close"
+                            data-orders-action="close-quick-assign"
+                            aria-label="Затвори"
+                        >
+                            ✕
+                        </button>
+                    </header>
+
+
+                    <div
+                        id="k3QuickAssignSite"
+                        class="orders-quick-assign-site"
+                    >
+                        -
+                    </div>
+
+
+                    <div
+                        class="orders-quick-assign-stats"
+                    >
+                        <div>
+                            <span>
+                                🚛 Камион
+                            </span>
+
+                            <strong
+                                id="k3QuickAssignTruck"
+                            >
+                                -
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>
+                                Остатък заявка
+                            </span>
+
+                            <strong
+                                id="k3QuickAssignRemaining"
+                            >
+                                0 т.
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>
+                                Свободни в камиона
+                            </span>
+
+                            <strong
+                                id="k3QuickAssignFree"
+                            >
+                                0 т.
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>
+                                Максимум сега
+                            </span>
+
+                            <strong
+                                id="k3QuickAssignMax"
+                            >
+                                0 т.
+                            </strong>
+                        </div>
+                    </div>
+
+
+                    <label
+                        class="orders-quick-assign-field"
+                    >
+                        <span>
+                            Колко тона да зачисля?
+                        </span>
+
+                        <input
+                            id="k3QuickAssignTons"
+                            type="number"
+                            min="0.001"
+                            step="0.001"
+                            inputmode="decimal"
+                            required
+                        />
+                    </label>
+
+
+                    <button
+                        type="submit"
+                        class="orders-quick-assign-submit"
+                    >
+                        ➕ Зачисли
+                    </button>
+                </form>
+            </dialog>
+
+
             <details
                 class="
                     orders-panel
@@ -1602,12 +1725,30 @@ Promise<void> {
         visibleOperationalOrders();
 
 
+    const composition =
+        selectedComposition();
+
+
+    const selectedTruck =
+        selectedOperationalTruck();
+
+
     await renderAdminOrdersMap(
         visible,
         fixedLocations,
         {
             selectedOrderId,
             selectedTruckId,
+
+            selectedTruckNumber:
+                selectedTruck
+                    ?.truckNumber ||
+                null,
+
+            selectedTruckFreeTons:
+                composition
+                    ?.freeTons ??
+                null,
 
             onSelectOrder:
                 orderId => {
@@ -1635,37 +1776,51 @@ Promise<void> {
 }
 
 
-async function submitSelectedAssignment(
-    button:
-        HTMLButtonElement
-): Promise<void> {
+function closeQuickAssignDialog():
+void {
+
+    const dialog =
+        document.querySelector<
+            HTMLDialogElement
+        >(
+            "#k3QuickAssignDialog"
+        );
+
+
+    if (
+        dialog?.open
+    ) {
+        dialog.close();
+    }
+}
+
+
+function openQuickAssignDialog(
+    orderId: string
+): void {
 
     const order =
-        selectedOrderId
-            ? getOperationalOrder(
-                selectedOrderId
-            )
-            : null;
+        getOperationalOrder(
+            orderId
+        );
+
 
     const composition =
         selectedComposition();
 
-    const input =
-        document.querySelector<
-            HTMLInputElement
-        >(
-            "#k3SelectedOrderTons"
-        );
+
+    const selectedTruck =
+        selectedOperationalTruck();
 
 
     if (
         !order ||
         !composition ||
-        !input
+        !selectedTruck
     ) {
 
         setPageMessage(
-            "Избери заявка и камион.",
+            "Първо избери активен камион, наличен за зачисляване.",
             "error"
         );
 
@@ -1673,10 +1828,203 @@ async function submitSelectedAssignment(
     }
 
 
-    const tons =
-        Number(
-            input.value
+    const allowed =
+        Math.min(
+            order.remainingTons,
+            composition.freeTons
         );
+
+
+    if (
+        allowed <= 0
+    ) {
+
+        setPageMessage(
+            composition.freeTons <= 0
+                ? `${composition.truckNumber} няма свободен капацитет.`
+                : "По заявката няма оставащи тонове за зачисляване.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    selectedOrderId =
+        order.id;
+
+    renderCompactOrders();
+
+
+    const dialog =
+        document.querySelector<
+            HTMLDialogElement
+        >(
+            "#k3QuickAssignDialog"
+        );
+
+    const form =
+        document.querySelector<
+            HTMLFormElement
+        >(
+            "#k3QuickAssignForm"
+        );
+
+    const company =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3QuickAssignCompany"
+        );
+
+    const site =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3QuickAssignSite"
+        );
+
+    const truck =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3QuickAssignTruck"
+        );
+
+    const remaining =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3QuickAssignRemaining"
+        );
+
+    const free =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3QuickAssignFree"
+        );
+
+    const max =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3QuickAssignMax"
+        );
+
+    const input =
+        document.querySelector<
+            HTMLInputElement
+        >(
+            "#k3QuickAssignTons"
+        );
+
+
+    if (
+        !dialog ||
+        !form ||
+        !company ||
+        !site ||
+        !truck ||
+        !remaining ||
+        !free ||
+        !max ||
+        !input
+    ) {
+
+        setPageMessage(
+            "Формата за бързо зачисляване не е налична.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    form.dataset.orderId =
+        order.id;
+
+    company.textContent =
+        order.companyName;
+
+    site.textContent =
+        `📍 ${order.siteName} — ${order.siteAddress}`;
+
+    truck.textContent =
+        composition.truckNumber;
+
+    remaining.textContent =
+        `${formatTons(
+            order.remainingTons
+        )} т.`;
+
+    free.textContent =
+        `${formatTons(
+            composition.freeTons
+        )} т.`;
+
+    max.textContent =
+        `${formatTons(
+            allowed
+        )} т.`;
+
+    input.max =
+        String(
+            allowed
+        );
+
+    input.value =
+        formatTons(
+            allowed
+        );
+
+
+    if (
+        !dialog.open
+    ) {
+        dialog.showModal();
+    }
+
+
+    window.setTimeout(
+        () => {
+            input.focus();
+            input.select();
+        },
+        0
+    );
+}
+
+
+async function performAssignment(
+    orderId: string,
+    tons: number,
+    button:
+        HTMLButtonElement,
+    idleButtonText: string
+): Promise<boolean> {
+
+    const order =
+        getOperationalOrder(
+            orderId
+        );
+
+    const composition =
+        selectedComposition();
+
+
+    if (
+        !order ||
+        !composition
+    ) {
+
+        setPageMessage(
+            "Избери заявка и активен камион.",
+            "error"
+        );
+
+        return false;
+    }
 
 
     const allowed =
@@ -1698,7 +2046,7 @@ async function submitSelectedAssignment(
             "error"
         );
 
-        return;
+        return false;
     }
 
 
@@ -1714,7 +2062,7 @@ async function submitSelectedAssignment(
             "error"
         );
 
-        return;
+        return false;
     }
 
 
@@ -1745,6 +2093,8 @@ async function submitSelectedAssignment(
         );
 
 
+        return true;
+
     } catch (error) {
 
         setPageMessage(
@@ -1759,8 +2109,56 @@ async function submitSelectedAssignment(
             false;
 
         button.textContent =
-            "🚛 Зачисли";
+            idleButtonText;
+
+
+        return false;
     }
+}
+
+
+async function submitSelectedAssignment(
+    button:
+        HTMLButtonElement
+): Promise<void> {
+
+    const order =
+        selectedOrderId
+            ? getOperationalOrder(
+                selectedOrderId
+            )
+            : null;
+
+    const input =
+        document.querySelector<
+            HTMLInputElement
+        >(
+            "#k3SelectedOrderTons"
+        );
+
+
+    if (
+        !order ||
+        !input
+    ) {
+
+        setPageMessage(
+            "Избери заявка и камион.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    await performAssignment(
+        order.id,
+        Number(
+            input.value
+        ),
+        button,
+        "🚛 Зачисли"
+    );
 }
 
 
@@ -2334,6 +2732,38 @@ async function handleClick(
 
     if (
         action ===
+        "quick-assign"
+    ) {
+
+        const orderId =
+            button.dataset
+                .orderId;
+
+
+        if (orderId) {
+
+            openQuickAssignDialog(
+                orderId
+            );
+        }
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "close-quick-assign"
+    ) {
+
+        closeQuickAssignDialog();
+
+        return;
+    }
+
+
+    if (
+        action ===
         "assign-selected"
     ) {
 
@@ -2469,6 +2899,82 @@ function handleInput(
 }
 
 
+async function handleSubmit(
+    event: SubmitEvent
+): Promise<void> {
+
+    const form =
+        event.target;
+
+
+    if (
+        !(
+            form instanceof
+            HTMLFormElement
+        ) ||
+        form.id !==
+            "k3QuickAssignForm"
+    ) {
+        return;
+    }
+
+
+    event.preventDefault();
+
+
+    const orderId =
+        form.dataset
+            .orderId ||
+        "";
+
+    const input =
+        form.querySelector<
+            HTMLInputElement
+        >(
+            "#k3QuickAssignTons"
+        );
+
+    const button =
+        form.querySelector<
+            HTMLButtonElement
+        >(
+            ".orders-quick-assign-submit"
+        );
+
+
+    if (
+        !orderId ||
+        !input ||
+        !button
+    ) {
+
+        setPageMessage(
+            "Бързото зачисляване не е готово.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const success =
+        await performAssignment(
+            orderId,
+            Number(
+                input.value
+            ),
+            button,
+            "➕ Зачисли"
+        );
+
+
+    if (success) {
+
+        closeQuickAssignDialog();
+    }
+}
+
+
 export async function initializeSection():
 Promise<void> {
 
@@ -2500,6 +3006,17 @@ Promise<void> {
     root.addEventListener(
         "input",
         handleInput
+    );
+
+
+    root.addEventListener(
+        "submit",
+        event => {
+
+            void handleSubmit(
+                event
+            );
+        }
     );
 
 

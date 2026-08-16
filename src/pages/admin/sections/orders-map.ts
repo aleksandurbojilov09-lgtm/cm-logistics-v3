@@ -28,6 +28,12 @@ export type AdminOrdersMapOptions = {
     selectedTruckId:
         string | null;
 
+    selectedTruckNumber:
+        string | null;
+
+    selectedTruckFreeTons:
+        number | null;
+
     onSelectOrder:
         (
             orderId: string
@@ -285,13 +291,130 @@ function statusLabel(
 
 function popupHtml(
     order:
-        AdminOrderListItem
+        AdminOrderListItem,
+
+    options:
+        AdminOrdersMapOptions
 ): string {
 
     const assignments =
         currentAssignments(
             order
         );
+
+
+    const selectedTruckReady =
+        Boolean(
+            options.selectedTruckId &&
+            options.selectedTruckNumber &&
+            options.selectedTruckFreeTons !== null
+        );
+
+
+    const selectedTruckFreeTons =
+        options.selectedTruckFreeTons ??
+        0;
+
+
+    const quickAssignTons =
+        selectedTruckReady
+            ? Math.min(
+                order.remainingTons,
+                selectedTruckFreeTons
+            )
+            : 0;
+
+
+    let quickActionHtml =
+        "";
+
+
+    if (
+        order.remainingTons <=
+        0
+    ) {
+
+        quickActionHtml = `
+            <div
+                class="orders-map-popup-quick-state"
+            >
+                ✅ Няма оставащи тонове
+            </div>
+        `;
+
+    } else if (
+        !options.selectedTruckId
+    ) {
+
+        quickActionHtml = `
+            <div
+                class="orders-map-popup-quick-state"
+            >
+                🚛 Първо избери активен камион
+            </div>
+        `;
+
+    } else if (
+        !selectedTruckReady
+    ) {
+
+        quickActionHtml = `
+            <div
+                class="orders-map-popup-quick-state"
+            >
+                ⚠️ Избраният камион е само за преглед
+            </div>
+        `;
+
+    } else if (
+        selectedTruckFreeTons <=
+        0
+    ) {
+
+        quickActionHtml = `
+            <div
+                class="orders-map-popup-quick-state"
+            >
+                🚛
+                ${escapeHtml(
+                    options.selectedTruckNumber ||
+                    "Камионът"
+                )}
+                е запълнен
+            </div>
+        `;
+
+    } else {
+
+        quickActionHtml = `
+            <button
+                type="button"
+                class="orders-map-popup-quick-assign"
+                data-orders-action="quick-assign"
+                data-order-id="${escapeHtml(
+                    order.id
+                )}"
+            >
+                <strong>
+                    ➕ Добави към
+                    ${escapeHtml(
+                        options.selectedTruckNumber ||
+                        "камиона"
+                    )}
+                </strong>
+
+                <span>
+                    до
+                    ${escapeHtml(
+                        formatTons(
+                            quickAssignTons
+                        )
+                    )}
+                    т.
+                </span>
+            </button>
+        `;
+    }
 
 
     return `
@@ -473,10 +596,9 @@ function popupHtml(
             }
 
             <div
-                class="orders-map-popup-hint"
+                class="orders-map-popup-quick-action"
             >
-                Кликни маркера, за да работиш
-                със заявката в панела вдясно.
+                ${quickActionHtml}
             </div>
         </div>
     `;
@@ -794,7 +916,8 @@ renderAdminOrdersMap(
                     )
                     .bindPopup(
                         popupHtml(
-                            order
+                            order,
+                            options
                         )
                     );
 
