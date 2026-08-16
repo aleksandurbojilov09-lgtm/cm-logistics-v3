@@ -64,18 +64,18 @@ let refreshVersion =
 
 type AdminDashboardCounters = {
     unfinishedOrders: number;
-    activeTrips: number;
-    activeDrivers: number;
-    activeTrucks: number;
+    activeTrips: number | null;
+    activeDrivers: number | null;
+    activeTrucks: number | null;
 };
 
 
 let dashboardCounters:
     AdminDashboardCounters = {
         unfinishedOrders: 0,
-        activeTrips: 0,
-        activeDrivers: 0,
-        activeTrucks: 0
+        activeTrips: null,
+        activeDrivers: null,
+        activeTrucks: null
     };
 
 let selectedTruckId:
@@ -589,6 +589,16 @@ HTMLElement | null {
 }
 
 
+function dashboardCounterText(
+    value: number | null
+): string {
+
+    return value === null
+        ? "—"
+        : String(value);
+}
+
+
 function renderDashboardCounters():
 void {
 
@@ -632,7 +642,7 @@ void {
 
     if (activeTrips) {
         activeTrips.textContent =
-            String(
+            dashboardCounterText(
                 dashboardCounters
                     .activeTrips
             );
@@ -641,7 +651,7 @@ void {
 
     if (activeDrivers) {
         activeDrivers.textContent =
-            String(
+            dashboardCounterText(
                 dashboardCounters
                     .activeDrivers
             );
@@ -650,7 +660,7 @@ void {
 
     if (activeTrucks) {
         activeTrucks.textContent =
-            String(
+            dashboardCounterText(
                 dashboardCounters
                     .activeTrucks
             );
@@ -3604,9 +3614,15 @@ Promise<void> {
                         () => []
                     ),
 
-                loadAdminActiveTrips(),
+                loadAdminActiveTrips()
+                    .catch(
+                        () => null
+                    ),
 
                 loadFleetSnapshot()
+                    .catch(
+                        () => null
+                    )
             ]);
 
 
@@ -3640,25 +3656,30 @@ Promise<void> {
 
             activeTrips:
                 activeTripsSnapshot
-                    .length,
+                    ?.length ??
+                null,
 
             activeDrivers:
                 fleetSnapshot
-                    .drivers
-                    .filter(
-                        driver =>
-                            driver.isActive
-                    )
-                    .length,
+                    ? fleetSnapshot
+                        .drivers
+                        .filter(
+                            driver =>
+                                driver.isActive
+                        )
+                        .length
+                    : null,
 
             activeTrucks:
                 fleetSnapshot
-                    .trucks
-                    .filter(
-                        truck =>
-                            truck.isActive
-                    )
-                    .length
+                    ? fleetSnapshot
+                        .trucks
+                        .filter(
+                            truck =>
+                                truck.isActive
+                        )
+                        .length
+                    : null
         };
 
 
