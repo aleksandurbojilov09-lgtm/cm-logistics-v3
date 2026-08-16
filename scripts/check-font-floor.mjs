@@ -44,6 +44,12 @@ function inspectFile(
     const remRegex =
         /font-size\s*:\s*(\d+(?:\.\d+)?)rem/gi;
 
+    const emRegex =
+        /font-size\s*:\s*(\d+(?:\.\d+)?)em/gi;
+
+    const percentRegex =
+        /font-size\s*:\s*(\d+(?:\.\d+)?)%/gi;
+
 
     for (
         const match
@@ -90,6 +96,56 @@ function inspectFile(
 
             violations.push(
                 `${filePath}: ${value}rem`
+            );
+        }
+    }
+
+
+    for (
+        const match
+        of text.matchAll(
+            emRegex
+        )
+    ) {
+
+        const value =
+            Number(
+                match[1]
+            );
+
+
+        if (
+            value <
+            0.875
+        ) {
+
+            violations.push(
+                `${filePath}: ${value}em`
+            );
+        }
+    }
+
+
+    for (
+        const match
+        of text.matchAll(
+            percentRegex
+        )
+    ) {
+
+        const value =
+            Number(
+                match[1]
+            );
+
+
+        if (
+            value <
+            87.5
+        ) {
+
+            violations.push(
+                `${filePath}: ${value}%`
             );
         }
     }
