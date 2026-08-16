@@ -1029,13 +1029,30 @@ void {
                 class="orders-selected-stat"
             >
                 <span>
-                    Зачислени
+                    Изпълнени
                 </span>
 
                 <strong>
                     ${escapeHtml(
                         formatTons(
-                            order.assignedTons
+                            order.completedTons
+                        )
+                    )}
+                    т.
+                </strong>
+            </div>
+
+            <div
+                class="orders-selected-stat"
+            >
+                <span>
+                    Зачислени сега
+                </span>
+
+                <strong>
+                    ${escapeHtml(
+                        formatTons(
+                            order.activeAssignedTons
                         )
                     )}
                     т.
@@ -1059,6 +1076,93 @@ void {
                 </strong>
             </div>
         </div>
+
+
+        ${
+            assignments.length
+
+                ? `
+                    <div
+                        class="orders-current-assignments"
+                    >
+                        <strong
+                            class="orders-current-assignments-title"
+                        >
+                            🚛 Текущо зачисляване
+                        </strong>
+
+                        ${
+                            assignments
+                                .map(
+                                    assignment => `
+                                        <div
+                                            class="orders-current-assignment"
+                                        >
+                                            <div
+                                                class="orders-current-assignment-info"
+                                            >
+                                                <strong>
+                                                    ${escapeHtml(
+                                                        assignment.truckNumber ||
+                                                        "Камион"
+                                                    )}
+                                                </strong>
+
+                                                <span>
+                                                    ${escapeHtml(
+                                                        assignment.driverName ||
+                                                        "-"
+                                                    )}
+                                                </span>
+                                            </div>
+
+                                            <strong
+                                                class="orders-current-assignment-tons"
+                                            >
+                                                ${escapeHtml(
+                                                    formatTons(
+                                                        assignment.assignedTons
+                                                    )
+                                                )}
+                                                т.
+                                            </strong>
+
+                                            ${
+                                                assignment.status ===
+                                                    "assigned" &&
+                                                !assignment.tripId
+
+                                                    ? `
+                                                        <button
+                                                            type="button"
+                                                            class="orders-cancel-assignment-button"
+                                                            data-orders-action="cancel-assignment"
+                                                            data-assignment-id="${escapeHtml(
+                                                                assignment.id
+                                                            )}"
+                                                        >
+                                                            ↩ Отмени
+                                                        </button>
+                                                    `
+
+                                                    : `
+                                                        <span
+                                                            class="orders-current-assignment-locked"
+                                                        >
+                                                            Курсът е започнал
+                                                        </span>
+                                                    `
+                                            }
+                                        </div>
+                                    `
+                                )
+                                .join("")
+                        }
+                    </div>
+                `
+
+                : ""
+        }
 
 
         ${
@@ -1182,7 +1286,7 @@ void {
                         class="orders-selected-history"
                     >
                         <summary>
-                            🚛 Зачислявания
+                            🕘 История
                             (${historyAssignments.length})
                         </summary>
 
@@ -1254,16 +1358,11 @@ void {
                                                     !assignment.tripId
 
                                                         ? `
-                                                            <button
-                                                                type="button"
-                                                                class="orders-cancel-assignment-button"
-                                                                data-orders-action="cancel-assignment"
-                                                                data-assignment-id="${escapeHtml(
-                                                                    assignment.id
-                                                                )}"
+                                                            <small
+                                                                class="orders-assignment-current-label"
                                                             >
-                                                                ↩ Отмени
-                                                            </button>
+                                                                Текущо
+                                                            </small>
                                                         `
 
                                                         : ""

@@ -371,11 +371,23 @@ function popupHtml(
                 </span>
 
                 <span>
-                    Зачислени
+                    Изпълнени
                     <strong>
                         ${escapeHtml(
                             formatTons(
-                                order.assignedTons
+                                order.completedTons
+                            )
+                        )}
+                        т.
+                    </strong>
+                </span>
+
+                <span>
+                    Зачислени сега
+                    <strong>
+                        ${escapeHtml(
+                            formatTons(
+                                order.activeAssignedTons
                             )
                         )}
                         т.

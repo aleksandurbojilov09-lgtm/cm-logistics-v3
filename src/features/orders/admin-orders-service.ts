@@ -66,7 +66,18 @@ export type AdminOrderListItem = {
     loadingRamp: boolean;
 
     requestedTons: number;
+
+    /*
+     * Total quantity that is no longer available:
+     * completed + currently active assignments.
+     *
+     * Kept for compatibility with existing calculations.
+     */
     assignedTons: number;
+
+    completedTons: number;
+    activeAssignedTons: number;
+
     remainingTons: number;
 
     status: AdminOrderStatus;
@@ -392,13 +403,13 @@ function mapOrder(
         );
 
 
-    const assignedTons =
+    const completedTons =
         assignments
 
             .filter(
                 assignment =>
-                    assignment.status !==
-                        "cancelled"
+                    assignment.status ===
+                        "completed"
             )
 
             .reduce(
@@ -411,6 +422,34 @@ function mapOrder(
 
                 0
             );
+
+
+    const activeAssignedTons =
+        assignments
+
+            .filter(
+                assignment =>
+                    assignment.status !==
+                        "cancelled" &&
+                    assignment.status !==
+                        "completed"
+            )
+
+            .reduce(
+                (
+                    total,
+                    assignment
+                ) =>
+                    total +
+                    assignment.assignedTons,
+
+                0
+            );
+
+
+    const assignedTons =
+        completedTons +
+        activeAssignedTons;
 
 
     return {
@@ -453,6 +492,10 @@ function mapOrder(
         requestedTons,
 
         assignedTons,
+
+        completedTons,
+
+        activeAssignedTons,
 
         remainingTons:
             Math.max(
