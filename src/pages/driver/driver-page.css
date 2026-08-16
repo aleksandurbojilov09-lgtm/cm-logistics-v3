@@ -1087,9 +1087,58 @@
     }
 
 
+    .driver-topbar-actions {
+        display:
+            flex;
+
+        align-items:
+            center;
+
+        gap:
+            6px;
+
+        margin-left:
+            auto;
+    }
+
+
     .driver-logout {
         display:
-            none;
+            inline-flex;
+
+        min-height:
+            36px;
+
+        align-items:
+            center;
+
+        justify-content:
+            center;
+
+        padding:
+            0 10px;
+
+        border:
+            1px solid
+            #334155;
+
+        border-radius:
+            9px;
+
+        background:
+            #1e293b;
+
+        color:
+            #fca5a5;
+
+        font-size:
+            11px;
+
+        font-weight:
+            800;
+
+        white-space:
+            nowrap;
     }
 
 
@@ -1101,8 +1150,8 @@
         padding:
             8px
             8px
-            calc(
-                76px +
+            max(
+                12px,
                 env(
                     safe-area-inset-bottom
                 )
@@ -1364,4 +1413,18 @@
         color:
             #fca5a5;
     }
+}
+
+
+/* =========================================================
+   DRIVER MOBILE HEADER REFINEMENT
+   Archive action will live beside logout when implemented.
+   ========================================================= */
+
+@media (max-width: 767px) {
+
+    .driver-mobile-nav {
+        display: none !important;
+    }
+
 }
