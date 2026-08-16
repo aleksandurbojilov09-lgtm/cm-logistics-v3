@@ -291,6 +291,7 @@ string {
                 >
 
                     <section
+                        id="k3DriverMapPanel"
                         class="driver-panel"
                     >
 
@@ -325,6 +326,7 @@ string {
 
 
                     <section
+                        id="k3DriverStopsPanel"
                         class="driver-panel"
                     >
 
@@ -360,6 +362,65 @@ string {
                 </div>
 
             </main>
+
+
+            <nav
+                class="driver-mobile-nav"
+                aria-label="Шофьор"
+            >
+
+                <a
+                    href="#k3DriverTripControl"
+                    class="driver-mobile-nav-item"
+                >
+                    <span>🚛</span>
+
+                    <small>
+                        Курс
+                    </small>
+                </a>
+
+
+                <a
+                    href="#k3DriverMapPanel"
+                    class="driver-mobile-nav-item"
+                >
+                    <span>🗺️</span>
+
+                    <small>
+                        Карта
+                    </small>
+                </a>
+
+
+                <a
+                    href="#k3DriverStopsPanel"
+                    class="driver-mobile-nav-item"
+                >
+                    <span>📍</span>
+
+                    <small>
+                        Спирки
+                    </small>
+                </a>
+
+
+                <button
+                    type="button"
+                    class="
+                        driver-mobile-nav-item
+                        driver-mobile-nav-logout
+                    "
+                    data-driver-action="logout"
+                >
+                    <span>🚪</span>
+
+                    <small>
+                        Изход
+                    </small>
+                </button>
+
+            </nav>
 
 
             <dialog

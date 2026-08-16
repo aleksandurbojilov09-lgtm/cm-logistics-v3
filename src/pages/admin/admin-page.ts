@@ -204,30 +204,110 @@ function renderDesktopNavigation():
 
 function renderMobileNavigation():
     string {
-    return (
-        Object.entries(
-            ADMIN_VIEW_CONFIG
-        )
-            .map(
-                ([view, config]) => `
-                    <button
-                        type="button"
-                        class="admin-mobile-nav-button"
-                        data-admin-view="${view}"
-                        aria-label="${config.label}"
-                    >
-                        <span
-                            class="admin-mobile-nav-icon"
-                        >
-                            ${config.icon}
-                        </span>
 
+    const primaryViews:
+        AdminView[] = [
+            "orders",
+            "trips",
+            "discrepancies"
+        ];
+
+    const moreViews:
+        AdminView[] = [
+            "registrations",
+            "drivers",
+            "fleet",
+            "archive"
+        ];
+
+
+    const renderButton =
+        (
+            view: AdminView,
+            extraClass = ""
+        ) => {
+
+            const config =
+                ADMIN_VIEW_CONFIG[view];
+
+
+            return `
+                <button
+                    type="button"
+                    class="
+                        admin-mobile-nav-button
+                        ${extraClass}
+                    "
+                    data-admin-view="${view}"
+                    aria-label="${config.label}"
+                >
+                    <span
+                        class="admin-mobile-nav-icon"
+                    >
+                        ${config.icon}
+                    </span>
+
+                    <span>
                         ${config.label}
-                    </button>
-                `
+                    </span>
+                </button>
+            `;
+        };
+
+
+    return `
+        ${primaryViews
+            .map(
+                view =>
+                    renderButton(
+                        view
+                    )
             )
-            .join("")
-    );
+            .join("")}
+
+        <details
+            class="admin-mobile-more"
+        >
+            <summary
+                class="admin-mobile-more-summary"
+                aria-label="Още"
+            >
+                <span
+                    class="admin-mobile-nav-icon"
+                >
+                    ⋯
+                </span>
+
+                <span>
+                    Още
+                </span>
+            </summary>
+
+            <div
+                class="admin-mobile-sheet"
+            >
+                <div
+                    class="admin-mobile-sheet-title"
+                >
+                    Още функции
+                </div>
+
+                <div
+                    class="admin-mobile-sheet-grid"
+                >
+                    ${moreViews
+                        .map(
+                            view =>
+                                renderButton(
+                                    view,
+                                    "admin-mobile-sheet-button"
+                                )
+                        )
+                        .join("")}
+                </div>
+            </div>
+        </details>
+    `;
 }
 
 
@@ -360,6 +440,44 @@ function renderFallbackSection(
 export function renderPage(): string {
     return `
         <div class="admin-page">
+
+            <header
+                class="admin-mobile-topbar"
+            >
+                <div
+                    class="admin-mobile-brand"
+                >
+                    <div
+                        class="admin-mobile-logo"
+                    >
+                        K3
+                    </div>
+
+                    <div
+                        class="admin-mobile-heading"
+                    >
+                        <span>
+                            Администрация
+                        </span>
+
+                        <strong
+                            id="adminMobilePageTitle"
+                        >
+                            Заявки
+                        </strong>
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    class="admin-mobile-logout"
+                    data-admin-logout
+                    aria-label="Изход"
+                    title="Изход"
+                >
+                    🚪
+                </button>
+            </header>
 
             <div class="admin-layout">
 
@@ -535,9 +653,21 @@ function updateHeader(
             "#adminPageSubtitle"
         );
 
+    const mobileTitle =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#adminMobilePageTitle"
+        );
+
     if (title) {
         title.textContent =
             config.title;
+    }
+
+    if (mobileTitle) {
+        mobileTitle.textContent =
+            config.label;
     }
 
     if (subtitle) {
@@ -676,6 +806,12 @@ function initializeNavigation():
                     if (!isAdminView(view)) {
                         return;
                     }
+
+                    button
+                        .closest("details")
+                        ?.removeAttribute(
+                            "open"
+                        );
 
                     void openAdminView(
                         view

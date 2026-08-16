@@ -668,3 +668,408 @@
     }
 
 }
+
+/* =========================================================
+   K3 MOBILE FOUNDATION - CLIENT
+   ========================================================= */
+
+.client-mobile-nav {
+    display: none;
+}
+
+
+@media (max-width: 767px) {
+
+    .client-portal {
+        min-height:
+            100dvh;
+
+        overflow-x:
+            hidden;
+    }
+
+
+    .client-topbar {
+        position:
+            sticky;
+
+        z-index:
+            9000;
+
+        top:
+            0;
+
+
+        min-height:
+            48px;
+
+
+        padding:
+            max(
+                6px,
+                env(
+                    safe-area-inset-top
+                )
+            )
+            10px
+            6px;
+
+
+        gap:
+            8px;
+
+
+        background:
+            rgba(
+                15,
+                23,
+                42,
+                0.97
+            );
+
+
+        backdrop-filter:
+            blur(
+                14px
+            );
+    }
+
+
+    .client-brand {
+        gap:
+            8px;
+    }
+
+
+    .client-brand-logo {
+        width:
+            36px;
+
+        height:
+            30px;
+
+
+        border-radius:
+            7px;
+
+
+        font-size:
+            16px;
+    }
+
+
+    .client-brand strong {
+        font-size:
+            13px;
+    }
+
+
+    .client-brand span {
+        display:
+            none;
+    }
+
+
+    .client-logout {
+        display:
+            none;
+    }
+
+
+    .client-main {
+        width:
+            100%;
+
+
+        padding:
+            8px
+            8px
+            calc(
+                76px +
+                env(
+                    safe-area-inset-bottom
+                )
+            );
+    }
+
+
+    .client-welcome {
+        margin-bottom:
+            8px;
+
+
+        padding:
+            10px
+            11px;
+
+
+        border-radius:
+            11px;
+    }
+
+
+    .client-welcome span {
+        font-size:
+            9px;
+    }
+
+
+    .client-welcome h1 {
+        margin-top:
+            2px;
+
+
+        font-size:
+            18px;
+    }
+
+
+    .client-welcome p {
+        margin-top:
+            2px;
+
+
+        font-size:
+            11px;
+    }
+
+
+    .client-main-grid {
+        gap:
+            9px;
+    }
+
+
+    .client-panel {
+        border-radius:
+            12px;
+    }
+
+
+    .client-panel-header {
+        padding:
+            11px
+            12px;
+    }
+
+
+    .client-panel-header h2 {
+        font-size:
+            15px;
+    }
+
+
+    .client-panel-header p {
+        margin-top:
+            2px;
+
+
+        font-size:
+            10px;
+    }
+
+
+    .client-order-form,
+    .client-orders-list,
+    .client-calendar-panel {
+        padding:
+            11px;
+    }
+
+
+    .client-order-form {
+        gap:
+            10px;
+    }
+
+
+    .client-order-card {
+        padding:
+            11px;
+
+
+        border-radius:
+            11px;
+    }
+
+
+    .client-order-header >
+    div >
+    strong {
+        font-size:
+            16px;
+    }
+
+
+    #k3ClientNotificationsPanel,
+    #k3ClientNewOrderPanel,
+    #k3ClientActiveOrdersPanel,
+    #k3ClientHistoryPanel {
+        scroll-margin-top:
+            58px;
+    }
+
+
+    .client-mobile-nav {
+        position:
+            fixed;
+
+        z-index:
+            9200;
+
+
+        right:
+            0;
+
+        bottom:
+            0;
+
+        left:
+            0;
+
+
+        display:
+            grid;
+
+
+        grid-template-columns:
+            repeat(
+                4,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+
+
+        padding:
+            5px
+            6px
+            max(
+                5px,
+                env(
+                    safe-area-inset-bottom
+                )
+            );
+
+
+        border-top:
+            1px solid
+            #334155;
+
+
+        background:
+            rgba(
+                15,
+                23,
+                42,
+                0.98
+            );
+
+
+        backdrop-filter:
+            blur(
+                14px
+            );
+    }
+
+
+    .client-mobile-nav-item {
+        display:
+            flex;
+
+
+        min-width:
+            0;
+
+
+        min-height:
+            50px;
+
+
+        align-items:
+            center;
+
+
+        justify-content:
+            center;
+
+
+        flex-direction:
+            column;
+
+
+        gap:
+            3px;
+
+
+        padding:
+            4px
+            2px;
+
+
+        border:
+            0;
+
+
+        border-radius:
+            10px;
+
+
+        background:
+            transparent;
+
+
+        color:
+            #94a3b8;
+
+
+        text-decoration:
+            none;
+    }
+
+
+    .client-mobile-nav-item span {
+        font-size:
+            18px;
+
+
+        line-height:
+            1;
+    }
+
+
+    .client-mobile-nav-item small {
+        font-size:
+            9px;
+
+
+        font-weight:
+            700;
+
+
+        line-height:
+            1;
+    }
+
+
+    .client-mobile-nav-item:active {
+        background:
+            rgba(
+                37,
+                99,
+                235,
+                0.16
+            );
+
+
+        color:
+            #60a5fa;
+    }
+
+
+    .client-mobile-nav-logout {
+        color:
+            #fca5a5;
+    }
+}

@@ -382,6 +382,7 @@ string {
 
 
                 <section
+                    id="k3ClientNotificationsPanel"
                     class="
                         client-panel
                         client-notifications-panel
@@ -436,6 +437,7 @@ string {
                 >
 
                     <section
+                        id="k3ClientNewOrderPanel"
                         class="client-panel"
                     >
 
@@ -511,6 +513,7 @@ string {
 
 
                     <section
+                        id="k3ClientActiveOrdersPanel"
                         class="client-panel"
                     >
 
@@ -560,6 +563,7 @@ string {
 
 
                 <section
+                    id="k3ClientHistoryPanel"
                     class="
                         client-panel
                         client-history-panel
@@ -643,6 +647,65 @@ string {
                 </section>
 
             </main>
+
+
+            <nav
+                class="client-mobile-nav"
+                aria-label="Клиент"
+            >
+
+                <a
+                    href="#k3ClientNewOrderPanel"
+                    class="client-mobile-nav-item"
+                >
+                    <span>➕</span>
+
+                    <small>
+                        Заявка
+                    </small>
+                </a>
+
+
+                <a
+                    href="#k3ClientActiveOrdersPanel"
+                    class="client-mobile-nav-item"
+                >
+                    <span>🚚</span>
+
+                    <small>
+                        Активни
+                    </small>
+                </a>
+
+
+                <a
+                    href="#k3ClientHistoryPanel"
+                    class="client-mobile-nav-item"
+                >
+                    <span>📅</span>
+
+                    <small>
+                        История
+                    </small>
+                </a>
+
+
+                <button
+                    type="button"
+                    class="
+                        client-mobile-nav-item
+                        client-mobile-nav-logout
+                    "
+                    data-client-action="logout"
+                >
+                    <span>🚪</span>
+
+                    <small>
+                        Изход
+                    </small>
+                </button>
+
+            </nav>
 
 
             <dialog

@@ -985,3 +985,383 @@
 .driver-first-stop-navigation {
     margin-top: 14px;
 }
+
+/* =========================================================
+   K3 MOBILE FOUNDATION - DRIVER
+   ========================================================= */
+
+.driver-mobile-nav {
+    display: none;
+}
+
+
+@media (max-width: 767px) {
+
+    .driver-portal {
+        min-height:
+            100dvh;
+
+        overflow-x:
+            hidden;
+    }
+
+
+    .driver-topbar {
+        position:
+            sticky;
+
+        z-index:
+            9000;
+
+        top:
+            0;
+
+
+        min-height:
+            48px;
+
+
+        padding:
+            max(
+                6px,
+                env(
+                    safe-area-inset-top
+                )
+            )
+            10px
+            6px;
+
+
+        gap:
+            8px;
+
+
+        background:
+            rgba(
+                15,
+                23,
+                42,
+                0.97
+            );
+
+
+        backdrop-filter:
+            blur(
+                14px
+            );
+    }
+
+
+    .driver-brand {
+        gap:
+            8px;
+    }
+
+
+    .driver-logo {
+        width:
+            36px;
+
+        height:
+            30px;
+
+
+        border-radius:
+            7px;
+
+
+        font-size:
+            16px;
+    }
+
+
+    .driver-brand strong {
+        font-size:
+            13px;
+    }
+
+
+    .driver-brand span {
+        display:
+            none;
+    }
+
+
+    .driver-logout {
+        display:
+            none;
+    }
+
+
+    .driver-main {
+        width:
+            100%;
+
+
+        padding:
+            8px
+            8px
+            calc(
+                76px +
+                env(
+                    safe-area-inset-bottom
+                )
+            );
+    }
+
+
+    .driver-summary {
+        gap:
+            6px;
+
+
+        margin-bottom:
+            8px;
+    }
+
+
+    .driver-summary-card {
+        padding:
+            8px
+            9px;
+
+
+        border-radius:
+            10px;
+    }
+
+
+    .driver-summary-card span {
+        font-size:
+            9px;
+    }
+
+
+    .driver-summary-card strong {
+        margin-top:
+            2px;
+
+
+        font-size:
+            12px;
+    }
+
+
+    .driver-panel {
+        margin-bottom:
+            9px;
+
+
+        border-radius:
+            12px;
+    }
+
+
+    .driver-panel-header {
+        padding:
+            11px
+            12px;
+    }
+
+
+    .driver-panel-header h2 {
+        font-size:
+            15px;
+    }
+
+
+    .driver-panel-header p {
+        margin-top:
+            2px;
+
+
+        font-size:
+            10px;
+    }
+
+
+    .driver-map {
+        min-height:
+            360px;
+
+
+        height:
+            48dvh;
+
+
+        max-height:
+            470px;
+    }
+
+
+    #k3DriverTripControl,
+    #k3DriverMapPanel,
+    #k3DriverStopsPanel {
+        scroll-margin-top:
+            58px;
+    }
+
+
+    .driver-mobile-nav {
+        position:
+            fixed;
+
+        z-index:
+            9200;
+
+
+        right:
+            0;
+
+        bottom:
+            0;
+
+        left:
+            0;
+
+
+        display:
+            grid;
+
+
+        grid-template-columns:
+            repeat(
+                4,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+
+
+        padding:
+            5px
+            6px
+            max(
+                5px,
+                env(
+                    safe-area-inset-bottom
+                )
+            );
+
+
+        border-top:
+            1px solid
+            #334155;
+
+
+        background:
+            rgba(
+                15,
+                23,
+                42,
+                0.98
+            );
+
+
+        backdrop-filter:
+            blur(
+                14px
+            );
+    }
+
+
+    .driver-mobile-nav-item {
+        display:
+            flex;
+
+
+        min-width:
+            0;
+
+
+        min-height:
+            50px;
+
+
+        align-items:
+            center;
+
+
+        justify-content:
+            center;
+
+
+        flex-direction:
+            column;
+
+
+        gap:
+            3px;
+
+
+        padding:
+            4px
+            2px;
+
+
+        border:
+            0;
+
+
+        border-radius:
+            10px;
+
+
+        background:
+            transparent;
+
+
+        color:
+            #94a3b8;
+
+
+        text-decoration:
+            none;
+    }
+
+
+    .driver-mobile-nav-item span {
+        font-size:
+            18px;
+
+
+        line-height:
+            1;
+    }
+
+
+    .driver-mobile-nav-item small {
+        font-size:
+            9px;
+
+
+        font-weight:
+            700;
+
+
+        line-height:
+            1;
+    }
+
+
+    .driver-mobile-nav-item:active {
+        background:
+            rgba(
+                37,
+                99,
+                235,
+                0.16
+            );
+
+
+        color:
+            #60a5fa;
+    }
+
+
+    .driver-mobile-nav-logout {
+        color:
+            #fca5a5;
+    }
+}

@@ -359,3 +359,499 @@
             repeat(4, minmax(0, 1fr));
     }
 }
+
+/* ============================================
+   K3 MOBILE FOUNDATION - ADMIN
+   ============================================ */
+
+.admin-mobile-topbar {
+    display: none;
+}
+
+
+@media (max-width: 767px) {
+
+    .admin-page {
+        min-height: 100dvh;
+
+        overflow-x: hidden;
+    }
+
+
+    .admin-mobile-topbar {
+        position: sticky;
+
+        z-index: 9100;
+
+        top: 0;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        gap: 10px;
+
+
+        min-height: 50px;
+
+
+        padding:
+            max(
+                6px,
+                env(safe-area-inset-top)
+            )
+            10px
+            6px;
+
+
+        border-bottom:
+            1px solid
+            #1e293b;
+
+
+        background:
+            rgba(
+                15,
+                23,
+                42,
+                0.97
+            );
+
+
+        backdrop-filter:
+            blur(14px);
+    }
+
+
+    .admin-mobile-brand {
+        display: flex;
+
+        min-width: 0;
+
+        align-items: center;
+
+        gap: 8px;
+    }
+
+
+    .admin-mobile-logo {
+        display: grid;
+
+        width: 36px;
+
+        height: 30px;
+
+        flex: 0 0 auto;
+
+        place-items: center;
+
+
+        border-radius: 7px;
+
+
+        background:
+            #f97316;
+
+        color:
+            #020617;
+
+
+        font-size: 16px;
+
+        font-weight: 1000;
+    }
+
+
+    .admin-mobile-heading {
+        min-width: 0;
+    }
+
+
+    .admin-mobile-heading span,
+    .admin-mobile-heading strong {
+        display: block;
+
+        overflow: hidden;
+
+        text-overflow:
+            ellipsis;
+
+        white-space:
+            nowrap;
+    }
+
+
+    .admin-mobile-heading span {
+        color:
+            #64748b;
+
+        font-size: 9px;
+
+        font-weight: 700;
+
+        letter-spacing:
+            0.04em;
+
+        text-transform:
+            uppercase;
+    }
+
+
+    .admin-mobile-heading strong {
+        margin-top: 1px;
+
+        color:
+            #f8fafc;
+
+        font-size: 14px;
+    }
+
+
+    .admin-mobile-logout {
+        display: grid;
+
+        width: 38px;
+
+        height: 38px;
+
+        flex: 0 0 auto;
+
+        place-items: center;
+
+
+        border:
+            1px solid
+            #334155;
+
+        border-radius:
+            10px;
+
+
+        background:
+            #1e293b;
+
+        color:
+            #fca5a5;
+
+
+        font-size:
+            16px;
+    }
+
+
+    .admin-header {
+        display: none;
+    }
+
+
+    .admin-main {
+        width: 100%;
+
+
+        padding:
+            10px
+            8px
+            calc(
+                76px +
+                env(
+                    safe-area-inset-bottom
+                )
+            );
+    }
+
+
+    .admin-mobile-nav {
+        grid-template-columns:
+            repeat(
+                4,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+
+
+        min-height:
+            62px;
+
+
+        padding:
+            5px
+            6px
+            max(
+                5px,
+                env(
+                    safe-area-inset-bottom
+                )
+            );
+
+
+        border-top:
+            1px solid
+            #334155;
+
+
+        background:
+            rgba(
+                15,
+                23,
+                42,
+                0.98
+            );
+    }
+
+
+    .admin-mobile-nav-button,
+    .admin-mobile-more-summary {
+        display: flex;
+
+        min-width: 0;
+
+        min-height: 50px;
+
+
+        align-items: center;
+
+        justify-content: center;
+
+        flex-direction:
+            column;
+
+
+        gap: 3px;
+
+
+        padding:
+            4px
+            2px;
+
+
+        border: 0;
+
+        border-radius:
+            10px;
+
+
+        background:
+            transparent;
+
+
+        color:
+            #94a3b8;
+
+
+        font-size:
+            9px;
+
+        font-weight:
+            700;
+
+        line-height:
+            1.05;
+
+
+        text-align:
+            center;
+    }
+
+
+    .admin-mobile-nav-icon {
+        margin: 0;
+
+
+        font-size:
+            18px;
+
+        line-height:
+            1;
+    }
+
+
+    .admin-mobile-nav-button-active {
+        background:
+            rgba(
+                37,
+                99,
+                235,
+                0.14
+            );
+
+        color:
+            #60a5fa;
+    }
+
+
+    .admin-mobile-more {
+        min-width: 0;
+    }
+
+
+    .admin-mobile-more >
+    summary {
+        list-style:
+            none;
+    }
+
+
+    .admin-mobile-more >
+    summary::-webkit-details-marker {
+        display: none;
+    }
+
+
+    .admin-mobile-more[open]
+    .admin-mobile-more-summary {
+        background:
+            rgba(
+                37,
+                99,
+                235,
+                0.14
+            );
+
+        color:
+            #60a5fa;
+    }
+
+
+    .admin-mobile-sheet {
+        position: fixed;
+
+        z-index: 9200;
+
+
+        right: 8px;
+
+        bottom:
+            calc(
+                70px +
+                env(
+                    safe-area-inset-bottom
+                )
+            );
+
+        left: 8px;
+
+
+        padding:
+            12px;
+
+
+        border:
+            1px solid
+            #334155;
+
+        border-radius:
+            16px;
+
+
+        background:
+            #0f172a;
+
+
+        box-shadow:
+            0
+            20px
+            60px
+            rgba(
+                0,
+                0,
+                0,
+                0.55
+            );
+    }
+
+
+    .admin-mobile-sheet-title {
+        margin-bottom:
+            9px;
+
+
+        color:
+            #94a3b8;
+
+
+        font-size:
+            11px;
+
+        font-weight:
+            800;
+
+        text-transform:
+            uppercase;
+    }
+
+
+    .admin-mobile-sheet-grid {
+        display: grid;
+
+
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+
+
+        gap:
+            7px;
+    }
+
+
+    .admin-mobile-sheet-button {
+        min-height:
+            58px;
+
+
+        border:
+            1px solid
+            #1e293b;
+
+
+        background:
+            #111c30;
+
+
+        color:
+            #cbd5e1;
+    }
+
+
+    .admin-stats {
+        gap: 7px;
+
+        margin-bottom:
+            10px;
+    }
+
+
+    .admin-stat-card {
+        padding:
+            10px;
+
+
+        border-radius:
+            11px;
+    }
+
+
+    .admin-stat-label {
+        font-size:
+            10px;
+    }
+
+
+    .admin-stat-value {
+        margin-top:
+            3px;
+
+
+        font-size:
+            21px;
+    }
+}
