@@ -2567,3 +2567,336 @@
     }
 
 }
+
+
+/* =========================================================
+   K3 FLOATING ORDERS ADDRESS DRAWER
+   ========================================================= */
+
+.orders-addresses-open-button {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 6px;
+}
+
+
+.orders-addresses-count {
+    display: grid;
+
+    min-width: 20px;
+
+    height: 20px;
+
+    place-items: center;
+
+    padding: 0 5px;
+
+    border-radius: 999px;
+
+    background: #334155;
+
+    color: #ffffff;
+
+    font-size: 9px;
+
+    font-weight: 900;
+}
+
+
+/* -----------------------------------------
+   DESKTOP DRAWER
+   ----------------------------------------- */
+
+.orders-address-dialog {
+    position: fixed;
+
+    inset:
+        0
+        0
+        0
+        auto;
+
+    width:
+        min(
+            430px,
+            92vw
+        );
+
+    height: 100dvh;
+
+    max-width: none;
+
+    max-height: none;
+
+    margin: 0;
+
+    padding: 0;
+
+    overflow: hidden;
+
+    border: 0;
+
+    border-left:
+        1px solid
+        #334155;
+
+    border-radius: 0;
+
+    background:
+        #0b1220;
+
+    color:
+        #ffffff;
+
+    box-shadow:
+        -18px 0 50px
+        rgba(
+            0,
+            0,
+            0,
+            0.48
+        );
+}
+
+
+.orders-address-dialog::backdrop {
+    background:
+        rgba(
+            2,
+            6,
+            23,
+            0.64
+        );
+
+    backdrop-filter:
+        blur(2px);
+}
+
+
+.orders-address-dialog-shell {
+    display: grid;
+
+    height: 100%;
+
+    grid-template-rows:
+        auto
+        auto
+        minmax(0, 1fr);
+}
+
+
+.orders-address-dialog-header {
+    display: flex;
+
+    min-height: 70px;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding:
+        14px
+        15px;
+
+    border-bottom:
+        1px solid
+        #1e293b;
+
+    background:
+        #111827;
+}
+
+
+.orders-address-dialog-header span,
+.orders-address-dialog-header strong {
+    display: block;
+}
+
+
+.orders-address-dialog-header span {
+    color:
+        #60a5fa;
+
+    font-size: 9px;
+
+    font-weight: 900;
+
+    text-transform: uppercase;
+}
+
+
+.orders-address-dialog-header strong {
+    margin-top: 3px;
+
+    color:
+        #ffffff;
+
+    font-size: 18px;
+}
+
+
+.orders-address-dialog-close {
+    display: grid;
+
+    width: 40px;
+
+    height: 40px;
+
+    flex: 0 0 auto;
+
+    place-items: center;
+
+    border:
+        1px solid
+        #334155;
+
+    border-radius: 10px;
+
+    background:
+        #1e293b;
+
+    color:
+        #ffffff;
+
+    cursor: pointer;
+
+    font-size: 14px;
+}
+
+
+.orders-address-dialog-close:hover {
+    background:
+        #334155;
+}
+
+
+.orders-address-dialog-help {
+    padding:
+        9px
+        14px;
+
+    border-bottom:
+        1px solid
+        #172033;
+
+    color:
+        #64748b;
+
+    font-size: 9px;
+}
+
+
+.orders-address-dialog-list {
+    min-height: 0;
+
+    max-height: none !important;
+
+    overflow-y: auto;
+
+    overscroll-behavior: contain;
+
+    scrollbar-gutter: stable;
+}
+
+
+.orders-address-dialog-list
+.orders-compact-item {
+    min-height: 58px;
+
+    padding:
+        10px
+        13px;
+}
+
+
+.orders-address-dialog-list
+.orders-compact-main strong {
+    font-size: 12px;
+}
+
+
+.orders-address-dialog-list
+.orders-compact-main span {
+    overflow: visible;
+
+    text-overflow: initial;
+
+    white-space: normal;
+}
+
+
+/* -----------------------------------------
+   PHONE / SMALL TABLET = BOTTOM SHEET
+   ----------------------------------------- */
+
+@media (max-width: 767px) {
+
+    .orders-address-dialog {
+        inset:
+            auto
+            0
+            0
+            0;
+
+        width: 100%;
+
+        height:
+            min(
+                72dvh,
+                620px
+            );
+
+        border:
+            1px solid
+            #334155;
+
+        border-bottom: 0;
+
+        border-radius:
+            18px
+            18px
+            0
+            0;
+
+        box-shadow:
+            0 -18px 50px
+            rgba(
+                0,
+                0,
+                0,
+                0.52
+            );
+    }
+
+
+    .orders-address-dialog-header {
+        min-height: 62px;
+
+        padding:
+            11px
+            12px;
+    }
+
+
+    .orders-address-dialog-header strong {
+        font-size: 16px;
+    }
+
+
+    .orders-address-dialog-close {
+        width: 42px;
+
+        height: 42px;
+    }
+
+
+    .orders-address-dialog-list
+    .orders-compact-item {
+        min-height: 60px;
+    }
+
+}

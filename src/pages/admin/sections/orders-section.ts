@@ -190,6 +190,25 @@ string {
                     >
                         🚛 Само избрания камион
                     </button>
+
+
+                    <button
+                        type="button"
+                        class="
+                            orders-dispatch-filter
+                            orders-addresses-open-button
+                        "
+                        data-orders-action="open-addresses"
+                    >
+                        📍 Адреси
+
+                        <span
+                            id="k3VisibleOrdersCount"
+                            class="orders-addresses-count"
+                        >
+                            0
+                        </span>
+                    </button>
                 </div>
 
 
@@ -224,50 +243,69 @@ string {
                         ></div>
 
 
-                        <details
-                            class="orders-compact-list-wrap"
-                            ${
-                                window.matchMedia(
-                                    "(max-width: 980px)"
-                                ).matches
-                                    ? ""
-                                    : "open"
-                            }
-                        >
 
-                            <summary
-                                class="orders-compact-list-header"
-                            >
-                                <strong>
-                                    📍 Адреси от заявките
-                                </strong>
-
-                                <span
-                                    id="k3VisibleOrdersCount"
-                                >
-                                    0
-                                </span>
-                            </summary>
-
-
-                            <div
-                                id="k3ActiveOrdersList"
-                                class="orders-compact-list"
-                            >
-                                <div
-                                    class="orders-loading"
-                                >
-                                    Зареждане...
-                                </div>
-                            </div>
-
-                        </details>
 
                     </aside>
 
                 </div>
 
             </section>
+
+
+            <dialog
+                id="k3AddressesDialog"
+                class="orders-address-dialog"
+            >
+                <div
+                    class="orders-address-dialog-shell"
+                >
+                    <header
+                        class="orders-address-dialog-header"
+                    >
+                        <div>
+                            <span>
+                                Заявки на картата
+                            </span>
+
+                            <strong>
+                                📍 Адреси
+                            </strong>
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="orders-address-dialog-close"
+                            data-orders-action="close-addresses"
+                            aria-label="Затвори адресите"
+                        >
+                            ✕
+                        </button>
+                    </header>
+
+
+                    <div
+                        class="orders-address-dialog-help"
+                    >
+                        Натисни адрес, за да отвориш заявката.
+                    </div>
+
+
+                    <div
+                        id="k3ActiveOrdersList"
+                        class="
+                            orders-compact-list
+                            orders-address-dialog-list
+                        "
+                    >
+                        <div
+                            class="orders-loading"
+                        >
+                            Зареждане...
+                        </div>
+                    </div>
+                </div>
+            </dialog>
 
 
             <dialog
@@ -2325,6 +2363,45 @@ Promise<void> {
 }
 
 
+function openAddressesDialog():
+void {
+
+    const dialog =
+        document.querySelector<
+            HTMLDialogElement
+        >(
+            "#k3AddressesDialog"
+        );
+
+
+    if (
+        dialog &&
+        !dialog.open
+    ) {
+        dialog.showModal();
+    }
+}
+
+
+function closeAddressesDialog():
+void {
+
+    const dialog =
+        document.querySelector<
+            HTMLDialogElement
+        >(
+            "#k3AddressesDialog"
+        );
+
+
+    if (
+        dialog?.open
+    ) {
+        dialog.close();
+    }
+}
+
+
 function closeQuickAssignDialog():
 void {
 
@@ -3272,8 +3349,32 @@ async function handleClick(
 
             renderCompactOrders();
 
+            closeAddressesDialog();
+
             await renderDispatchMap();
         }
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "open-addresses"
+    ) {
+
+        openAddressesDialog();
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "close-addresses"
+    ) {
+
+        closeAddressesDialog();
 
         return;
     }
