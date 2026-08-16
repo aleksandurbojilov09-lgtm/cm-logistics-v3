@@ -1,6 +1,7 @@
 import "./driver-page.css";
 import "./driver-interactions.css";
 import "./driver-truck-change.css";
+import "./driver-handoff.css";
 
 import {
     finishDriverTrip,
@@ -24,6 +25,17 @@ import {
     loadDriverTruckChange,
     type DriverTruckChange
 } from "../../features/trips/driver-truck-change-service";
+
+import {
+    acceptDriverHandoff,
+    cancelDriverHandoff,
+    loadDriverHandoffCandidates,
+    loadDriverHandoffState,
+    rejectDriverHandoff,
+    requestDriverHandoff,
+    type DriverHandoffCandidate,
+    type DriverHandoffState
+} from "../../features/trips/driver-handoff-service";
 
 import {
     FIXED_LOCATION_CODES,
@@ -76,6 +88,28 @@ let interactions:
 
 let pendingTruckChange:
     DriverTruckChange | null =
+    null;
+
+
+let driverHandoffState:
+    DriverHandoffState = {
+        outgoing: null,
+        incoming: null
+    };
+
+
+let driverHandoffCandidates:
+    DriverHandoffCandidate[] =
+    [];
+
+
+let handoffDialogMode:
+    "request" | null =
+    null;
+
+
+let renderedHandoffDialogKey:
+    string | null =
     null;
 
 
@@ -1193,6 +1227,119 @@ void {
     }
 
 
+    const outgoingHandoff =
+        driverHandoffState.outgoing;
+
+
+    if (outgoingHandoff) {
+
+        container.innerHTML = `
+            <header
+                class="driver-panel-header"
+            >
+                <div>
+                    <h2>
+                        🚛 Курс
+                        #${escapeHtml(
+                            trip.tripNumber
+                        )}
+                    </h2>
+
+                    <p>
+                        Предаването е изпратено.
+                        Курсът остава активен.
+                    </p>
+                </div>
+
+                <span
+                    class="
+                        driver-trip-badge
+                        driver-trip-waiting
+                    "
+                >
+                    ⏳ Предаване
+                </span>
+            </header>
+
+
+            <div
+                class="driver-handoff-waiting"
+            >
+                <div
+                    class="driver-handoff-waiting-title"
+                >
+                    <strong>
+                        🔄 Изчаква приемане от
+                        ${escapeHtml(
+                            outgoingHandoff
+                                .toDriverName
+                        )}
+                    </strong>
+
+                    <span>
+                        Докато заявката чака,
+                        действията по курса са заключени.
+                    </span>
+                </div>
+
+
+                <div
+                    class="driver-handoff-waiting-grid"
+                >
+                    <div
+                        class="driver-handoff-waiting-item"
+                    >
+                        <span>
+                            Камион
+                        </span>
+
+                        <strong>
+                            ${escapeHtml(
+                                outgoingHandoff
+                                    .truckNumber
+                            )}
+                        </strong>
+                    </div>
+
+                    <div
+                        class="driver-handoff-waiting-item"
+                    >
+                        <span>
+                            Междинен километраж
+                        </span>
+
+                        <strong>
+                            ${escapeHtml(
+                                outgoingHandoff
+                                    .handoffKm
+                                    .toLocaleString(
+                                        "bg-BG"
+                                    )
+                            )}
+                            км
+                        </strong>
+                    </div>
+                </div>
+
+
+                <button
+                    type="button"
+                    class="driver-handoff-cancel"
+                    data-driver-action="cancel-driver-handoff"
+                    data-request-id="${escapeHtml(
+                        outgoingHandoff
+                            .requestId
+                    )}"
+                >
+                    ↩ Отмени предаването
+                </button>
+            </div>
+        `;
+
+        return;
+    }
+
+
     const active =
         currentStop();
 
@@ -1273,6 +1420,35 @@ void {
             </span>
 
         </header>
+
+
+        <div
+            class="driver-handoff-entry"
+        >
+            <button
+                type="button"
+                class="driver-handoff-open"
+                data-driver-action="open-driver-handoff"
+                ${
+                    pendingTruckChange
+                        ? "disabled"
+                        : ""
+                }
+            >
+                🔄 Предай курса на друг шофьор
+            </button>
+
+            ${
+                pendingTruckChange
+                    ? `
+                        <small>
+                            Първо приключи чакащата
+                            смяна на камион.
+                        </small>
+                    `
+                    : ""
+            }
+        </div>
 
 
         ${
@@ -2130,6 +2306,933 @@ Promise<void> {
 }
 
 
+
+/* =========================================================
+   DRIVER HANDOFF
+   ========================================================= */
+
+
+function ensureDriverHandoffDialog():
+HTMLDialogElement | null {
+
+    const root =
+        document.querySelector<HTMLElement>(
+            "#k3DriverPortal"
+        );
+
+
+    if (!root) {
+        return null;
+    }
+
+
+    let dialog =
+        document.querySelector<HTMLDialogElement>(
+            "#k3DriverHandoffDialog"
+        );
+
+
+    if (dialog) {
+        return dialog;
+    }
+
+
+    dialog =
+        document.createElement(
+            "dialog"
+        );
+
+
+    dialog.id =
+        "k3DriverHandoffDialog";
+
+    dialog.className =
+        "driver-handoff-dialog";
+
+
+    dialog.addEventListener(
+        "cancel",
+        event => {
+
+            event.preventDefault();
+
+
+            if (
+                !driverHandoffState
+                    .incoming
+            ) {
+                closeDriverHandoffRequestDialog();
+            }
+        }
+    );
+
+
+    root.append(
+        dialog
+    );
+
+
+    return dialog;
+}
+
+
+function setDriverHandoffDialogMessage(
+    message: string
+): void {
+
+    const element =
+        document.querySelector<HTMLElement>(
+            "#k3DriverHandoffMessage"
+        );
+
+
+    if (!element) {
+        return;
+    }
+
+
+    element.textContent =
+        message;
+}
+
+
+function closeDriverHandoffRequestDialog():
+void {
+
+    if (
+        driverHandoffState
+            .incoming
+    ) {
+        return;
+    }
+
+
+    handoffDialogMode =
+        null;
+
+    renderedHandoffDialogKey =
+        null;
+
+
+    const dialog =
+        document.querySelector<HTMLDialogElement>(
+            "#k3DriverHandoffDialog"
+        );
+
+
+    if (dialog?.open) {
+        dialog.close();
+    }
+}
+
+
+function renderDriverHandoffDialog():
+void {
+
+    const dialog =
+        ensureDriverHandoffDialog();
+
+
+    if (!dialog) {
+        return;
+    }
+
+
+    const incoming =
+        driverHandoffState
+            .incoming;
+
+
+    if (incoming) {
+
+        const key =
+            `incoming:${incoming.requestId}`;
+
+
+        if (
+            renderedHandoffDialogKey ===
+                key &&
+            dialog.open
+        ) {
+            return;
+        }
+
+
+        renderedHandoffDialogKey =
+            key;
+
+
+        dialog.innerHTML = `
+            <div
+                class="driver-handoff-card"
+            >
+                <header
+                    class="driver-handoff-header"
+                >
+                    <div
+                        class="driver-handoff-header-main"
+                    >
+                        <h2>
+                            🔄 Получаваш курс
+                            #${escapeHtml(
+                                incoming
+                                    .tripNumber
+                            )}
+                        </h2>
+
+                        <p>
+                            ${escapeHtml(
+                                incoming
+                                    .fromDriverName
+                            )}
+                            иска да ти предаде
+                            активния курс.
+                        </p>
+                    </div>
+                </header>
+
+
+                <div
+                    class="driver-handoff-summary"
+                >
+                    <div
+                        class="driver-handoff-summary-row"
+                    >
+                        <span>
+                            От шофьор
+                        </span>
+
+                        <strong>
+                            ${escapeHtml(
+                                incoming
+                                    .fromDriverName
+                            )}
+                        </strong>
+                    </div>
+
+
+                    <div
+                        class="driver-handoff-summary-row"
+                    >
+                        <span>
+                            Камион
+                        </span>
+
+                        <strong>
+                            🚛
+                            ${escapeHtml(
+                                incoming
+                                    .truckNumber
+                            )}
+                        </strong>
+                    </div>
+
+
+                    ${
+                        incoming.trailerNumber
+
+                            ? `
+                                <div
+                                    class="driver-handoff-summary-row"
+                                >
+                                    <span>
+                                        Ремарке
+                                    </span>
+
+                                    <strong>
+                                        ${escapeHtml(
+                                            incoming
+                                                .trailerNumber
+                                        )}
+                                    </strong>
+                                </div>
+                            `
+
+                            : ""
+                    }
+
+
+                    ${
+                        incoming.positionNumber
+
+                            ? `
+                                <div
+                                    class="driver-handoff-summary-row"
+                                >
+                                    <span>
+                                        Позиция
+                                    </span>
+
+                                    <strong>
+                                        ${escapeHtml(
+                                            incoming
+                                                .positionNumber
+                                        )}
+                                    </strong>
+                                </div>
+                            `
+
+                            : ""
+                    }
+                </div>
+
+
+                <div
+                    class="driver-handoff-km-highlight"
+                >
+                    <span>
+                        Междинен километраж
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(
+                            incoming
+                                .handoffKm
+                                .toLocaleString(
+                                    "bg-BG"
+                                )
+                        )}
+                        км
+                    </strong>
+
+                    <small>
+                        Това автоматично ще бъде
+                        началният километраж на
+                        твоята отсечка.
+                    </small>
+                </div>
+
+
+                <div
+                    id="k3DriverHandoffMessage"
+                    class="driver-handoff-message"
+                    aria-live="polite"
+                ></div>
+
+
+                <div
+                    class="driver-handoff-actions"
+                >
+                    <button
+                        type="button"
+                        class="driver-handoff-reject"
+                        data-driver-action="reject-driver-handoff"
+                        data-request-id="${escapeHtml(
+                            incoming
+                                .requestId
+                        )}"
+                    >
+                        ❌ Откажи
+                    </button>
+
+                    <button
+                        type="button"
+                        class="driver-handoff-accept"
+                        data-driver-action="accept-driver-handoff"
+                        data-request-id="${escapeHtml(
+                            incoming
+                                .requestId
+                        )}"
+                    >
+                        ✅ Приеми курса
+                    </button>
+                </div>
+            </div>
+        `;
+
+
+        if (!dialog.open) {
+            dialog.showModal();
+        }
+
+
+        return;
+    }
+
+
+    if (
+        handoffDialogMode !==
+            "request"
+    ) {
+
+        renderedHandoffDialogKey =
+            null;
+
+
+        if (dialog.open) {
+            dialog.close();
+        }
+
+
+        dialog.innerHTML =
+            "";
+
+
+        return;
+    }
+
+
+    const trip =
+        state?.trip;
+
+
+    const activeSegment =
+        trip?.activeSegment;
+
+
+    if (
+        !state?.hasActiveTrip ||
+        !trip ||
+        !activeSegment
+    ) {
+
+        closeDriverHandoffRequestDialog();
+
+        return;
+    }
+
+
+    const key =
+        `request:${trip.id}`;
+
+
+    if (
+        renderedHandoffDialogKey ===
+            key &&
+        dialog.open
+    ) {
+        return;
+    }
+
+
+    renderedHandoffDialogKey =
+        key;
+
+
+    const options =
+        driverHandoffCandidates
+            .map(
+                candidate => {
+
+                    const truck =
+                        candidate
+                            .currentTruckNumber
+
+                            ? ` — ${candidate.currentTruckNumber}`
+
+                            : "";
+
+
+                    const employee =
+                        candidate
+                            .employeeCode
+
+                            ? ` (${candidate.employeeCode})`
+
+                            : "";
+
+
+                    return `
+                        <option
+                            value="${escapeHtml(
+                                candidate.driverId
+                            )}"
+                        >
+                            ${escapeHtml(
+                                `${candidate.driverName}${employee}${truck}`
+                            )}
+                        </option>
+                    `;
+                }
+            )
+            .join("");
+
+
+    dialog.innerHTML = `
+        <form
+            id="k3DriverHandoffRequestForm"
+            class="
+                driver-handoff-card
+                driver-handoff-form
+            "
+        >
+            <header
+                class="driver-handoff-header"
+            >
+                <div
+                    class="driver-handoff-header-main"
+                >
+                    <h2>
+                        🔄 Предай курс
+                    </h2>
+
+                    <p>
+                        Курсът остава същият.
+                        Сменя се само активният
+                        шофьор и километровата отсечка.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    class="driver-handoff-close"
+                    data-driver-action="close-driver-handoff"
+                    aria-label="Затвори"
+                >
+                    ✕
+                </button>
+            </header>
+
+
+            ${
+                driverHandoffCandidates.length
+
+                    ? `
+                        <label>
+                            Предай на шофьор
+
+                            <select
+                                id="k3DriverHandoffDriver"
+                                required
+                            >
+                                <option
+                                    value=""
+                                >
+                                    -- Избери шофьор --
+                                </option>
+
+                                ${options}
+                            </select>
+                        </label>
+
+
+                        <label>
+                            Километраж на камиона
+
+                            <input
+                                id="k3DriverHandoffKm"
+                                type="number"
+                                min="${escapeHtml(
+                                    String(
+                                        activeSegment
+                                            .startKm
+                                    )
+                                )}"
+                                step="1"
+                                inputmode="numeric"
+                                required
+                                placeholder="Междинен километраж"
+                            />
+
+                            <small>
+                                Междинен километраж.
+                                Начало на текущата отсечка:
+                                ${escapeHtml(
+                                    activeSegment
+                                        .startKm
+                                        .toLocaleString(
+                                            "bg-BG"
+                                        )
+                                )}
+                                км.
+                            </small>
+                        </label>
+
+
+                        <div
+                            id="k3DriverHandoffMessage"
+                            class="driver-handoff-message"
+                            aria-live="polite"
+                        ></div>
+
+
+                        <button
+                            type="submit"
+                            class="driver-handoff-submit"
+                        >
+                            🔄 Изпрати предаването
+                        </button>
+                    `
+
+                    : `
+                        <div
+                            class="driver-handoff-no-candidates"
+                        >
+                            В момента няма свободен
+                            активен шофьор, на когото
+                            курсът може да бъде предаден.
+                        </div>
+                    `
+            }
+        </form>
+    `;
+
+
+    if (!dialog.open) {
+        dialog.showModal();
+    }
+}
+
+
+async function openDriverHandoffRequestDialog(
+    button: HTMLButtonElement
+): Promise<void> {
+
+    if (
+        !state?.hasActiveTrip ||
+        !state.trip ||
+        driverHandoffState.outgoing
+    ) {
+        return;
+    }
+
+
+    button.disabled =
+        true;
+
+    button.textContent =
+        "Зареждане...";
+
+
+    try {
+
+        driverHandoffCandidates =
+            await loadDriverHandoffCandidates();
+
+
+        handoffDialogMode =
+            "request";
+
+        renderedHandoffDialogKey =
+            null;
+
+
+        renderDriverHandoffDialog();
+
+
+    } catch (error) {
+
+        setMessage(
+            errorMessage(
+                error
+            ),
+            "error"
+        );
+
+
+        button.disabled =
+            false;
+
+        button.textContent =
+            "🔄 Предай курса на друг шофьор";
+    }
+}
+
+
+async function submitDriverHandoffRequest(
+    form: HTMLFormElement
+): Promise<void> {
+
+    const driver =
+        form.querySelector<HTMLSelectElement>(
+            "#k3DriverHandoffDriver"
+        );
+
+    const km =
+        form.querySelector<HTMLInputElement>(
+            "#k3DriverHandoffKm"
+        );
+
+    const button =
+        form.querySelector<HTMLButtonElement>(
+            '[type="submit"]'
+        );
+
+
+    if (
+        !driver ||
+        !km ||
+        !button
+    ) {
+        return;
+    }
+
+
+    const handoffKm =
+        Number(
+            km.value
+        );
+
+
+    if (!driver.value) {
+
+        setDriverHandoffDialogMessage(
+            "Избери шофьор."
+        );
+
+        return;
+    }
+
+
+    if (
+        !Number.isInteger(
+            handoffKm
+        ) ||
+        handoffKm < 0
+    ) {
+
+        setDriverHandoffDialogMessage(
+            "Въведи валиден междинен километраж."
+        );
+
+        return;
+    }
+
+
+    button.disabled =
+        true;
+
+    button.textContent =
+        "Изпращане...";
+
+
+    setDriverHandoffDialogMessage(
+        ""
+    );
+
+
+    try {
+
+        await requestDriverHandoff(
+            driver.value,
+            handoffKm
+        );
+
+
+        handoffDialogMode =
+            null;
+
+        renderedHandoffDialogKey =
+            null;
+
+
+        await refresh();
+
+
+        setMessage(
+            "🔄 Предаването е изпратено. Изчаква се другият шофьор.",
+            "success"
+        );
+
+
+    } catch (error) {
+
+        setDriverHandoffDialogMessage(
+            errorMessage(
+                error
+            )
+        );
+
+
+        button.disabled =
+            false;
+
+        button.textContent =
+            "🔄 Изпрати предаването";
+    }
+}
+
+
+async function cancelOutgoingDriverHandoff(
+    button: HTMLButtonElement
+): Promise<void> {
+
+    const requestId =
+        button.dataset
+            .requestId || "";
+
+
+    if (!requestId) {
+        return;
+    }
+
+
+    button.disabled =
+        true;
+
+    button.textContent =
+        "Отмяна...";
+
+
+    try {
+
+        await cancelDriverHandoff(
+            requestId
+        );
+
+
+        await refresh();
+
+
+        setMessage(
+            "↩ Предаването на курса е отменено.",
+            "success"
+        );
+
+
+    } catch (error) {
+
+        setMessage(
+            errorMessage(
+                error
+            ),
+            "error"
+        );
+
+
+        button.disabled =
+            false;
+
+        button.textContent =
+            "↩ Отмени предаването";
+    }
+}
+
+
+async function acceptIncomingDriverHandoff(
+    button: HTMLButtonElement
+): Promise<void> {
+
+    const requestId =
+        button.dataset
+            .requestId || "";
+
+
+    if (!requestId) {
+        return;
+    }
+
+
+    button.disabled =
+        true;
+
+    button.textContent =
+        "Приемане...";
+
+
+    setDriverHandoffDialogMessage(
+        ""
+    );
+
+
+    try {
+
+        await acceptDriverHandoff(
+            requestId
+        );
+
+
+        handoffDialogMode =
+            null;
+
+        renderedHandoffDialogKey =
+            null;
+
+
+        await refresh();
+
+
+        setMessage(
+            "✅ Курсът е приет. Продължаваш от междинния километраж.",
+            "success"
+        );
+
+
+    } catch (error) {
+
+        setDriverHandoffDialogMessage(
+            errorMessage(
+                error
+            )
+        );
+
+
+        button.disabled =
+            false;
+
+        button.textContent =
+            "✅ Приеми курса";
+    }
+}
+
+
+async function rejectIncomingDriverHandoff(
+    button: HTMLButtonElement
+): Promise<void> {
+
+    const requestId =
+        button.dataset
+            .requestId || "";
+
+
+    if (!requestId) {
+        return;
+    }
+
+
+    button.disabled =
+        true;
+
+    button.textContent =
+        "Отказване...";
+
+
+    setDriverHandoffDialogMessage(
+        ""
+    );
+
+
+    try {
+
+        await rejectDriverHandoff(
+            requestId
+        );
+
+
+        handoffDialogMode =
+            null;
+
+        renderedHandoffDialogKey =
+            null;
+
+
+        await refresh();
+
+
+        setMessage(
+            "❌ Предаването на курса е отказано.",
+            "success"
+        );
+
+
+    } catch (error) {
+
+        setDriverHandoffDialogMessage(
+            errorMessage(
+                error
+            )
+        );
+
+
+        button.disabled =
+            false;
+
+        button.textContent =
+            "❌ Откажи";
+    }
+}
+
+
 /* =========================================================
    TRUCK CHANGE
    ========================================================= */
@@ -2639,12 +3742,14 @@ Promise<void> {
         const [
             nextState,
             nextInteractions,
-            nextTruckChange
+            nextTruckChange,
+            nextHandoffState
         ] =
             await Promise.all([
                 loadDriverTripState(),
                 loadDriverInteractions(),
-                loadDriverTruckChange()
+                loadDriverTruckChange(),
+                loadDriverHandoffState()
             ]);
 
 
@@ -2679,6 +3784,10 @@ Promise<void> {
             nextTruckChange;
 
 
+        driverHandoffState =
+            nextHandoffState;
+
+
         renderSummary();
 
         renderTripControl();
@@ -2686,6 +3795,8 @@ Promise<void> {
         renderStops();
 
         renderTruckChangeDialog();
+
+        renderDriverHandoffDialog();
 
         await renderMap();
 
@@ -2723,11 +3834,13 @@ Promise<void> {
 
         const [
             nextInteractions,
-            nextTruckChange
+            nextTruckChange,
+            nextHandoffState
         ] =
             await Promise.all([
                 loadDriverInteractions(),
-                loadDriverTruckChange()
+                loadDriverTruckChange(),
+                loadDriverHandoffState()
             ]);
 
 
@@ -2739,10 +3852,16 @@ Promise<void> {
             nextTruckChange;
 
 
+        driverHandoffState =
+            nextHandoffState;
+
+
         renderTripControl();
 
 
         renderTruckChangeDialog();
+
+        renderDriverHandoffDialog();
 
 
     } catch (error) {
@@ -3558,6 +4677,21 @@ async function handleSubmit(
 
     if (
         form.id ===
+        "k3DriverHandoffRequestForm"
+    ) {
+
+        event.preventDefault();
+
+        await submitDriverHandoffRequest(
+            form
+        );
+
+        return;
+    }
+
+
+    if (
+        form.id ===
         "k3DriverTruckChangeForm"
     ) {
 
@@ -3649,6 +4783,69 @@ async function handleClick(
             );
         }
 
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "open-driver-handoff"
+    ) {
+
+        await openDriverHandoffRequestDialog(
+            button
+        );
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "close-driver-handoff"
+    ) {
+
+        closeDriverHandoffRequestDialog();
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "cancel-driver-handoff"
+    ) {
+
+        await cancelOutgoingDriverHandoff(
+            button
+        );
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "accept-driver-handoff"
+    ) {
+
+        await acceptIncomingDriverHandoff(
+            button
+        );
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "reject-driver-handoff"
+    ) {
+
+        await rejectIncomingDriverHandoff(
+            button
+        );
 
         return;
     }

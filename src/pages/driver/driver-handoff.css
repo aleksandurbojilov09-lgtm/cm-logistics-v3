@@ -1,0 +1,238 @@
+.driver-handoff-entry {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin: 1rem 0;
+}
+
+.driver-handoff-open {
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    background: #f8fafc;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.driver-handoff-open:hover:not(:disabled) {
+    background: #f1f5f9;
+}
+
+.driver-handoff-open:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.driver-handoff-entry small {
+    color: #64748b;
+}
+
+.driver-handoff-waiting {
+    display: grid;
+    gap: 0.85rem;
+    padding: 1rem;
+    border: 1px solid #f59e0b;
+    border-radius: 14px;
+    background: #fffbeb;
+}
+
+.driver-handoff-waiting-title {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.driver-handoff-waiting-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.driver-handoff-waiting-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.7rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.driver-handoff-waiting-item span {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.driver-handoff-cancel {
+    min-height: 46px;
+    border: 1px solid #dc2626;
+    border-radius: 10px;
+    background: white;
+    color: #b91c1c;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.driver-handoff-dialog {
+    width: min(520px, calc(100vw - 2rem));
+    max-height: calc(100vh - 2rem);
+    padding: 0;
+    border: 0;
+    border-radius: 18px;
+    overflow: auto;
+}
+
+.driver-handoff-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.65);
+}
+
+.driver-handoff-card {
+    display: grid;
+    gap: 1rem;
+    padding: 1.2rem;
+    margin: 0;
+    background: white;
+}
+
+.driver-handoff-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.driver-handoff-header-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.driver-handoff-header-main h2,
+.driver-handoff-header-main p {
+    margin: 0;
+}
+
+.driver-handoff-close {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    border: 0;
+    border-radius: 10px;
+    background: #f1f5f9;
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+.driver-handoff-form {
+    display: grid;
+    gap: 1rem;
+}
+
+.driver-handoff-form label {
+    display: grid;
+    gap: 0.4rem;
+    font-weight: 700;
+}
+
+.driver-handoff-form select,
+.driver-handoff-form input {
+    width: 100%;
+    min-height: 48px;
+    box-sizing: border-box;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 0 0.75rem;
+    background: white;
+    font: inherit;
+}
+
+.driver-handoff-form small {
+    color: #64748b;
+    font-weight: 400;
+}
+
+.driver-handoff-summary {
+    display: grid;
+    gap: 0.65rem;
+    padding: 0.9rem;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.driver-handoff-summary-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.driver-handoff-summary-row span {
+    color: #64748b;
+}
+
+.driver-handoff-km-highlight {
+    padding: 0.9rem;
+    border-radius: 12px;
+    background: #eff6ff;
+    text-align: center;
+}
+
+.driver-handoff-km-highlight span,
+.driver-handoff-km-highlight strong {
+    display: block;
+}
+
+.driver-handoff-km-highlight strong {
+    margin-top: 0.2rem;
+    font-size: 1.35rem;
+}
+
+.driver-handoff-submit,
+.driver-handoff-accept,
+.driver-handoff-reject {
+    min-height: 48px;
+    border-radius: 10px;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.driver-handoff-submit,
+.driver-handoff-accept {
+    border: 0;
+    background: #166534;
+    color: white;
+}
+
+.driver-handoff-reject {
+    border: 1px solid #dc2626;
+    background: white;
+    color: #b91c1c;
+}
+
+.driver-handoff-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.driver-handoff-message {
+    min-height: 1.2rem;
+    color: #b91c1c;
+    font-size: 0.9rem;
+}
+
+.driver-handoff-no-candidates {
+    padding: 0.9rem;
+    border-radius: 10px;
+    background: #fff7ed;
+    color: #9a3412;
+}
+
+@media (max-width: 560px) {
+    .driver-handoff-waiting-grid,
+    .driver-handoff-actions {
+        grid-template-columns: 1fr;
+    }
+}
