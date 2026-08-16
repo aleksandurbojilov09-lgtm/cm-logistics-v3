@@ -1,0 +1,422 @@
+.archive-view-switch {
+    display: flex;
+
+    gap: 8px;
+
+    margin-bottom: 14px;
+
+    padding: 5px;
+
+    width: fit-content;
+
+    border: 1px solid #1e293b;
+
+    border-radius: 12px;
+
+    background: #07101f;
+}
+
+
+.archive-view-button {
+    min-height: 38px;
+
+    padding: 8px 14px;
+
+    border: 1px solid transparent;
+
+    border-radius: 9px;
+
+    background: transparent;
+
+    color: #94a3b8;
+
+    font-size: 14px;
+
+    font-weight: 900;
+
+    cursor: pointer;
+}
+
+
+.archive-view-button:hover {
+    color: #ffffff;
+}
+
+
+.archive-view-button-active {
+    border-color: #2563eb;
+
+    background: #172554;
+
+    color: #bfdbfe;
+}
+
+
+.archive-view[hidden] {
+    display: none !important;
+}
+
+
+.bioexis-report {
+    display: grid;
+
+    gap: 14px;
+}
+
+
+.bioexis-report-header {
+    display: flex;
+
+    align-items: flex-end;
+
+    justify-content: space-between;
+
+    gap: 18px;
+
+    padding: 16px;
+
+    border: 1px solid #1e293b;
+
+    border-radius: 14px;
+
+    background: #0b1424;
+}
+
+
+.bioexis-report-title {
+    display: grid;
+
+    gap: 4px;
+}
+
+
+.bioexis-report-title > span {
+    color: #60a5fa;
+
+    font-size: 14px;
+
+    font-weight: 900;
+}
+
+
+.bioexis-report-title > strong {
+    font-size: 18px;
+}
+
+
+.bioexis-report-title > small {
+    color: #94a3b8;
+
+    font-size: 14px;
+}
+
+
+.bioexis-trailer-select {
+    display: grid;
+
+    min-width: 260px;
+
+    gap: 6px;
+}
+
+
+.bioexis-trailer-select > span {
+    color: #94a3b8;
+
+    font-size: 14px;
+
+    font-weight: 800;
+}
+
+
+.bioexis-trailer-select select {
+    min-height: 42px;
+
+    padding: 8px 11px;
+
+    border: 1px solid #334155;
+
+    border-radius: 9px;
+
+    background: #020617;
+
+    color: #ffffff;
+
+    font-size: 14px;
+
+    font-weight: 800;
+}
+
+
+.bioexis-trailer-card {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(
+                0,
+                1fr
+            )
+        );
+
+    gap: 10px;
+}
+
+
+.bioexis-trailer-card > div {
+    padding: 13px 15px;
+
+    border: 1px solid #1e293b;
+
+    border-radius: 12px;
+
+    background: #0f172a;
+}
+
+
+.bioexis-trailer-card span,
+.bioexis-summary span {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #64748b;
+
+    font-size: 14px;
+
+    font-weight: 800;
+}
+
+
+.bioexis-trailer-card strong {
+    font-size: 16px;
+}
+
+
+.bioexis-summary {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(
+                0,
+                1fr
+            )
+        );
+
+    gap: 10px;
+}
+
+
+.bioexis-summary article {
+    padding: 15px;
+
+    border: 1px solid #1e293b;
+
+    border-radius: 12px;
+
+    background: #0f172a;
+}
+
+
+.bioexis-summary strong {
+    display: block;
+
+    font-size: 20px;
+}
+
+
+.bioexis-table-card {
+    overflow: hidden;
+
+    border: 1px solid #1e293b;
+
+    border-radius: 14px;
+
+    background: #0b1424;
+}
+
+
+.bioexis-table-title {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 14px 16px;
+
+    border-bottom: 1px solid #1e293b;
+}
+
+
+.bioexis-table-title small {
+    color: #64748b;
+
+    font-size: 14px;
+}
+
+
+.bioexis-table-scroll {
+    overflow-x: auto;
+}
+
+
+.bioexis-table {
+    width: 100%;
+
+    min-width: 1050px;
+
+    border-collapse: collapse;
+}
+
+
+.bioexis-table th {
+    padding: 11px 10px;
+
+    border-bottom: 1px solid #334155;
+
+    background: #111c2f;
+
+    color: #94a3b8;
+
+    font-size: 14px;
+
+    text-align: left;
+
+    white-space: nowrap;
+}
+
+
+.bioexis-table td {
+    padding: 11px 10px;
+
+    border-bottom: 1px solid #1e293b;
+
+    color: #e2e8f0;
+
+    font-size: 14px;
+
+    vertical-align: top;
+}
+
+
+.bioexis-trip-first-row td {
+    border-top: 1px solid #334155;
+}
+
+
+.bioexis-trip-continuation-row td {
+    background: rgba(
+        15,
+        23,
+        42,
+        0.55
+    );
+
+    color: #94a3b8;
+}
+
+
+.bioexis-companies-cell {
+    min-width: 210px;
+}
+
+
+.bioexis-number-cell {
+    text-align: right;
+
+    white-space: nowrap;
+}
+
+
+.bioexis-km-cell {
+    color: #93c5fd !important;
+
+    font-weight: 900;
+}
+
+
+.bioexis-tons-cell {
+    color: #86efac !important;
+
+    font-weight: 900;
+}
+
+
+.bioexis-loading,
+.bioexis-empty,
+.bioexis-error {
+    min-height: 180px;
+
+    display: grid;
+
+    place-items: center;
+
+    padding: 24px;
+
+    border: 1px solid #1e293b;
+
+    border-radius: 14px;
+
+    background: #0b1424;
+
+    color: #94a3b8;
+
+    font-size: 14px;
+
+    text-align: center;
+}
+
+
+.bioexis-error {
+    border-color: #7f1d1d;
+
+    background: #2b0a0a;
+
+    color: #fecaca;
+}
+
+
+@media (
+    max-width: 767px
+) {
+
+    .archive-view-switch {
+        width: 100%;
+    }
+
+
+    .archive-view-button {
+        flex: 1 1 0;
+    }
+
+
+    .bioexis-report-header {
+        align-items: stretch;
+
+        flex-direction: column;
+    }
+
+
+    .bioexis-trailer-select {
+        min-width: 0;
+    }
+
+
+    .bioexis-trailer-card,
+    .bioexis-summary {
+        grid-template-columns: 1fr;
+    }
+
+
+    .bioexis-table-title {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+}

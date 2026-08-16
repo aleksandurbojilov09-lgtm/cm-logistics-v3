@@ -7,6 +7,10 @@ import {
 } from "../../../features/trips/admin-archive-service";
 
 import {
+    renderBioexisReport
+} from "./bioexis-report";
+
+import {
     escapeHtml
 } from "../../../shared/lib/html";
 
@@ -42,6 +46,16 @@ let selectedDate:
 
 let refreshVersion =
     0;
+
+
+type ArchiveView =
+    | "drivers"
+    | "bioexis";
+
+
+let archiveView:
+    ArchiveView =
+    "drivers";
 
 
 type DriverArchiveView = {
@@ -731,11 +745,15 @@ string {
                         📅 ARCHIVE
                     </span>
 
-                    <strong>
+                    <strong
+                        id="k3ArchiveHeading"
+                    >
                         Архив по шофьор
                     </strong>
 
-                    <small>
+                    <small
+                        id="k3ArchiveDescription"
+                    >
                         Календарен изглед.
                         Натисни ден, за да видиш
                         курсовете за него.
@@ -780,9 +798,40 @@ string {
                 </div>
             </header>
 
-            <div
-                class="archive-layout"
+            <nav
+                class="archive-view-switch"
+                aria-label="Изглед на архива"
             >
+                <button
+                    type="button"
+                    class="
+                        archive-view-button
+                        archive-view-button-active
+                    "
+                    data-archive-action="view-drivers"
+                    aria-pressed="true"
+                >
+                    👨‍✈️ По шофьор
+                </button>
+
+                <button
+                    type="button"
+                    class="archive-view-button"
+                    data-archive-action="view-bioexis"
+                    aria-pressed="false"
+                >
+                    🚛 BIOEXIS
+                </button>
+            </nav>
+
+            <div
+                id="k3DriverArchiveView"
+                class="archive-view"
+            >
+
+                <div
+                    class="archive-layout"
+                >
                 <aside
                     class="archive-sidebar"
                 >
@@ -847,6 +896,20 @@ string {
                     ></div>
                 </div>
             </dialog>
+
+            </div>
+
+            <div
+                id="k3BioexisArchiveView"
+                class="archive-view"
+                hidden
+            >
+                <div
+                    class="bioexis-loading"
+                >
+                    Зареждане...
+                </div>
+            </div>
 
         </section>
     `;
@@ -1544,6 +1607,112 @@ void {
 }
 
 
+
+function setArchiveView(
+    view: ArchiveView
+): void {
+
+    archiveView =
+        view;
+
+    const root =
+        getRoot();
+
+    if (!root) {
+        return;
+    }
+
+    const driverView =
+        root
+            .querySelector<HTMLElement>(
+                "#k3DriverArchiveView"
+            );
+
+    const bioexisView =
+        root
+            .querySelector<HTMLElement>(
+                "#k3BioexisArchiveView"
+            );
+
+    if (driverView) {
+        driverView.hidden =
+            view !==
+            "drivers";
+    }
+
+    if (bioexisView) {
+        bioexisView.hidden =
+            view !==
+            "bioexis";
+    }
+
+    const heading =
+        root
+            .querySelector<HTMLElement>(
+                "#k3ArchiveHeading"
+            );
+
+    const description =
+        root
+            .querySelector<HTMLElement>(
+                "#k3ArchiveDescription"
+            );
+
+    if (heading) {
+        heading.textContent =
+            view ===
+            "bioexis"
+                ? "BIOEXIS отчет"
+                : "Архив по шофьор";
+    }
+
+    if (description) {
+        description.textContent =
+            view ===
+            "bioexis"
+                ? "Месечен отчет по ремарке с реален товар и сегментни километри."
+                : "Календарен изглед. Натисни ден, за да видиш курсовете за него.";
+    }
+
+    const buttons =
+        root
+            .querySelectorAll<HTMLButtonElement>(
+                ".archive-view-button"
+            );
+
+    for (
+        const button
+        of buttons
+    ) {
+        const active =
+            (
+                view ===
+                    "drivers" &&
+                button.dataset
+                    .archiveAction ===
+                    "view-drivers"
+            ) ||
+            (
+                view ===
+                    "bioexis" &&
+                button.dataset
+                    .archiveAction ===
+                    "view-bioexis"
+            );
+
+        button.classList.toggle(
+            "archive-view-button-active",
+            active
+        );
+
+        button.setAttribute(
+            "aria-pressed",
+            String(active)
+        );
+    }
+}
+
+
 async function refreshArchive():
 Promise<void> {
 
@@ -1553,6 +1722,21 @@ Promise<void> {
     setMessage("", null);
 
     renderMonthHeader();
+
+    setArchiveView(
+        archiveView
+    );
+
+    if (
+        archiveView ===
+        "bioexis"
+    ) {
+        await renderBioexisReport(
+            selectedMonthStart
+        );
+
+        return;
+    }
 
     const driversList =
         document.querySelector<HTMLElement>(
@@ -1694,6 +1878,38 @@ function handleClick(
 
     if (
         action ===
+        "view-drivers"
+    ) {
+        closeDayDialog();
+
+        setArchiveView(
+            "drivers"
+        );
+
+        void refreshArchive();
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "view-bioexis"
+    ) {
+        closeDayDialog();
+
+        setArchiveView(
+            "bioexis"
+        );
+
+        void refreshArchive();
+
+        return;
+    }
+
+
+    if (
+        action ===
         "previous-month"
     ) {
         selectedMonthStart =
@@ -1811,6 +2027,10 @@ Promise<void> {
     root.addEventListener(
         "click",
         handleClick
+    );
+
+    setArchiveView(
+        archiveView
     );
 
     await refreshArchive();
