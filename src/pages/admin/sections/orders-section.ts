@@ -9,6 +9,7 @@ import {
 
 import {
     assignOrderLoad,
+    cancelOrderAssignment,
     loadAdminOrdersWorkspace,
     type AdminOrderAssignment,
     type AdminOrderListItem,
@@ -922,6 +923,9 @@ void {
             order
         );
 
+    const historyAssignments =
+        order.assignments;
+
 
     const canAssign =
         Boolean(
@@ -1171,7 +1175,7 @@ void {
 
 
         ${
-            assignments.length
+            historyAssignments.length
 
                 ? `
                     <details
@@ -1179,17 +1183,27 @@ void {
                     >
                         <summary>
                             🚛 Зачислявания
-                            (${assignments.length})
+                            (${historyAssignments.length})
                         </summary>
 
                         <div
                             class="orders-selected-history-list"
                         >
-                            ${assignments
+                            ${historyAssignments
                                 .map(
                                     assignment => `
                                         <div
-                                            class="orders-selected-history-row"
+                                            class="
+                                                orders-selected-history-row
+                                                ${
+                                                    assignment.status ===
+                                                        "cancelled"
+
+                                                        ? "orders-selected-history-row-cancelled"
+
+                                                        : ""
+                                                }
+                                            "
                                         >
                                             <div>
                                                 <strong>
@@ -1205,16 +1219,56 @@ void {
                                                         "-"
                                                     )}
                                                 </span>
+
+                                                ${
+                                                    assignment.status ===
+                                                        "cancelled"
+
+                                                        ? `
+                                                            <small
+                                                                class="orders-assignment-cancelled-label"
+                                                            >
+                                                                ↩ Отменено
+                                                            </small>
+                                                        `
+
+                                                        : ""
+                                                }
                                             </div>
 
-                                            <strong>
-                                                ${escapeHtml(
-                                                    formatTons(
-                                                        assignment.assignedTons
-                                                    )
-                                                )}
-                                                т.
-                                            </strong>
+                                            <div
+                                                class="orders-selected-history-actions"
+                                            >
+                                                <strong>
+                                                    ${escapeHtml(
+                                                        formatTons(
+                                                            assignment.assignedTons
+                                                        )
+                                                    )}
+                                                    т.
+                                                </strong>
+
+                                                ${
+                                                    assignment.status ===
+                                                        "assigned" &&
+                                                    !assignment.tripId
+
+                                                        ? `
+                                                            <button
+                                                                type="button"
+                                                                class="orders-cancel-assignment-button"
+                                                                data-orders-action="cancel-assignment"
+                                                                data-assignment-id="${escapeHtml(
+                                                                    assignment.id
+                                                                )}"
+                                                            >
+                                                                ↩ Отмени
+                                                            </button>
+                                                        `
+
+                                                        : ""
+                                                }
+                                            </div>
                                         </div>
                                     `
                                 )
@@ -1607,6 +1661,126 @@ async function submitSelectedAssignment(
 
         button.textContent =
             "🚛 Зачисли";
+    }
+}
+
+
+async function cancelSelectedAssignment(
+    button:
+        HTMLButtonElement
+): Promise<void> {
+
+    const assignmentId =
+        button.dataset
+            .assignmentId ||
+        "";
+
+
+    const order =
+        selectedOrderId
+            ? getOperationalOrder(
+                selectedOrderId
+            )
+            : null;
+
+
+    const assignment =
+        order
+            ?.assignments
+            .find(
+                item =>
+                    item.id ===
+                    assignmentId
+            ) ||
+        null;
+
+
+    if (
+        !order ||
+        !assignment
+    ) {
+
+        setPageMessage(
+            "Зачисляването не е намерено.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    if (
+        assignment.status !==
+            "assigned" ||
+        assignment.tripId
+    ) {
+
+        setPageMessage(
+            "Зачисляването може да бъде отменено само преди стартиране на курса.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const confirmed =
+        window.confirm(
+            `Да върна ли ${formatTons(
+                assignment.assignedTons
+            )} т. от ${assignment.truckNumber || "камиона"} обратно към заявката на ${order.companyName}?`
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    button.disabled =
+        true;
+
+    button.textContent =
+        "Отмяна...";
+
+
+    try {
+
+        await cancelOrderAssignment(
+            assignment.id
+        );
+
+
+        await refreshPage();
+
+
+        setPageMessage(
+            `↩ ${formatTons(
+                assignment.assignedTons
+            )} т. са върнати към заявката на ${order.companyName}.`,
+            "success"
+        );
+
+    } catch (error) {
+
+        setPageMessage(
+            errorMessage(
+                error
+            ),
+            "error"
+        );
+
+
+        if (
+            button.isConnected
+        ) {
+
+            button.disabled =
+                false;
+
+            button.textContent =
+                "↩ Отмени";
+        }
     }
 }
 
@@ -2065,6 +2239,19 @@ async function handleClick(
     ) {
 
         await submitSelectedAssignment(
+            button
+        );
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "cancel-assignment"
+    ) {
+
+        await cancelSelectedAssignment(
             button
         );
 

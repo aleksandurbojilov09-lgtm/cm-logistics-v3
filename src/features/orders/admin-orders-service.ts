@@ -34,6 +34,7 @@ export type AdminOrderAssignment = {
     id: string;
 
     truckId: string;
+    tripId: string | null;
 
     assignedTons: number;
     loadedTons: number | null;
@@ -274,6 +275,11 @@ function mapAssignment(
                 value.truck_id
             ),
 
+        tripId:
+            nullableString(
+                value.trip_id
+            ),
+
         assignedTons:
             numberValue(
                 value.assigned_tons
@@ -501,6 +507,7 @@ Promise<AdminOrderListItem[]> {
                 order_assignments (
                     id,
                     truck_id,
+                    trip_id,
                     assigned_tons,
                     loaded_tons,
                     status,
@@ -911,4 +918,40 @@ assignOrderLoad(
 
 
     return data;
+}
+
+
+
+export async function
+cancelOrderAssignment(
+    assignmentId: string
+): Promise<void> {
+
+    if (!assignmentId) {
+
+        throw new Error(
+            "Зачисляването не е избрано."
+        );
+    }
+
+
+    const {
+        error
+    } =
+        await supabase.rpc(
+            "orders_cancel_assignment",
+            {
+                p_assignment_id:
+                    assignmentId
+            }
+        );
+
+
+    if (error) {
+
+        throw new Error(
+            error.message ||
+            "Зачисляването не можа да бъде отменено."
+        );
+    }
 }

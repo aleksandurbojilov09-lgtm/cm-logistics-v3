@@ -1395,3 +1395,94 @@
 
     font-weight: 900;
 }
+
+
+/* =========================================================
+   CANCEL ORDER ASSIGNMENT
+   ========================================================= */
+
+.orders-selected-history-actions {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 8px;
+}
+
+
+.orders-cancel-assignment-button {
+    min-height: 30px;
+
+    padding: 5px 8px;
+
+    border:
+        1px solid #dc2626;
+
+    border-radius: 7px;
+
+    background:
+        rgba(
+            127,
+            29,
+            29,
+            0.24
+        );
+
+    color: #fecaca;
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    cursor: pointer;
+}
+
+
+.orders-cancel-assignment-button:hover {
+    background:
+        rgba(
+            185,
+            28,
+            28,
+            0.42
+        );
+}
+
+
+.orders-cancel-assignment-button:disabled {
+    cursor: wait;
+
+    opacity: 0.55;
+}
+
+
+.orders-selected-history-row-cancelled {
+    opacity: 0.58;
+}
+
+
+.orders-assignment-cancelled-label {
+    display: block;
+
+    width: fit-content;
+
+    margin-top: 4px;
+
+    color: #fca5a5;
+
+    font-size: 9px;
+
+    font-weight: 800;
+}
+
+
+@media (max-width: 640px) {
+
+    .orders-selected-history-actions {
+        flex-direction: column;
+
+        align-items: flex-end;
+    }
+}
