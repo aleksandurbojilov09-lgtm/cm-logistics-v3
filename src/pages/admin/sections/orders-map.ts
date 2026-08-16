@@ -193,6 +193,15 @@ function markerClass(
 
 
     if (
+        order.loadingRamp
+    ) {
+        classes.push(
+            "orders-map-pin-ramp"
+        );
+    }
+
+
+    if (
         options.selectedOrderId ===
         order.id
     ) {
@@ -314,6 +323,22 @@ function popupHtml(
                     )}
                 </span>
             </div>
+
+            ${
+                order.loadingRamp
+
+                    ? `
+                        <div
+                            class="orders-map-popup-ramp"
+                        >
+                            🚪 РАМПА
+                            ·
+                            ЗАДЪЛЖИТЕЛНО ПЪРВА СПИРКА
+                        </div>
+                    `
+
+                    : ""
+            }
 
             <div
                 class="orders-map-popup-meta"

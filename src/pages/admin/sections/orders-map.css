@@ -1230,3 +1230,168 @@
     }
 
 }
+
+
+/* =========================================================
+   LOADING RAMP
+   ========================================================= */
+
+.orders-map-pin {
+    position: relative;
+}
+
+
+.orders-map-pin-ramp {
+    border-color: #c4b5fd;
+
+    box-shadow:
+        0 0 0 4px
+        rgba(
+            124,
+            58,
+            237,
+            0.35
+        ),
+        0 5px 14px
+        rgba(
+            0,
+            0,
+            0,
+            0.42
+        );
+}
+
+
+.orders-map-pin-ramp::after {
+    content: "Р";
+
+    position: absolute;
+
+    top: -10px;
+
+    right: -10px;
+
+    display: grid;
+
+    width: 20px;
+
+    height: 20px;
+
+    place-items: center;
+
+    border:
+        2px solid #ffffff;
+
+    border-radius: 6px;
+
+    background: #7c3aed;
+
+    color: #ffffff;
+
+    font-size: 10px;
+
+    font-weight: 900;
+
+    line-height: 1;
+}
+
+
+.orders-map-pin-ramp.orders-map-pin-selected {
+    box-shadow:
+        0 0 0 5px
+        rgba(
+            124,
+            58,
+            237,
+            0.55
+        ),
+        0 5px 16px
+        rgba(
+            0,
+            0,
+            0,
+            0.5
+        );
+}
+
+
+.orders-map-popup-ramp {
+    margin-top: 8px;
+
+    padding: 7px 8px;
+
+    border:
+        1px solid #7c3aed;
+
+    border-radius: 7px;
+
+    background:
+        rgba(
+            124,
+            58,
+            237,
+            0.18
+        );
+
+    color: #ddd6fe;
+
+    font-size: 9px;
+
+    font-weight: 900;
+}
+
+
+.orders-ramp-badge {
+    display: block;
+
+    width: fit-content;
+
+    margin-top: 8px;
+
+    padding: 5px 8px;
+
+    border:
+        1px solid #7c3aed;
+
+    border-radius: 999px;
+
+    background:
+        rgba(
+            124,
+            58,
+            237,
+            0.18
+        );
+
+    color: #ddd6fe;
+
+    font-size: 9px;
+
+    font-weight: 900;
+}
+
+
+.orders-compact-ramp {
+    width: fit-content;
+
+    margin-top: 5px !important;
+
+    padding: 3px 6px;
+
+    border:
+        1px solid #7c3aed;
+
+    border-radius: 999px;
+
+    background:
+        rgba(
+            124,
+            58,
+            237,
+            0.15
+        );
+
+    color: #c4b5fd !important;
+
+    font-weight: 900;
+}

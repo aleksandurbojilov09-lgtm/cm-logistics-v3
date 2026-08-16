@@ -62,6 +62,8 @@ export type AdminOrderListItem = {
     siteLatitude: number | null;
     siteLongitude: number | null;
 
+    loadingRamp: boolean;
+
     requestedTons: number;
     assignedTons: number;
     remainingTons: number;
@@ -438,6 +440,10 @@ function mapOrder(
                 value.site_longitude_snapshot
             ),
 
+        loadingRamp:
+            value.loading_ramp_snapshot ===
+            true,
+
         requestedTons,
 
         assignedTons,
@@ -487,6 +493,7 @@ Promise<AdminOrderListItem[]> {
                 site_address_snapshot,
                 site_latitude_snapshot,
                 site_longitude_snapshot,
+                loading_ramp_snapshot,
                 requested_tons,
                 status,
                 note,

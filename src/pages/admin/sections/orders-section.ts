@@ -982,6 +982,22 @@ void {
             ${escapeHtml(
                 order.siteAddress
             )}
+
+            ${
+                order.loadingRamp
+
+                    ? `
+                        <span
+                            class="orders-ramp-badge"
+                        >
+                            🚪 РАМПА
+                            ·
+                            ПЪРВА СПИРКА
+                        </span>
+                    `
+
+                    : ""
+            }
         </div>
 
 
@@ -1357,6 +1373,22 @@ void {
                                         order.siteAddress
                                     )}
                                 </span>
+
+                                ${
+                                    order.loadingRamp
+
+                                        ? `
+                                            <small
+                                                class="orders-compact-ramp"
+                                            >
+                                                🚪 РАМПА
+                                                ·
+                                                ПЪРВА СПИРКА
+                                            </small>
+                                        `
+
+                                        : ""
+                                }
 
                                 <small>
                                     ${
