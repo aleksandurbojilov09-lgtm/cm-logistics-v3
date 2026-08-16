@@ -17,6 +17,50 @@ export type AdminOrderLocationGroup = {
 };
 
 
+export function
+locationGroupCompanyLabel(
+    group:
+        AdminOrderLocationGroup
+): string {
+
+    const companyNames =
+        Array.from(
+            new Set(
+                group.orders
+                    .map(
+                        order =>
+                            order.companyName
+                                .trim()
+                    )
+                    .filter(
+                        Boolean
+                    )
+            )
+        );
+
+
+    if (
+        companyNames.length ===
+        0
+    ) {
+        return "Фирма";
+    }
+
+
+    if (
+        companyNames.length ===
+        1
+    ) {
+        return companyNames[0];
+    }
+
+
+    return (
+        `${companyNames[0]} + още ${companyNames.length - 1}`
+    );
+}
+
+
 function normalizeLocationText(
     value: string
 ): string {

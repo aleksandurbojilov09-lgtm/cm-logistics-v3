@@ -14,6 +14,7 @@ import {
 
 import {
     groupOrdersByLocation,
+    locationGroupCompanyLabel,
     type AdminOrderLocationGroup
 } from "./orders-location-grouping";
 
@@ -966,18 +967,28 @@ function groupPopupHtml(
                 class="orders-map-group-header"
             >
                 <strong>
+                    🏢
+                    ${escapeHtml(
+                        locationGroupCompanyLabel(
+                            group
+                        )
+                    )}
+                </strong>
+
+                <span>
                     📍
                     ${escapeHtml(
                         group.address ||
                         group.siteName ||
                         "Адрес"
                     )}
-                </strong>
-
-                <span>
+                    ·
                     ${group.orders.length}
-                    отделни заявки
-                    на този адрес
+                    ${
+                        group.orders.length === 1
+                            ? "заявка"
+                            : "заявки"
+                    }
                 </span>
             </div>
 
@@ -1427,11 +1438,12 @@ renderAdminOrdersMap(
                     }`
 
                     : `${
+                        locationGroupCompanyLabel(
+                            group
+                        )
+                    } — ${
                         group.orders.length
-                    } заявки — ${
-                        group.address ||
-                        group.siteName
-                    }`;
+                    } заявки`;
 
 
             const icon =

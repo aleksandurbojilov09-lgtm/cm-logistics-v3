@@ -42,7 +42,8 @@ import {
 } from "../../../shared/lib/html";
 
 import {
-    groupOrdersByLocation
+    groupOrdersByLocation,
+    locationGroupCompanyLabel
 } from "./orders-location-grouping";
 
 
@@ -68,6 +69,7 @@ let refreshVersion =
 
 type AdminDashboardCounters = {
     unfinishedOrders: number;
+    orderLocations: number;
     activeTrips: number | null;
     activeDrivers: number | null;
     activeTrucks: number | null;
@@ -77,6 +79,7 @@ type AdminDashboardCounters = {
 let dashboardCounters:
     AdminDashboardCounters = {
         unfinishedOrders: 0,
+        orderLocations: 0,
         activeTrips: null,
         activeDrivers: null,
         activeTrucks: null
@@ -129,7 +132,7 @@ string {
                     <div
                         class="admin-stat-label"
                     >
-                        📦 Незавършени заявки
+                        📦 Отделни незавършени заявки
                     </div>
 
                     <div
@@ -137,6 +140,13 @@ string {
                         class="admin-stat-value"
                     >
                         0
+                    </div>
+
+                    <div
+                        id="k3DashboardOrderLocations"
+                        class="orders-dashboard-stat-note"
+                    >
+                        📍 0 адреса на картата
                     </div>
                 </article>
 
@@ -613,6 +623,13 @@ void {
             "#k3DashboardUnfinishedOrders"
         );
 
+    const orderLocations =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3DashboardOrderLocations"
+        );
+
     const activeTrips =
         document.querySelector<
             HTMLElement
@@ -641,6 +658,21 @@ void {
                 dashboardCounters
                     .unfinishedOrders
             );
+    }
+
+
+    if (orderLocations) {
+
+        const count =
+            dashboardCounters
+                .orderLocations;
+
+        orderLocations.textContent =
+            `📍 ${count} ${
+                count === 1
+                    ? "адрес"
+                    : "адреса"
+            } на картата`;
     }
 
 
@@ -2436,9 +2468,13 @@ void {
      * Бутонът "Адреси" = физически адреси.
      */
     totalCount.textContent =
-        String(
-            mapOrders.length
-        );
+        `${
+            locationGroups.length
+        } ${
+            locationGroups.length === 1
+                ? "адрес"
+                : "адреса"
+        }`;
 
     visibleCount.textContent =
         String(
@@ -2534,14 +2570,22 @@ void {
                                     class="orders-address-group-title"
                                 >
                                     <strong>
+                                        🏢
+                                        ${escapeHtml(
+                                            locationGroupCompanyLabel(
+                                                group
+                                            )
+                                        )}
+                                    </strong>
+
+                                    <span>
+                                        📍
                                         ${escapeHtml(
                                             group.address ||
                                             group.siteName ||
                                             "Адрес без име"
                                         )}
-                                    </strong>
-
-                                    <span>
+                                        ·
                                         ${
                                             group.orders.length ===
                                             1
@@ -2550,7 +2594,6 @@ void {
 
                                                 : `${group.orders.length} заявки`
                                         }
-                                        на този адрес
                                     </span>
                                 </span>
 
@@ -3762,6 +3805,13 @@ Promise<void> {
             unfinishedOrders:
                 orderWorkspace
                     .mapOrders
+                    .length,
+
+            orderLocations:
+                groupOrdersByLocation(
+                    orderWorkspace
+                        .mapOrders
+                )
                     .length,
 
             activeTrips:
