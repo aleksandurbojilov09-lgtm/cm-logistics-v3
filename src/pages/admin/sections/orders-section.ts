@@ -1938,12 +1938,48 @@ void {
 
 
     const assignments =
-        currentOrderAssignments(
-            order
-        );
+        locationOrders
+            .flatMap(
+                item =>
+                    currentOrderAssignments(
+                        item
+                    )
+            )
+            .sort(
+                (
+                    first,
+                    second
+                ) =>
+                    new Date(
+                        first.assignedAt ||
+                        0
+                    ).getTime() -
+                    new Date(
+                        second.assignedAt ||
+                        0
+                    ).getTime()
+            );
 
     const historyAssignments =
-        order.assignments;
+        locationOrders
+            .flatMap(
+                item =>
+                    item.assignments
+            )
+            .sort(
+                (
+                    first,
+                    second
+                ) =>
+                    new Date(
+                        first.assignedAt ||
+                        0
+                    ).getTime() -
+                    new Date(
+                        second.assignedAt ||
+                        0
+                    ).getTime()
+            );
 
 
     const canAssign =
@@ -2482,7 +2518,7 @@ void {
                         class="orders-selected-history"
                     >
                         <summary>
-                            🕘 История на новата заявка
+                            🕘 История на адреса
                             (${historyAssignments.length})
                         </summary>
 
@@ -2964,21 +3000,17 @@ Promise<void> {
     const visible =
         visibleOperationalOrders();
 
-
     const route =
         selectedTruckRouteItems();
 
 
     /*
-     * Маршрутът на избрания камион
-     * остава видим на картата,
-     * дори ако текущият филтър
-     * скрива вече напълно
-     * зачислена заявка.
+     * Първо събираме заявките,
+     * които текущият filter/search
+     * и активният маршрут изискват.
      */
     const mapVisible =
         [...visible];
-
 
     const visibleIds =
         new Set(
@@ -3007,16 +3039,78 @@ Promise<void> {
             item.order
         );
 
-
         visibleIds.add(
             item.order.id
         );
     }
 
 
+    /*
+     * Критично location правило:
+     *
+     * ако една заявка от company+site
+     * е попаднала на картата, добавяме
+     * ВСИЧКИ operational заявки от
+     * същата реална location.
+     *
+     * Така marker/popup винаги работят
+     * с пълния остатък на адреса,
+     * дори при search/filter.
+     */
+    const visibleLocationKeys =
+        new Set(
+            groupOrdersByLocation(
+                mapVisible
+            ).map(
+                group =>
+                    group.key
+            )
+        );
+
+
+    for (
+        const group
+        of groupOrdersByLocation(
+            mapOrders
+        )
+    ) {
+
+        if (
+            !visibleLocationKeys.has(
+                group.key
+            )
+        ) {
+            continue;
+        }
+
+
+        for (
+            const order
+            of group.orders
+        ) {
+
+            if (
+                visibleIds.has(
+                    order.id
+                )
+            ) {
+                continue;
+            }
+
+
+            mapVisible.push(
+                order
+            );
+
+            visibleIds.add(
+                order.id
+            );
+        }
+    }
+
+
     const composition =
         selectedComposition();
-
 
     const selectedTruck =
         selectedOperationalTruck();
@@ -3584,7 +3678,7 @@ async function cancelSelectedAssignment(
         "";
 
 
-    const order =
+    const selectedOrder =
         selectedOrderId
             ? getOperationalOrder(
                 selectedOrderId
@@ -3592,8 +3686,42 @@ async function cancelSelectedAssignment(
             : null;
 
 
+    if (!selectedOrder) {
+
+        setPageMessage(
+            "Адресът не е намерен.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const locationGroup =
+        locationGroupForOrder(
+            selectedOrder
+        );
+
+    const locationOrders =
+        locationGroup
+            ? locationGroup.orders
+            : [selectedOrder];
+
+
+    const assignmentOwner =
+        locationOrders.find(
+            order =>
+                order.assignments.some(
+                    assignment =>
+                        assignment.id ===
+                        assignmentId
+                )
+        ) ||
+        null;
+
+
     const assignment =
-        order
+        assignmentOwner
             ?.assignments
             .find(
                 item =>
@@ -3604,12 +3732,12 @@ async function cancelSelectedAssignment(
 
 
     if (
-        !order ||
+        !assignmentOwner ||
         !assignment
     ) {
 
         setPageMessage(
-            "Зачисляването не е намерено.",
+            "Зачисляването не е намерено на този адрес.",
             "error"
         );
 
@@ -3632,11 +3760,22 @@ async function cancelSelectedAssignment(
     }
 
 
+    const companyLabel =
+        locationGroup
+            ? locationGroupCompanyLabel(
+                locationGroup
+            )
+            : assignmentOwner.companyName;
+
+
     const confirmed =
         window.confirm(
             `Да върна ли ${formatTons(
                 assignment.assignedTons
-            )} т. от ${assignment.truckNumber || "камиона"} обратно към заявката на ${order.companyName}?`
+            )} т. от ${
+                assignment.truckNumber ||
+                "камиона"
+            } обратно към адреса на ${companyLabel}?`
         );
 
 
@@ -3665,7 +3804,7 @@ async function cancelSelectedAssignment(
         setPageMessage(
             `↩ ${formatTons(
                 assignment.assignedTons
-            )} т. са върнати към заявката на ${order.companyName}.`,
+            )} т. са върнати към адреса на ${companyLabel}.`,
             "success"
         );
 

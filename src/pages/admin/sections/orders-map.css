@@ -4351,3 +4351,23 @@
             64px;
     }
 }
+
+
+/* K3 LOCATION OPERATIONS REVIEW FIX */
+
+.orders-map-group-header {
+    border-bottom-color:
+        #334155;
+}
+
+
+.orders-map-group-header strong {
+    color:
+        #ffffff;
+}
+
+
+.orders-map-group-header span {
+    color:
+        #94a3b8;
+}
