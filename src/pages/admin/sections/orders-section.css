@@ -602,20 +602,3 @@
     }
 
 }
-
-
-
-/* =========================================================
-   K3 DASHBOARD ORDER LOCATION NOTE
-   ========================================================= */
-
-.orders-dashboard-stat-note {
-    margin-top: 4px;
-
-    color:
-        var(--cm-color-text-muted);
-
-    font-size: 14px;
-
-    line-height: 1.35;
-}

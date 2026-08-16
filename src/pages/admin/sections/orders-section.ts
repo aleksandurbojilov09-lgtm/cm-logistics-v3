@@ -68,7 +68,6 @@ let refreshVersion =
 
 
 type AdminDashboardCounters = {
-    unfinishedOrders: number;
     orderLocations: number;
     activeTrips: number | null;
     activeDrivers: number | null;
@@ -78,7 +77,6 @@ type AdminDashboardCounters = {
 
 let dashboardCounters:
     AdminDashboardCounters = {
-        unfinishedOrders: 0,
         orderLocations: 0,
         activeTrips: null,
         activeDrivers: null,
@@ -132,21 +130,14 @@ string {
                     <div
                         class="admin-stat-label"
                     >
-                        📦 Отделни незавършени заявки
-                    </div>
-
-                    <div
-                        id="k3DashboardUnfinishedOrders"
-                        class="admin-stat-value"
-                    >
-                        0
+                        📍 Незавършени адреси
                     </div>
 
                     <div
                         id="k3DashboardOrderLocations"
-                        class="orders-dashboard-stat-note"
+                        class="admin-stat-value"
                     >
-                        📍 0 адреса на картата
+                        0
                     </div>
                 </article>
 
@@ -616,13 +607,6 @@ function dashboardCounterText(
 function renderDashboardCounters():
 void {
 
-    const unfinishedOrders =
-        document.querySelector<
-            HTMLElement
-        >(
-            "#k3DashboardUnfinishedOrders"
-        );
-
     const orderLocations =
         document.querySelector<
             HTMLElement
@@ -652,27 +636,12 @@ void {
         );
 
 
-    if (unfinishedOrders) {
-        unfinishedOrders.textContent =
+    if (orderLocations) {
+        orderLocations.textContent =
             String(
                 dashboardCounters
-                    .unfinishedOrders
+                    .orderLocations
             );
-    }
-
-
-    if (orderLocations) {
-
-        const count =
-            dashboardCounters
-                .orderLocations;
-
-        orderLocations.textContent =
-            `📍 ${count} ${
-                count === 1
-                    ? "адрес"
-                    : "адреса"
-            } на картата`;
     }
 
 
@@ -3802,11 +3771,6 @@ Promise<void> {
 
 
         dashboardCounters = {
-            unfinishedOrders:
-                orderWorkspace
-                    .mapOrders
-                    .length,
-
             orderLocations:
                 groupOrdersByLocation(
                     orderWorkspace
