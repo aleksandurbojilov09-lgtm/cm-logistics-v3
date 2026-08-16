@@ -217,15 +217,22 @@ string {
                         ></div>
 
 
-                        <div
+                        <details
                             class="orders-compact-list-wrap"
+                            ${
+                                window.matchMedia(
+                                    "(max-width: 980px)"
+                                ).matches
+                                    ? ""
+                                    : "open"
+                            }
                         >
 
-                            <div
+                            <summary
                                 class="orders-compact-list-header"
                             >
                                 <strong>
-                                    📍 Адреси
+                                    📍 Адреси от заявките
                                 </strong>
 
                                 <span
@@ -233,7 +240,7 @@ string {
                                 >
                                     0
                                 </span>
-                            </div>
+                            </summary>
 
 
                             <div
@@ -247,7 +254,7 @@ string {
                                 </div>
                             </div>
 
-                        </div>
+                        </details>
 
                     </aside>
 

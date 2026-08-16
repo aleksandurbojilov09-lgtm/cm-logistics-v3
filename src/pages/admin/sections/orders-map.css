@@ -1699,3 +1699,123 @@
 
     font-weight: 800;
 }
+
+
+/* =========================================================
+   K3 ORDERS COLLAPSIBLE ADDRESS LIST
+   ========================================================= */
+
+.orders-compact-list-wrap > summary {
+    list-style: none;
+
+    cursor: pointer;
+
+    user-select: none;
+}
+
+
+.orders-compact-list-wrap
+> summary::-webkit-details-marker {
+    display: none;
+}
+
+
+.orders-compact-list-header::after {
+    content: "▼";
+
+    flex: 0 0 auto;
+
+    margin-left: 2px;
+
+    color: #64748b;
+
+    font-size: 9px;
+}
+
+
+.orders-compact-list-wrap[open]
+.orders-compact-list-header::after {
+    content: "▲";
+}
+
+
+@media (max-width: 980px) {
+
+    /*
+       На tablet/phone sidebar-ът вече е под картата.
+       Не трябва да има фиксирана височина.
+    */
+
+    .orders-dispatch-sidebar {
+        height: auto !important;
+
+        grid-template-rows:
+            auto
+            auto;
+
+        overflow: visible;
+    }
+
+
+    .orders-compact-list-wrap {
+        display: block;
+
+        min-height: 0;
+    }
+
+
+    .orders-compact-list-header {
+        min-height: 44px;
+
+        padding:
+            10px
+            12px;
+
+        border-top:
+            1px solid
+            #1e293b;
+
+        background:
+            #0f172a;
+    }
+
+
+    .orders-compact-list-header strong {
+        font-size: 11px;
+    }
+
+
+    .orders-compact-list {
+        max-height: 280px;
+
+        overflow-y: auto;
+
+        overscroll-behavior: contain;
+
+        border-top:
+            1px solid
+            #172033;
+    }
+
+}
+
+
+@media (max-width: 650px) {
+
+    .orders-dispatch-sidebar {
+        height: auto !important;
+    }
+
+
+    .orders-compact-list {
+        max-height: 250px;
+    }
+
+
+    .orders-compact-list-header {
+        position: relative;
+
+        z-index: 1;
+    }
+
+}
