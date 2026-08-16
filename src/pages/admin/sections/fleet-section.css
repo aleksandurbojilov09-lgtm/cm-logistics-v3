@@ -206,7 +206,7 @@
     color:
         var(--cm-color-text-soft);
 
-    font-size: 12px;
+    font-size: 14px;
 }
 
 
@@ -316,7 +316,7 @@
 
     color: #cbd5e1;
 
-    font-size: 12px;
+    font-size: 14px;
 
     font-weight: 800;
 }
@@ -393,7 +393,7 @@
     color:
         var(--cm-color-text-soft);
 
-    font-size: 12px;
+    font-size: 14px;
 }
 
 
@@ -548,7 +548,7 @@
 .fleet-trailer-top .fleet-permit {
     margin-top: 7px;
 
-    font-size: 13px;
+    font-size: 14px;
 }
 
 
@@ -565,7 +565,7 @@
 
     color: #cbd5e1;
 
-    font-size: 11px;
+    font-size: 14px;
 
     font-weight: 800;
 }
@@ -598,7 +598,7 @@
     color:
         var(--cm-color-text-muted);
 
-    font-size: 13px;
+    font-size: 14px;
 }
 
 
@@ -712,7 +712,7 @@
     color:
         var(--cm-color-text-muted);
 
-    font-size: 13px;
+    font-size: 14px;
 }
 
 
@@ -801,7 +801,7 @@
 
     color: #fecaca;
 
-    font-size: 13px;
+    font-size: 14px;
 }
 
 

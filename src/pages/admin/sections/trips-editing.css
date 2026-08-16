@@ -62,7 +62,7 @@
 
     cursor: pointer;
 
-    font-size: 11px;
+    font-size: 14px;
 
     font-weight: 800;
 }
@@ -185,7 +185,7 @@
 
     cursor: pointer;
 
-    font-size: 11px;
+    font-size: 14px;
 
     font-weight: 900;
 }
@@ -290,7 +290,7 @@
 
     color: #94a3b8;
 
-    font-size: 11px;
+    font-size: 14px;
 }
 
 
@@ -331,7 +331,7 @@
 
     color: #cbd5e1;
 
-    font-size: 12px;
+    font-size: 14px;
 
     font-weight: 700;
 }
@@ -387,7 +387,7 @@
 
     color: #64748b;
 
-    font-size: 10px;
+    font-size: 14px;
 }
 
 
@@ -417,7 +417,7 @@
 
     color: #fde68a;
 
-    font-size: 10px;
+    font-size: 14px;
 
     line-height: 1.5;
 }
@@ -476,14 +476,14 @@
 
     color: #94a3b8;
 
-    font-size: 10px;
+    font-size: 14px;
 }
 
 
 .trip-add-order-details strong {
     color: #ffffff;
 
-    font-size: 13px;
+    font-size: 14px;
 }
 
 

@@ -57,7 +57,7 @@
     color:
         var(--cm-color-text-muted);
 
-    font-size: 13px;
+    font-size: 14px;
 }
 
 
@@ -92,7 +92,7 @@
 
     border-radius: 12px;
 
-    font-size: 13px;
+    font-size: 14px;
 }
 
 
@@ -196,7 +196,7 @@
     color:
         var(--cm-color-text-muted);
 
-    font-size: 11px;
+    font-size: 14px;
 }
 
 
@@ -207,7 +207,7 @@
 
     background: #1e293b;
 
-    font-size: 11px;
+    font-size: 14px;
 
     font-weight: 700;
 }
@@ -263,7 +263,7 @@
     color:
         var(--cm-color-text-muted);
 
-    font-size: 11px;
+    font-size: 14px;
 }
 
 
@@ -297,7 +297,7 @@
 
     color: #cbd5e1;
 
-    font-size: 13px;
+    font-size: 14px;
 }
 
 
@@ -343,7 +343,7 @@
     color:
         var(--cm-color-text-muted);
 
-    font-size: 12px;
+    font-size: 14px;
 }
 
 
@@ -406,7 +406,7 @@
     color:
         var(--cm-color-text-muted);
 
-    font-size: 12px;
+    font-size: 14px;
 }
 
 
@@ -433,7 +433,7 @@
 
     color: #cbd5e1;
 
-    font-size: 12px;
+    font-size: 14px;
 }
 
 
@@ -459,7 +459,7 @@
 
 
 .client-directory-item strong {
-    font-size: 13px;
+    font-size: 14px;
 }
 
 
@@ -468,7 +468,7 @@
     color:
         var(--cm-color-text-muted);
 
-    font-size: 11px;
+    font-size: 14px;
 }
 
 
@@ -483,7 +483,7 @@
     color:
         var(--cm-color-text-muted);
 
-    font-size: 12px;
+    font-size: 14px;
 
     text-align: center;
 }

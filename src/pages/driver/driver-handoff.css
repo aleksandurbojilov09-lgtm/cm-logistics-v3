@@ -70,7 +70,7 @@
 }
 
 .driver-handoff-waiting-item span {
-    font-size: 0.8rem;
+    font-size: 0.875rem;
     color: #94a3b8;
 }
 
@@ -302,14 +302,14 @@
         color:
             #cbd5e1;
 
-        font-size: 10px;
+        font-size: 14px;
 
         font-weight: 800;
     }
 
 
     .driver-handoff-entry small {
-        font-size: 8px;
+        font-size: 14px;
     }
 
 
@@ -328,12 +328,12 @@
 
 
     .driver-handoff-waiting-title strong {
-        font-size: 11px;
+        font-size: 14px;
     }
 
 
     .driver-handoff-waiting-title span {
-        font-size: 9px;
+        font-size: 14px;
     }
 
 
@@ -350,12 +350,12 @@
 
 
     .driver-handoff-waiting-item span {
-        font-size: 8px;
+        font-size: 14px;
     }
 
 
     .driver-handoff-waiting-item strong {
-        font-size: 11px;
+        font-size: 14px;
     }
 
 
@@ -364,6 +364,6 @@
 
         border-radius: 9px;
 
-        font-size: 10px;
+        font-size: 14px;
     }
 }

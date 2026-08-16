@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "build": "npm run check:fonts && tsc && vite build",
+    "preview": "vite preview",
+    "check:fonts": "node scripts/check-font-floor.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.0.0"

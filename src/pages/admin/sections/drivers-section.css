@@ -61,7 +61,7 @@
     color:
         var(--cm-color-text-muted);
 
-    font-size: 13px;
+    font-size: 14px;
 }
 
 
@@ -90,7 +90,7 @@
 
     text-align: center;
 
-    font-size: 13px;
+    font-size: 14px;
 
     font-weight: 800;
 }
@@ -131,7 +131,7 @@
     color:
         var(--cm-color-text-muted);
 
-    font-size: 11px;
+    font-size: 14px;
 
     font-weight: 400;
 
@@ -256,7 +256,7 @@
 
     border-radius: 10px;
 
-    font-size: 13px;
+    font-size: 14px;
 }
 
 
@@ -413,7 +413,7 @@
     color:
         var(--cm-color-text-muted);
 
-    font-size: 12px;
+    font-size: 14px;
 }
 
 
@@ -447,7 +447,7 @@
     color:
         var(--cm-color-text-muted);
 
-    font-size: 11px;
+    font-size: 14px;
 }
 
 
@@ -504,7 +504,7 @@
     color:
         var(--cm-color-text-muted);
 
-    font-size: 11px;
+    font-size: 14px;
 }
 
 

@@ -36,7 +36,7 @@
 .orders-dispatch-field > span {
     color: #94a3b8;
 
-    font-size: 10px;
+    font-size: 14px;
 
     font-weight: 800;
 
@@ -65,7 +65,7 @@
 
     font: inherit;
 
-    font-size: 12px;
+    font-size: 14px;
 }
 
 
@@ -107,7 +107,7 @@
 
     font: inherit;
 
-    font-size: 10px;
+    font-size: 14px;
 
     font-weight: 800;
 }
@@ -223,7 +223,7 @@
 
     text-align: center;
 
-    font-size: 12px;
+    font-size: 14px;
 }
 
 
@@ -254,7 +254,7 @@
 
     color: #94a3b8;
 
-    font-size: 10px;
+    font-size: 14px;
 }
 
 
@@ -272,7 +272,7 @@
 
     color: #cbd5e1;
 
-    font-size: 9px;
+    font-size: 14px;
 
     font-weight: 800;
 }
@@ -292,7 +292,7 @@
 
     color: #cbd5e1;
 
-    font-size: 10px;
+    font-size: 14px;
 }
 
 
@@ -331,7 +331,7 @@
 
     color: #64748b;
 
-    font-size: 8px;
+    font-size: 14px;
 
     text-transform: uppercase;
 }
@@ -344,7 +344,7 @@
 
     color: #ffffff;
 
-    font-size: 12px;
+    font-size: 14px;
 }
 
 
@@ -370,7 +370,7 @@
 
     color: #94a3b8;
 
-    font-size: 9px;
+    font-size: 14px;
 
     font-weight: 800;
 }
@@ -422,7 +422,7 @@
 
     font: inherit;
 
-    font-size: 10px;
+    font-size: 14px;
 
     font-weight: 900;
 }
@@ -440,7 +440,7 @@
 
     color: #94a3b8;
 
-    font-size: 9px;
+    font-size: 14px;
 }
 
 
@@ -459,7 +459,7 @@
 
     cursor: pointer;
 
-    font-size: 10px;
+    font-size: 14px;
 
     font-weight: 800;
 }
@@ -498,7 +498,7 @@
 
     background: #0f172a;
 
-    font-size: 9px;
+    font-size: 14px;
 }
 
 
@@ -542,7 +542,7 @@
 .orders-compact-list-header strong {
     color: #ffffff;
 
-    font-size: 11px;
+    font-size: 14px;
 }
 
 
@@ -555,7 +555,7 @@
 
     color: #cbd5e1;
 
-    font-size: 9px;
+    font-size: 14px;
 
     font-weight: 800;
 }
@@ -626,7 +626,7 @@
 
     color: #ffffff;
 
-    font-size: 11px;
+    font-size: 14px;
 
     text-overflow: ellipsis;
 
@@ -643,7 +643,7 @@
 
     color: #94a3b8;
 
-    font-size: 9px;
+    font-size: 14px;
 
     text-overflow: ellipsis;
 
@@ -658,7 +658,7 @@
 
     color: #64748b;
 
-    font-size: 8px;
+    font-size: 14px;
 }
 
 
@@ -684,7 +684,7 @@
 
     color: #fdba74;
 
-    font-size: 10px;
+    font-size: 14px;
 
     font-weight: 900;
 
@@ -714,7 +714,7 @@
 
     text-align: center;
 
-    font-size: 11px;
+    font-size: 14px;
 }
 
 
@@ -757,7 +757,7 @@
 
     color: #64748b;
 
-    font-size: 10px;
+    font-size: 14px;
 }
 
 
@@ -766,7 +766,7 @@
 
     color: #94a3b8;
 
-    font-size: 11px;
+    font-size: 14px;
 }
 
 
@@ -818,7 +818,7 @@
 
     color: #ffffff;
 
-    font-size: 10px;
+    font-size: 14px;
 
     font-weight: 900;
 
@@ -995,7 +995,7 @@
 .orders-map-popup {
     color: #e2e8f0;
 
-    font-size: 11px;
+    font-size: 14px;
 }
 
 
@@ -1031,7 +1031,7 @@
 .orders-map-popup-address span {
     color: #94a3b8;
 
-    font-size: 10px;
+    font-size: 14px;
 }
 
 
@@ -1040,7 +1040,7 @@
 
     color: #94a3b8;
 
-    font-size: 9px;
+    font-size: 14px;
 }
 
 
@@ -1074,7 +1074,7 @@
 
     color: #64748b;
 
-    font-size: 8px;
+    font-size: 14px;
 }
 
 
@@ -1085,7 +1085,7 @@
 
     color: #ffffff;
 
-    font-size: 10px;
+    font-size: 14px;
 }
 
 
@@ -1132,14 +1132,14 @@
 .orders-map-popup-assignment strong {
     color: #ffffff;
 
-    font-size: 9px;
+    font-size: 14px;
 }
 
 
 .orders-map-popup-assignment small {
     color: #94a3b8;
 
-    font-size: 8px;
+    font-size: 14px;
 }
 
 
@@ -1163,7 +1163,7 @@
 
     color: #fdba74;
 
-    font-size: 9px;
+    font-size: 14px;
 
     font-weight: 800;
 }
@@ -1174,7 +1174,7 @@
 
     color: #64748b;
 
-    font-size: 8px;
+    font-size: 14px;
 }
 
 
@@ -1288,7 +1288,7 @@
 
     color: #ffffff;
 
-    font-size: 10px;
+    font-size: 14px;
 
     font-weight: 900;
 
@@ -1335,7 +1335,7 @@
 
     color: #ddd6fe;
 
-    font-size: 9px;
+    font-size: 14px;
 
     font-weight: 900;
 }
@@ -1365,7 +1365,7 @@
 
     color: #ddd6fe;
 
-    font-size: 9px;
+    font-size: 14px;
 
     font-weight: 900;
 }
@@ -1432,7 +1432,7 @@
 
     color: #fecaca;
 
-    font-size: 10px;
+    font-size: 14px;
 
     font-weight: 800;
 
@@ -1472,7 +1472,7 @@
 
     color: #fca5a5;
 
-    font-size: 9px;
+    font-size: 14px;
 
     font-weight: 800;
 }
@@ -1514,7 +1514,7 @@
 
     color: #e2e8f0;
 
-    font-size: 10px;
+    font-size: 14px;
 
     font-weight: 900;
 }
@@ -1563,7 +1563,7 @@
 .orders-current-assignment-info strong {
     color: #ffffff;
 
-    font-size: 10px;
+    font-size: 14px;
 }
 
 
@@ -1574,7 +1574,7 @@
 
     color: #94a3b8;
 
-    font-size: 8px;
+    font-size: 14px;
 
     text-overflow: ellipsis;
 
@@ -1585,14 +1585,14 @@
 .orders-current-assignment-tons {
     color: #ffffff;
 
-    font-size: 11px;
+    font-size: 14px;
 }
 
 
 .orders-current-assignment-locked {
     color: #64748b;
 
-    font-size: 8px;
+    font-size: 14px;
 
     text-align: right;
 }
@@ -1601,7 +1601,7 @@
 .orders-assignment-current-label {
     color: #93c5fd;
 
-    font-size: 8px;
+    font-size: 14px;
 
     font-weight: 800;
 }
@@ -1664,7 +1664,7 @@
 
 
 .orders-map-popup-quick-assign strong {
-    font-size: 10px;
+    font-size: 14px;
 }
 
 
@@ -1673,7 +1673,7 @@
 
     color: #bfdbfe;
 
-    font-size: 9px;
+    font-size: 14px;
 
     font-weight: 800;
 }
@@ -1695,7 +1695,7 @@
 
     color: #94a3b8;
 
-    font-size: 9px;
+    font-size: 14px;
 
     font-weight: 800;
 }
@@ -1729,7 +1729,7 @@
 
     color: #64748b;
 
-    font-size: 9px;
+    font-size: 14px;
 }
 
 
@@ -1781,7 +1781,7 @@
 
 
     .orders-compact-list-header strong {
-        font-size: 11px;
+        font-size: 14px;
     }
 
 
@@ -1877,7 +1877,7 @@
     color:
         #60a5fa;
 
-    font-size: 9px;
+    font-size: 14px;
 
     font-weight: 900;
 
@@ -1903,7 +1903,7 @@
     color:
         #64748b;
 
-    font-size: 9px;
+    font-size: 14px;
 
     text-overflow: ellipsis;
 
@@ -1928,7 +1928,7 @@
     color:
         #ffffff;
 
-    font-size: 12px;
+    font-size: 14px;
 }
 
 
@@ -1938,7 +1938,7 @@
     color:
         #94a3b8;
 
-    font-size: 8px;
+    font-size: 14px;
 }
 
 
@@ -2066,7 +2066,7 @@
     color:
         #ffffff;
 
-    font-size: 9px;
+    font-size: 14px;
 
     font-weight: 900;
 }
@@ -2096,7 +2096,7 @@
     color:
         #ffffff;
 
-    font-size: 10px;
+    font-size: 14px;
 
     text-overflow: ellipsis;
 
@@ -2112,7 +2112,7 @@
     color:
         #94a3b8;
 
-    font-size: 8px;
+    font-size: 14px;
 
     text-overflow: ellipsis;
 
@@ -2124,7 +2124,7 @@
     color:
         #e2e8f0;
 
-    font-size: 9px;
+    font-size: 14px;
 
     white-space: nowrap;
 }
@@ -2147,7 +2147,7 @@
 
     cursor: pointer;
 
-    font-size: 13px;
+    font-size: 14px;
 
     font-weight: 900;
 }
@@ -2175,7 +2175,7 @@
     color:
         #64748b;
 
-    font-size: 9px;
+    font-size: 14px;
 
     text-align: center;
 }
@@ -2231,13 +2231,13 @@
 
     .orders-truck-route-main strong {
         font-size:
-            11px;
+            14px;
     }
 
 
     .orders-truck-route-main small {
         font-size:
-            9px;
+            14px;
     }
 
 
@@ -2263,7 +2263,7 @@
 
     padding: 12px;
 
-    font-size: 10px;
+    font-size: 14px;
 }
 
 
@@ -2280,14 +2280,14 @@
 .orders-selected-header span {
     margin-top: 2px;
 
-    font-size: 9px;
+    font-size: 14px;
 }
 
 
 .orders-selected-badge {
     padding: 4px 6px;
 
-    font-size: 8px;
+    font-size: 14px;
 }
 
 
@@ -2296,7 +2296,7 @@
 
     padding: 7px 8px;
 
-    font-size: 9px;
+    font-size: 14px;
 }
 
 
@@ -2349,7 +2349,7 @@
 > summary span {
     color: #cbd5e1;
 
-    font-size: 9px;
+    font-size: 14px;
 
     font-weight: 900;
 }
@@ -2359,7 +2359,7 @@
 > summary small {
     color: #64748b;
 
-    font-size: 8px;
+    font-size: 14px;
 
     text-align: right;
 }
@@ -2373,7 +2373,7 @@
 
     color: #64748b;
 
-    font-size: 8px;
+    font-size: 14px;
 }
 
 
@@ -2410,13 +2410,13 @@
 
 .orders-selected-details
 .orders-selected-stat span {
-    font-size: 7px;
+    font-size: 14px;
 }
 
 
 .orders-selected-details
 .orders-selected-stat strong {
-    font-size: 10px;
+    font-size: 14px;
 }
 
 
@@ -2432,7 +2432,7 @@
 
 
 .orders-current-assignments-title {
-    font-size: 9px !important;
+    font-size: 14px !important;
 }
 
 
@@ -2446,17 +2446,17 @@
 
 
 .orders-current-assignment-info strong {
-    font-size: 10px !important;
+    font-size: 14px !important;
 }
 
 
 .orders-current-assignment-info span {
-    font-size: 8px !important;
+    font-size: 14px !important;
 }
 
 
 .orders-current-assignment-tons {
-    font-size: 9px !important;
+    font-size: 14px !important;
 }
 
 
@@ -2470,7 +2470,7 @@
 
 
 .orders-selected-assignment label {
-    font-size: 8px;
+    font-size: 14px;
 }
 
 
@@ -2486,14 +2486,14 @@
 
     padding: 6px 10px;
 
-    font-size: 9px;
+    font-size: 14px;
 }
 
 
 .orders-selected-capacity {
     margin-top: 4px;
 
-    font-size: 8px;
+    font-size: 14px;
 }
 
 
@@ -2509,7 +2509,7 @@
 
 
 .orders-selected-history summary {
-    font-size: 9px;
+    font-size: 14px;
 }
 
 
@@ -2523,7 +2523,7 @@
 .orders-selected-history-row {
     padding: 5px 6px;
 
-    font-size: 8px;
+    font-size: 14px;
 }
 
 
@@ -2599,7 +2599,7 @@
 
     color: #ffffff;
 
-    font-size: 9px;
+    font-size: 14px;
 
     font-weight: 900;
 }
@@ -2721,7 +2721,7 @@
     color:
         #60a5fa;
 
-    font-size: 9px;
+    font-size: 14px;
 
     font-weight: 900;
 
@@ -2786,7 +2786,7 @@
     color:
         #64748b;
 
-    font-size: 9px;
+    font-size: 14px;
 }
 
 
@@ -2815,7 +2815,7 @@
 
 .orders-address-dialog-list
 .orders-compact-main strong {
-    font-size: 12px;
+    font-size: 14px;
 }
 
 
@@ -2953,7 +2953,7 @@
 
     cursor: pointer;
 
-    font-size: 11px;
+    font-size: 14px;
 
     font-weight: 900;
 }
@@ -3065,7 +3065,7 @@
     color:
         #cbd5e1;
 
-    font-size: 9px;
+    font-size: 14px;
 
     text-overflow: ellipsis;
 
@@ -3077,7 +3077,7 @@
     color:
         #ffffff;
 
-    font-size: 11px;
+    font-size: 14px;
 }
 
 
@@ -3087,7 +3087,7 @@
     color:
         #64748b;
 
-    font-size: 8px;
+    font-size: 14px;
 
     white-space: nowrap;
 }
@@ -3222,7 +3222,7 @@
             0.42
         );
 
-    font-size: 10px;
+    font-size: 14px;
 
     line-height: 1;
 
@@ -3284,7 +3284,7 @@
     color:
         #fecaca;
 
-    font-size: 9px;
+    font-size: 14px;
 }
 
 
@@ -3292,7 +3292,7 @@
     color:
         #fca5a5;
 
-    font-size: 8px;
+    font-size: 14px;
 }
 
 
@@ -3331,7 +3331,7 @@
     color:
         #fecaca;
 
-    font-size: 10px;
+    font-size: 14px;
 }
 
 
@@ -3339,7 +3339,7 @@
     color:
         #fca5a5;
 
-    font-size: 9px;
+    font-size: 14px;
 }
 
 
@@ -3347,7 +3347,7 @@
     color:
         #cbd5e1;
 
-    font-size: 8px;
+    font-size: 14px;
 }
 
 
@@ -3386,7 +3386,7 @@
     color:
         #fca5a5 !important;
 
-    font-size: 8px !important;
+    font-size: 14px !important;
 
     font-weight: 900;
 }
@@ -3400,7 +3400,7 @@
 
 
     .orders-selected-discrepancy strong {
-        font-size: 9px;
+        font-size: 14px;
     }
 
 
@@ -3411,7 +3411,7 @@
         top: -8px;
         left: -8px;
 
-        font-size: 9px;
+        font-size: 14px;
     }
 
 }

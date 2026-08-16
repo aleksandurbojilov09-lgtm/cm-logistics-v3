@@ -23,7 +23,7 @@
 
     border-radius: 11px;
 
-    font-size: 13px;
+    font-size: 14px;
 }
 
 
@@ -94,7 +94,7 @@
 
     color: var(--cm-color-text-muted);
 
-    font-size: 11px;
+    font-size: 14px;
 }
 
 
@@ -148,7 +148,7 @@
 
     color: var(--cm-color-text-muted);
 
-    font-size: 12px;
+    font-size: 14px;
 }
 
 
@@ -330,7 +330,7 @@
 
     color: #64748b;
 
-    font-size: 10px;
+    font-size: 14px;
 }
 
 
@@ -339,7 +339,7 @@
 
     border-radius: 9999px;
 
-    font-size: 10px;
+    font-size: 14px;
 
     font-weight: 800;
 }
@@ -402,7 +402,7 @@
 
     color: #64748b;
 
-    font-size: 9px;
+    font-size: 14px;
 }
 
 
@@ -447,7 +447,7 @@
 
     color: #cbd5e1;
 
-    font-size: 11px;
+    font-size: 14px;
 }
 
 
@@ -467,7 +467,7 @@
 
     color: #94a3b8;
 
-    font-size: 11px;
+    font-size: 14px;
 }
 
 
@@ -482,7 +482,7 @@
 
     color: #cbd5e1;
 
-    font-size: 11px;
+    font-size: 14px;
 }
 
 
@@ -491,7 +491,7 @@
 
     color: #86efac;
 
-    font-size: 10px;
+    font-size: 14px;
 }
 
 
@@ -580,7 +580,7 @@
 
     color: #64748b;
 
-    font-size: 10px;
+    font-size: 14px;
 }
 
 
@@ -598,7 +598,7 @@
 
     border-radius: 9999px;
 
-    font-size: 10px;
+    font-size: 14px;
 
     font-weight: 800;
 }
@@ -759,7 +759,7 @@
 .discrepancy-company-main strong {
     overflow: hidden;
 
-    font-size: 13px;
+    font-size: 14px;
 
     text-overflow: ellipsis;
 
@@ -770,7 +770,7 @@
 .discrepancy-company-main span {
     overflow: hidden;
 
-    font-size: 9px;
+    font-size: 14px;
 
     text-overflow: ellipsis;
 
@@ -797,7 +797,7 @@
         4px
         7px;
 
-    font-size: 8px;
+    font-size: 14px;
 }
 
 
@@ -812,7 +812,7 @@
 
     color: #64748b;
 
-    font-size: 11px;
+    font-size: 14px;
 
     transition:
         transform
@@ -933,7 +933,7 @@
 
     color: #94a3b8;
 
-    font-size: 8px;
+    font-size: 14px;
 
     text-overflow: ellipsis;
 
@@ -947,7 +947,7 @@
 .discrepancy-difference-positive,
 .discrepancy-archive-item-summary
 .discrepancy-difference-zero {
-    font-size: 10px;
+    font-size: 14px;
 
     text-align: center;
 }
@@ -960,7 +960,7 @@
 
     border-radius: 999px;
 
-    font-size: 8px;
+    font-size: 14px;
 
     font-weight: 800;
 
@@ -999,7 +999,7 @@
 .discrepancy-archive-item-chevron {
     color: #64748b;
 
-    font-size: 10px;
+    font-size: 14px;
 
     text-align: center;
 
@@ -1158,7 +1158,7 @@
 .discrepancy-meta,
 .discrepancy-note,
 .discrepancy-reviewed-at {
-    font-size: 12px;
+    font-size: 14px;
 }
 
 
@@ -1167,13 +1167,13 @@
 .discrepancy-company-pending,
 .discrepancy-company-ok,
 .discrepancy-archive-item-status {
-    font-size: 12px;
+    font-size: 14px;
 }
 
 
 /* Tons labels */
 .discrepancy-tons-grid span {
-    font-size: 12px;
+    font-size: 14px;
 }
 
 
@@ -1199,7 +1199,7 @@
 .discrepancy-company-main span {
     margin-top: 4px;
 
-    font-size: 12px;
+    font-size: 14px;
 
     line-height: 1.35;
 }
@@ -1228,7 +1228,7 @@
 
 .discrepancy-archive-item-date,
 .discrepancy-archive-item-truck {
-    font-size: 12px;
+    font-size: 14px;
 
     line-height: 1.35;
 }
@@ -1271,7 +1271,7 @@
     .discrepancy-company-main span,
     .discrepancy-archive-item-date,
     .discrepancy-archive-item-truck {
-        font-size: 13px;
+        font-size: 14px;
     }
 
 
