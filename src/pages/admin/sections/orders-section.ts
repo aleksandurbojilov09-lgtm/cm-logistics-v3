@@ -8,7 +8,7 @@ import {
 } from "../../../features/clients/client-service";
 
 import {
-    assignOrderLoad,
+    assignLocationLoad,
     cancelOrderAssignment,
     loadAdminOrdersWorkspace,
     type AdminOrderAssignment,
@@ -43,7 +43,11 @@ import {
 
 import {
     groupOrdersByLocation,
-    locationGroupCompanyLabel
+    locationGroupAssignableOrders,
+    locationGroupCompanyLabel,
+    locationGroupNewestAssignableOrder,
+    locationGroupPreviousRemainingTons,
+    locationGroupTotalRemainingTons
 } from "./orders-location-grouping";
 
 
@@ -1697,6 +1701,24 @@ void {
 }
 
 
+function locationGroupForOrder(
+    order:
+        AdminOrderListItem
+) {
+
+    return groupOrdersByLocation(
+        mapOrders
+    ).find(
+        group =>
+            group.orders.some(
+                item =>
+                    item.id ===
+                    order.id
+            )
+    ) || null;
+}
+
+
 function renderSelectedOrder():
 void {
 
@@ -1733,6 +1755,116 @@ void {
     }
 
 
+    const locationGroup =
+        locationGroupForOrder(
+            order
+        );
+
+    const locationOrders =
+        locationGroup
+            ? locationGroup.orders
+            : [order];
+
+    const assignableOrders =
+        locationGroup
+            ? locationGroupAssignableOrders(
+                locationGroup
+            )
+            : (
+                order.remainingTons > 0
+                    ? [order]
+                    : []
+            );
+
+    const totalRemaining =
+        locationGroup
+            ? locationGroupTotalRemainingTons(
+                locationGroup
+            )
+            : order.remainingTons;
+
+    const previousRemaining =
+        locationGroup
+            ? locationGroupPreviousRemainingTons(
+                locationGroup
+            )
+            : 0;
+
+    const companyLabel =
+        locationGroup
+            ? locationGroupCompanyLabel(
+                locationGroup
+            )
+            : order.companyName;
+
+
+    const locationRequestedTons =
+        locationOrders.reduce(
+            (
+                total,
+                item
+            ) =>
+                total +
+                item.requestedTons,
+            0
+        );
+
+    const locationCompletedTons =
+        locationOrders.reduce(
+            (
+                total,
+                item
+            ) =>
+                total +
+                item.completedTons,
+            0
+        );
+
+    const locationActiveAssignedTons =
+        locationOrders.reduce(
+            (
+                total,
+                item
+            ) =>
+                total +
+                item.activeAssignedTons,
+            0
+        );
+
+
+    const warningOrder =
+        locationOrders
+            .filter(
+                item =>
+                    Boolean(
+                        item.latestLoadingWarning
+                    )
+            )
+            .sort(
+                (
+                    first,
+                    second
+                ) =>
+                    new Date(
+                        second
+                            .latestLoadingWarning
+                            ?.loadedAt ||
+                        0
+                    ).getTime() -
+                    new Date(
+                        first
+                            .latestLoadingWarning
+                            ?.loadedAt ||
+                        0
+                    ).getTime()
+            )[0];
+
+    const latestLoadingWarning =
+        warningOrder
+            ?.latestLoadingWarning ||
+        null;
+
+
     container.hidden =
         false;
 
@@ -1754,7 +1886,7 @@ void {
                         🏢
                         <strong>
                             ${escapeHtml(
-                                order.companyName
+                                companyLabel
                             )}
                         </strong>
                     </span>
@@ -1762,21 +1894,20 @@ void {
                     <small>
                         ${escapeHtml(
                             formatTons(
-                                order.remainingTons
+                                totalRemaining
                             )
                         )}
-                        т. остатък
+                        т. общ остатък
                         ·
                         Натисни за отваряне
                     </small>
                 </button>
 
-
                 <button
                     type="button"
                     class="orders-selected-panel-close"
                     data-orders-action="close-selected-order"
-                    aria-label="Затвори заявката"
+                    aria-label="Затвори адреса"
                     title="Затвори"
                 >
                     ✕
@@ -1791,17 +1922,18 @@ void {
     const composition =
         selectedComposition();
 
-
     const selectedTruck =
         selectedOperationalTruck();
 
 
     const allowed =
         composition
+
             ? Math.min(
-                order.remainingTons,
+                totalRemaining,
                 composition.freeTons
             )
+
             : 0;
 
 
@@ -1829,20 +1961,17 @@ void {
                 <strong>
                     🏢
                     ${escapeHtml(
-                        order.companyName
+                        companyLabel
                     )}
                 </strong>
 
                 <span>
-                    Заявка
-                    #${escapeHtml(
-                        order.orderNumber
-                    )}
-                    ·
+                    📍
                     ${escapeHtml(
-                        statusLabel(
-                            order.status
-                        )
+                        locationGroup
+                            ?.address ||
+                        order.siteAddress ||
+                        order.siteName
                     )}
                 </span>
             </div>
@@ -1855,23 +1984,21 @@ void {
                 >
                     ${escapeHtml(
                         formatTons(
-                            order.remainingTons
+                            totalRemaining
                         )
                     )}
-                    т. остатък
+                    т.
                 </span>
-
 
                 <button
                     type="button"
                     class="orders-selected-panel-control"
                     data-orders-action="minimize-selected-order"
-                    aria-label="Минимизирай заявката"
+                    aria-label="Минимизирай адреса"
                     title="Минимизирай"
                 >
                     —
                 </button>
-
 
                 <button
                     type="button"
@@ -1880,7 +2007,7 @@ void {
                         orders-selected-panel-close
                     "
                     data-orders-action="close-selected-order"
-                    aria-label="Затвори заявката"
+                    aria-label="Затвори адреса"
                     title="Затвори"
                 >
                     ✕
@@ -1895,16 +2022,23 @@ void {
             📍
             <strong>
                 ${escapeHtml(
+                    locationGroup
+                        ?.siteName ||
                     order.siteName
                 )}
             </strong>
             —
             ${escapeHtml(
+                locationGroup
+                    ?.address ||
                 order.siteAddress
             )}
 
             ${
-                order.loadingRamp
+                locationOrders.some(
+                    item =>
+                        item.loadingRamp
+                )
 
                     ? `
                         <span
@@ -1922,7 +2056,28 @@ void {
 
 
         ${
-            order.latestLoadingWarning
+            previousRemaining > 0
+
+                ? `
+                    <div
+                        class="orders-location-previous-warning"
+                    >
+                        ▲
+                        ${escapeHtml(
+                            formatTons(
+                                previousRemaining
+                            )
+                        )}
+                        т. остатък от предишна заявка
+                    </div>
+                `
+
+                : ""
+        }
+
+
+        ${
+            latestLoadingWarning
 
                 ? `
                     <div
@@ -1936,7 +2091,7 @@ void {
                             Зачислени
                             ${escapeHtml(
                                 formatTons(
-                                    order.latestLoadingWarning
+                                    latestLoadingWarning
                                         .assignedTons
                                 )
                             )}
@@ -1945,7 +2100,7 @@ void {
                             Реално
                             ${escapeHtml(
                                 formatTons(
-                                    order.latestLoadingWarning
+                                    latestLoadingWarning
                                         .actualLoadedTons
                                 )
                             )}
@@ -1954,30 +2109,70 @@ void {
                             Разлика
                             ${escapeHtml(
                                 formatSignedTons(
-                                    order.latestLoadingWarning
+                                    latestLoadingWarning
                                         .differenceTons
                                 )
                             )}
                             т.
                         </span>
-
-                        ${
-                            order.latestLoadingWarning
-                                .note
-
-                                ? `
-                                    <small>
-                                        📝
-                                        ${escapeHtml(
-                                            order.latestLoadingWarning
-                                                .note
-                                        )}
-                                    </small>
-                                `
-
-                                : ""
-                        }
                     </div>
+                `
+
+                : ""
+        }
+
+
+        ${
+            assignableOrders.length > 1
+
+                ? `
+                    <details
+                        class="orders-location-orders-details"
+                    >
+                        <summary>
+                            Заявки на адреса
+                            (${assignableOrders.length})
+                        </summary>
+
+                        <div
+                            class="orders-location-orders-list"
+                        >
+                            ${assignableOrders
+                                .map(
+                                    (
+                                        item,
+                                        index
+                                    ) => `
+                                        <div
+                                            class="orders-location-order-row"
+                                        >
+                                            <span>
+                                                ${
+                                                    index ===
+                                                    assignableOrders.length - 1
+
+                                                        ? "Нова"
+                                                        : "Предишна"
+                                                }
+                                                #${escapeHtml(
+                                                    item.orderNumber
+                                                )}
+                                            </span>
+
+                                            <strong>
+                                                ${escapeHtml(
+                                                    formatTons(
+                                                        item.remainingTons
+                                                    )
+                                                )}
+                                                т.
+                                            </strong>
+                                        </div>
+                                    `
+                                )
+                                .join("")}
+                        </div>
+                    </details>
                 `
 
                 : ""
@@ -1995,92 +2190,91 @@ void {
                 <small>
                     ${escapeHtml(
                         formatTons(
-                            order.requestedTons
+                            locationRequestedTons
                         )
                     )}
                     т. заявени
                     ·
                     ${escapeHtml(
                         formatTons(
-                            order.completedTons
+                            locationCompletedTons
                         )
                     )}
                     т. изпълнени
                 </small>
             </summary>
 
-
             <div
                 class="orders-selected-stats"
             >
-            <div
-                class="orders-selected-stat"
-            >
-                <span>
-                    Заявени
-                </span>
+                <div
+                    class="orders-selected-stat"
+                >
+                    <span>
+                        Заявени
+                    </span>
 
-                <strong>
-                    ${escapeHtml(
-                        formatTons(
-                            order.requestedTons
-                        )
-                    )}
-                    т.
-                </strong>
+                    <strong>
+                        ${escapeHtml(
+                            formatTons(
+                                locationRequestedTons
+                            )
+                        )}
+                        т.
+                    </strong>
+                </div>
+
+                <div
+                    class="orders-selected-stat"
+                >
+                    <span>
+                        Изпълнени
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(
+                            formatTons(
+                                locationCompletedTons
+                            )
+                        )}
+                        т.
+                    </strong>
+                </div>
+
+                <div
+                    class="orders-selected-stat"
+                >
+                    <span>
+                        Зачислени сега
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(
+                            formatTons(
+                                locationActiveAssignedTons
+                            )
+                        )}
+                        т.
+                    </strong>
+                </div>
+
+                <div
+                    class="orders-selected-stat"
+                >
+                    <span>
+                        Остатък
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(
+                            formatTons(
+                                totalRemaining
+                            )
+                        )}
+                        т.
+                    </strong>
+                </div>
             </div>
-
-            <div
-                class="orders-selected-stat"
-            >
-                <span>
-                    Изпълнени
-                </span>
-
-                <strong>
-                    ${escapeHtml(
-                        formatTons(
-                            order.completedTons
-                        )
-                    )}
-                    т.
-                </strong>
-            </div>
-
-            <div
-                class="orders-selected-stat"
-            >
-                <span>
-                    Зачислени сега
-                </span>
-
-                <strong>
-                    ${escapeHtml(
-                        formatTons(
-                            order.activeAssignedTons
-                        )
-                    )}
-                    т.
-                </strong>
-            </div>
-
-            <div
-                class="orders-selected-stat"
-            >
-                <span>
-                    Остатък
-                </span>
-
-                <strong>
-                    ${escapeHtml(
-                        formatTons(
-                            order.remainingTons
-                        )
-                    )}
-                    т.
-                </strong>
-            </div>
-        </div>
         </details>
 
 
@@ -2097,73 +2291,71 @@ void {
                             🚛 Текущо зачисляване
                         </strong>
 
-                        ${
-                            assignments
-                                .map(
-                                    assignment => `
+                        ${assignments
+                            .map(
+                                assignment => `
+                                    <div
+                                        class="orders-current-assignment"
+                                    >
                                         <div
-                                            class="orders-current-assignment"
+                                            class="orders-current-assignment-info"
                                         >
-                                            <div
-                                                class="orders-current-assignment-info"
-                                            >
-                                                <strong>
-                                                    ${escapeHtml(
-                                                        assignment.truckNumber ||
-                                                        "Камион"
-                                                    )}
-                                                </strong>
-
-                                                <span>
-                                                    ${escapeHtml(
-                                                        assignment.driverName ||
-                                                        "-"
-                                                    )}
-                                                </span>
-                                            </div>
-
-                                            <strong
-                                                class="orders-current-assignment-tons"
-                                            >
+                                            <strong>
                                                 ${escapeHtml(
-                                                    formatTons(
-                                                        assignment.assignedTons
-                                                    )
+                                                    assignment.truckNumber ||
+                                                    "Камион"
                                                 )}
-                                                т.
                                             </strong>
 
-                                            ${
-                                                assignment.status ===
-                                                    "assigned" &&
-                                                !assignment.tripId
-
-                                                    ? `
-                                                        <button
-                                                            type="button"
-                                                            class="orders-cancel-assignment-button"
-                                                            data-orders-action="cancel-assignment"
-                                                            data-assignment-id="${escapeHtml(
-                                                                assignment.id
-                                                            )}"
-                                                        >
-                                                            ↩ Отмени
-                                                        </button>
-                                                    `
-
-                                                    : `
-                                                        <span
-                                                            class="orders-current-assignment-locked"
-                                                        >
-                                                            Курсът е започнал
-                                                        </span>
-                                                    `
-                                            }
+                                            <span>
+                                                ${escapeHtml(
+                                                    assignment.driverName ||
+                                                    "-"
+                                                )}
+                                            </span>
                                         </div>
-                                    `
-                                )
-                                .join("")
-                        }
+
+                                        <strong
+                                            class="orders-current-assignment-tons"
+                                        >
+                                            ${escapeHtml(
+                                                formatTons(
+                                                    assignment.assignedTons
+                                                )
+                                            )}
+                                            т.
+                                        </strong>
+
+                                        ${
+                                            assignment.status ===
+                                                "assigned" &&
+                                            !assignment.tripId
+
+                                                ? `
+                                                    <button
+                                                        type="button"
+                                                        class="orders-cancel-assignment-button"
+                                                        data-orders-action="cancel-assignment"
+                                                        data-assignment-id="${escapeHtml(
+                                                            assignment.id
+                                                        )}"
+                                                    >
+                                                        ↩ Отмени
+                                                    </button>
+                                                `
+
+                                                : `
+                                                    <span
+                                                        class="orders-current-assignment-locked"
+                                                    >
+                                                        Курсът е започнал
+                                                    </span>
+                                                `
+                                        }
+                                    </div>
+                                `
+                            )
+                            .join("")}
                     </div>
                 `
 
@@ -2172,7 +2364,7 @@ void {
 
 
         ${
-            order.remainingTons > 0
+            totalRemaining > 0
 
                 ? `
                     <div
@@ -2189,7 +2381,7 @@ void {
                                 max="${escapeHtml(
                                     String(
                                         allowed ||
-                                        order.remainingTons
+                                        totalRemaining
                                     )
                                 )}"
                                 value="${
@@ -2259,9 +2451,7 @@ void {
                                             selectedTruck.truckNumber
                                         )}
                                         е избран за преглед,
-                                        но в момента не е
-                                        наличен за ново
-                                        зачисляване.
+                                        но не е наличен за ново зачисляване.
                                     `
 
                                     : `
@@ -2276,7 +2466,7 @@ void {
                     <div
                         class="orders-selected-capacity"
                     >
-                        ✅ По тази заявка
+                        ✅ На този адрес
                         няма оставащ тонаж
                         за зачисляване.
                     </div>
@@ -2292,7 +2482,7 @@ void {
                         class="orders-selected-history"
                     >
                         <summary>
-                            🕘 История
+                            🕘 История на новата заявка
                             (${historyAssignments.length})
                         </summary>
 
@@ -2329,51 +2519,16 @@ void {
                                                         "-"
                                                     )}
                                                 </span>
-
-                                                ${
-                                                    assignment.status ===
-                                                        "cancelled"
-
-                                                        ? `
-                                                            <small
-                                                                class="orders-assignment-cancelled-label"
-                                                            >
-                                                                ↩ Отменено
-                                                            </small>
-                                                        `
-
-                                                        : ""
-                                                }
                                             </div>
 
-                                            <div
-                                                class="orders-selected-history-actions"
-                                            >
-                                                <strong>
-                                                    ${escapeHtml(
-                                                        formatTons(
-                                                            assignment.assignedTons
-                                                        )
-                                                    )}
-                                                    т.
-                                                </strong>
-
-                                                ${
-                                                    assignment.status ===
-                                                        "assigned" &&
-                                                    !assignment.tripId
-
-                                                        ? `
-                                                            <small
-                                                                class="orders-assignment-current-label"
-                                                            >
-                                                                Текущо
-                                                            </small>
-                                                        `
-
-                                                        : ""
-                                                }
-                                            </div>
+                                            <strong>
+                                                ${escapeHtml(
+                                                    formatTons(
+                                                        assignment.assignedTons
+                                                    )
+                                                )}
+                                                т.
+                                            </strong>
                                         </div>
                                     `
                                 )
@@ -2425,17 +2580,30 @@ void {
     const visible =
         visibleOperationalOrders();
 
-
-    const locationGroups =
+    const visibleGroups =
         groupOrdersByLocation(
             visible
         );
 
+    const visibleKeys =
+        new Set(
+            visibleGroups.map(
+                group =>
+                    group.key
+            )
+        );
 
-    /*
-     * Горният count = реални заявки.
-     * Бутонът "Адреси" = физически адреси.
-     */
+    const locationGroups =
+        groupOrdersByLocation(
+            mapOrders
+        ).filter(
+            group =>
+                visibleKeys.has(
+                    group.key
+                )
+        );
+
+
     totalCount.textContent =
         `${
             locationGroups.length
@@ -2490,6 +2658,29 @@ void {
             .map(
                 group => {
 
+                    const assignableOrders =
+                        locationGroupAssignableOrders(
+                            group
+                        );
+
+                    const anchorOrder =
+                        locationGroupNewestAssignableOrder(
+                            group
+                        ) ||
+                        group.orders[
+                            group.orders.length - 1
+                        ];
+
+                    const totalRemaining =
+                        locationGroupTotalRemainingTons(
+                            group
+                        );
+
+                    const previousRemaining =
+                        locationGroupPreviousRemainingTons(
+                            group
+                        );
+
                     const selectedGroup =
                         Boolean(
                             selectedOrderId &&
@@ -2500,17 +2691,66 @@ void {
                             )
                         );
 
+                    const assignments =
+                        group.orders.flatMap(
+                            currentOrderAssignments
+                        );
 
-                    const shouldOpen =
-                        (
-                            group.orders.length ===
-                            1
-                        ) ||
-                        selectedGroup;
+                    const trucks =
+                        Array.from(
+                            new Set(
+                                assignments
+                                    .map(
+                                        assignment =>
+                                            assignment.truckNumber
+                                    )
+                                    .filter(
+                                        Boolean
+                                    )
+                            )
+                        );
+
+                    const hasRamp =
+                        group.orders.some(
+                            order =>
+                                order.loadingRamp
+                        );
+
+                    const warningOrder =
+                        group.orders
+                            .filter(
+                                order =>
+                                    Boolean(
+                                        order.latestLoadingWarning
+                                    )
+                            )
+                            .sort(
+                                (
+                                    first,
+                                    second
+                                ) =>
+                                    new Date(
+                                        second
+                                            .latestLoadingWarning
+                                            ?.loadedAt ||
+                                        0
+                                    ).getTime() -
+                                    new Date(
+                                        first
+                                            .latestLoadingWarning
+                                            ?.loadedAt ||
+                                        0
+                                    ).getTime()
+                            )[0];
+
+                    const warning =
+                        warningOrder
+                            ?.latestLoadingWarning ||
+                        null;
 
 
                     return `
-                        <details
+                        <article
                             class="
                                 orders-address-group
                                 ${
@@ -2519,24 +2759,17 @@ void {
                                         : ""
                                 }
                             "
-                            ${
-                                shouldOpen
-                                    ? "open"
-                                    : ""
-                            }
                         >
-                            <summary
-                                class="orders-address-group-summary"
+                            <button
+                                type="button"
+                                class="orders-address-location-card"
+                                data-orders-action="select-order"
+                                data-order-id="${escapeHtml(
+                                    anchorOrder.id
+                                )}"
                             >
                                 <span
-                                    class="orders-address-group-pin"
-                                >
-                                    📍
-                                </span>
-
-
-                                <span
-                                    class="orders-address-group-title"
+                                    class="orders-address-location-main"
                                 >
                                     <strong>
                                         🏢
@@ -2554,183 +2787,167 @@ void {
                                             group.siteName ||
                                             "Адрес без име"
                                         )}
-                                        ·
-                                        ${
-                                            group.orders.length ===
-                                            1
-
-                                                ? "1 заявка"
-
-                                                : `${group.orders.length} заявки`
-                                        }
                                     </span>
+
+                                    ${
+                                        previousRemaining > 0
+
+                                            ? `
+                                                <small
+                                                    class="orders-location-previous-warning"
+                                                >
+                                                    ▲
+                                                    ${escapeHtml(
+                                                        formatTons(
+                                                            previousRemaining
+                                                        )
+                                                    )}
+                                                    т. остатък от предишна заявка
+                                                </small>
+                                            `
+
+                                            : ""
+                                    }
+
+                                    ${
+                                        trucks.length
+
+                                            ? `
+                                                <small>
+                                                    🚛
+                                                    ${escapeHtml(
+                                                        trucks.join(
+                                                            ", "
+                                                        )
+                                                    )}
+                                                </small>
+                                            `
+
+                                            : ""
+                                    }
+
+                                    ${
+                                        hasRamp
+
+                                            ? `
+                                                <small
+                                                    class="orders-address-order-ramp"
+                                                >
+                                                    🚪 РАМПА · ПЪРВА СПИРКА
+                                                </small>
+                                            `
+
+                                            : ""
+                                    }
+
+                                    ${
+                                        warning
+
+                                            ? `
+                                                <small
+                                                    class="orders-address-order-warning"
+                                                >
+                                                    ⚠️ Последно товарене:
+                                                    ${escapeHtml(
+                                                        formatSignedTons(
+                                                            warning
+                                                                .differenceTons
+                                                        )
+                                                    )}
+                                                    т.
+                                                </small>
+                                            `
+
+                                            : ""
+                                    }
                                 </span>
 
-
                                 <strong
-                                    class="orders-address-group-count"
-                                >
-                                    ${group.orders.length}
-                                </strong>
-                            </summary>
-
-
-                            <div
-                                class="orders-address-group-orders"
-                            >
-                                ${group.orders
-                                    .map(
-                                        order => {
-
-                                            const assignments =
-                                                currentOrderAssignments(
-                                                    order
-                                                );
-
-
-                                            const trucks =
-                                                Array.from(
-                                                    new Set(
-                                                        assignments
-                                                            .map(
-                                                                assignment =>
-                                                                    assignment
-                                                                        .truckNumber
-                                                            )
-                                                            .filter(
-                                                                Boolean
-                                                            )
-                                                    )
-                                                );
-
-
-                                            const active =
-                                                selectedOrderId ===
-                                                order.id;
-
-
-                                            return `
-                                                <button
-                                                    type="button"
-                                                    class="
-                                                        orders-address-order
-                                                        ${
-                                                            active
-                                                                ? "orders-address-order-active"
-                                                                : ""
-                                                        }
-                                                    "
-                                                    data-orders-action="select-order"
-                                                    data-order-id="${escapeHtml(
-                                                        order.id
-                                                    )}"
-                                                >
-                                                    <span
-                                                        class="orders-address-order-main"
-                                                    >
-                                                        <strong>
-                                                            ${escapeHtml(
-                                                                order.companyName
-                                                            )}
-                                                        </strong>
-
-                                                        <span>
-                                                            Заявка
-                                                            #${escapeHtml(
-                                                                order.orderNumber
-                                                            )}
-                                                            ·
-                                                            ${escapeHtml(
-                                                                statusLabel(
-                                                                    order.status
-                                                                )
-                                                            )}
-                                                        </span>
-
-                                                        <small>
-                                                            ${
-                                                                trucks.length
-
-                                                                    ? `🚛 ${escapeHtml(
-                                                                        trucks.join(
-                                                                            ", "
-                                                                        )
-                                                                    )}`
-
-                                                                    : "⚠️ Няма камион"
-                                                            }
-                                                        </small>
-
-                                                        ${
-                                                            order.loadingRamp
-
-                                                                ? `
-                                                                    <small
-                                                                        class="orders-address-order-ramp"
-                                                                    >
-                                                                        🚪 РАМПА · ПЪРВА СПИРКА
-                                                                    </small>
-                                                                `
-
-                                                                : ""
-                                                        }
-
-                                                        ${
-                                                            order.latestLoadingWarning
-
-                                                                ? `
-                                                                    <small
-                                                                        class="orders-address-order-warning"
-                                                                    >
-                                                                        ⚠️ Последно товарене:
-                                                                        ${escapeHtml(
-                                                                            formatSignedTons(
-                                                                                order.latestLoadingWarning
-                                                                                    .differenceTons
-                                                                            )
-                                                                        )}
-                                                                        т.
-                                                                    </small>
-                                                                `
-
-                                                                : ""
-                                                        }
-                                                    </span>
-
-
-                                                    <strong
-                                                        class="
-                                                            orders-address-order-tons
-                                                            ${
-                                                                order.remainingTons <=
-                                                                0
-
-                                                                    ? "orders-address-order-tons-zero"
-
-                                                                    : ""
-                                                            }
-                                                        "
-                                                    >
-                                                        ${
-                                                            order.remainingTons >
-                                                            0
-
-                                                                ? `${escapeHtml(
-                                                                    formatTons(
-                                                                        order.remainingTons
-                                                                    )
-                                                                )} т.`
-
-                                                                : "✓"
-                                                        }
-                                                    </strong>
-                                                </button>
-                                            `;
+                                    class="
+                                        orders-address-location-tons
+                                        ${
+                                            totalRemaining <= 0
+                                                ? "orders-address-location-tons-zero"
+                                                : ""
                                         }
-                                    )
-                                    .join("")}
-                            </div>
-                        </details>
+                                    "
+                                >
+                                    ${
+                                        totalRemaining > 0
+
+                                            ? `${escapeHtml(
+                                                formatTons(
+                                                    totalRemaining
+                                                )
+                                            )} т.`
+
+                                            : "▶"
+                                    }
+                                </strong>
+                            </button>
+
+
+                            ${
+                                assignableOrders.length > 1
+
+                                    ? `
+                                        <details
+                                            class="orders-address-location-details"
+                                            ${
+                                                selectedGroup
+                                                    ? "open"
+                                                    : ""
+                                            }
+                                        >
+                                            <summary>
+                                                Подробности
+                                                ·
+                                                ${assignableOrders.length}
+                                                заявки
+                                            </summary>
+
+                                            <div>
+                                                ${assignableOrders
+                                                    .map(
+                                                        (
+                                                            order,
+                                                            index
+                                                        ) => `
+                                                            <div
+                                                                class="orders-location-order-row"
+                                                            >
+                                                                <span>
+                                                                    ${
+                                                                        index ===
+                                                                        assignableOrders.length - 1
+
+                                                                            ? "Нова"
+                                                                            : "Предишна"
+                                                                    }
+                                                                    #${escapeHtml(
+                                                                        order.orderNumber
+                                                                    )}
+                                                                </span>
+
+                                                                <strong>
+                                                                    ${escapeHtml(
+                                                                        formatTons(
+                                                                            order.remainingTons
+                                                                        )
+                                                                    )}
+                                                                    т.
+                                                                </strong>
+                                                            </div>
+                                                        `
+                                                    )
+                                                    .join("")}
+                                            </div>
+                                        </details>
+                                    `
+
+                                    : ""
+                            }
+                        </article>
                     `;
                 }
             )
@@ -2923,10 +3140,8 @@ function openQuickAssignDialog(
             orderId
         );
 
-
     const composition =
         selectedComposition();
-
 
     const selectedTruck =
         selectedOperationalTruck();
@@ -2947,9 +3162,32 @@ function openQuickAssignDialog(
     }
 
 
+    const locationGroup =
+        locationGroupForOrder(
+            order
+        );
+
+    const totalRemaining =
+        locationGroup
+            ? locationGroupTotalRemainingTons(
+                locationGroup
+            )
+            : order.remainingTons;
+
+    const anchorOrder =
+        locationGroup
+            ? (
+                locationGroupNewestAssignableOrder(
+                    locationGroup
+                ) ||
+                order
+            )
+            : order;
+
+
     const allowed =
         Math.min(
-            order.remainingTons,
+            totalRemaining,
             composition.freeTons
         );
 
@@ -2961,7 +3199,7 @@ function openQuickAssignDialog(
         setPageMessage(
             composition.freeTons <= 0
                 ? `${composition.truckNumber} няма свободен капацитет.`
-                : "По заявката няма оставащи тонове за зачисляване.",
+                : "На адреса няма оставащи тонове за зачисляване.",
             "error"
         );
 
@@ -2970,7 +3208,7 @@ function openQuickAssignDialog(
 
 
     selectedOrderId =
-        order.id;
+        anchorOrder.id;
 
     renderCompactOrders();
 
@@ -3069,20 +3307,32 @@ function openQuickAssignDialog(
 
 
     form.dataset.orderId =
-        order.id;
+        anchorOrder.id;
 
     company.textContent =
-        order.companyName;
+        locationGroup
+            ? locationGroupCompanyLabel(
+                locationGroup
+            )
+            : order.companyName;
 
     site.textContent =
-        `📍 ${order.siteName} — ${order.siteAddress}`;
+        `📍 ${
+            locationGroup
+                ?.siteName ||
+            order.siteName
+        } — ${
+            locationGroup
+                ?.address ||
+            order.siteAddress
+        }`;
 
     truck.textContent =
         composition.truckNumber;
 
     remaining.textContent =
         `${formatTons(
-            order.remainingTons
+            totalRemaining
         )} т.`;
 
     free.textContent =
@@ -3105,16 +3355,6 @@ function openQuickAssignDialog(
             allowed
         );
 
-
-    /*
-     * Popup-ът се използва повторно.
-     * След успешно предишно зачисляване
-     * бутонът е останал disabled +
-     * "Зачисляване...".
-     *
-     * Всеки нов open започва от чисто
-     * интерактивно състояние.
-     */
     submitButton.disabled =
         false;
 
@@ -3162,7 +3402,7 @@ async function performAssignment(
     ) {
 
         setPageMessage(
-            "Избери заявка и активен камион.",
+            "Избери адрес и активен камион.",
             "error"
         );
 
@@ -3170,9 +3410,31 @@ async function performAssignment(
     }
 
 
+    const locationGroup =
+        locationGroupForOrder(
+            order
+        );
+
+    const anchorOrder =
+        locationGroup
+            ? (
+                locationGroupNewestAssignableOrder(
+                    locationGroup
+                ) ||
+                order
+            )
+            : order;
+
+    const totalRemaining =
+        locationGroup
+            ? locationGroupTotalRemainingTons(
+                locationGroup
+            )
+            : order.remainingTons;
+
     const allowed =
         Math.min(
-            order.remainingTons,
+            totalRemaining,
             composition.freeTons
         );
 
@@ -3218,8 +3480,8 @@ async function performAssignment(
 
     try {
 
-        await assignOrderLoad(
-            order.id,
+        await assignLocationLoad(
+            anchorOrder.id,
             composition.truckId,
             tons
         );
@@ -3231,7 +3493,13 @@ async function performAssignment(
         setPageMessage(
             `✅ ${formatTons(
                 tons
-            )} т. от ${order.companyName} са зачислени към ${composition.truckNumber}.`,
+            )} т. от ${
+                locationGroup
+                    ? locationGroupCompanyLabel(
+                        locationGroup
+                    )
+                    : order.companyName
+            } са зачислени към ${composition.truckNumber}.`,
             "success"
         );
 

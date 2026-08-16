@@ -3950,3 +3950,404 @@
     }
 
 }
+
+
+/* =========================================================
+   K3 LOCATION OPERATIONS V1
+   ========================================================= */
+
+.orders-address-location-card {
+    display: grid;
+
+    width: 100%;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding:
+        12px
+        13px;
+
+    border: 0;
+
+    background:
+        transparent;
+
+    color:
+        inherit;
+
+    cursor:
+        pointer;
+
+    font:
+        inherit;
+
+    text-align:
+        left;
+}
+
+
+.orders-address-location-card:hover {
+    background:
+        #111827;
+}
+
+
+.orders-address-group-selected
+.orders-address-location-card {
+    border-left:
+        4px solid
+        #3b82f6;
+
+    background:
+        #172554;
+}
+
+
+.orders-address-location-main {
+    display: flex;
+
+    min-width: 0;
+
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+
+.orders-address-location-main > strong {
+    color:
+        #ffffff;
+
+    font-size:
+        14px;
+}
+
+
+.orders-address-location-main > span,
+.orders-address-location-main > small {
+    color:
+        #94a3b8;
+
+    font-size:
+        14px;
+
+    line-height:
+        1.35;
+}
+
+
+.orders-address-location-tons {
+    min-width:
+        68px;
+
+    padding:
+        8px
+        9px;
+
+    border:
+        1px solid
+        #c2410c;
+
+    border-radius:
+        9px;
+
+    background:
+        #431407;
+
+    color:
+        #fdba74;
+
+    font-size:
+        14px;
+
+    font-weight:
+        900;
+
+    text-align:
+        center;
+}
+
+
+.orders-address-location-tons-zero {
+    border-color:
+        #166534;
+
+    background:
+        #052e16;
+
+    color:
+        #86efac;
+}
+
+
+.orders-location-previous-warning {
+    display:
+        block;
+
+    width:
+        fit-content;
+
+    margin-top:
+        5px;
+
+    padding:
+        4px
+        7px;
+
+    border:
+        1px solid
+        #c2410c;
+
+    border-radius:
+        999px;
+
+    background:
+        rgba(
+            154,
+            52,
+            18,
+            0.22
+        );
+
+    color:
+        #fdba74 !important;
+
+    font-size:
+        14px;
+
+    font-weight:
+        900;
+}
+
+
+.orders-address-location-details,
+.orders-location-orders-details,
+.orders-map-location-details {
+    border-top:
+        1px solid
+        #1e293b;
+
+    background:
+        #070d19;
+}
+
+
+.orders-address-location-details > summary,
+.orders-location-orders-details > summary,
+.orders-map-location-details > summary {
+    padding:
+        8px
+        12px;
+
+    color:
+        #94a3b8;
+
+    cursor:
+        pointer;
+
+    font-size:
+        14px;
+
+    font-weight:
+        800;
+}
+
+
+.orders-location-order-row {
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        space-between;
+
+    gap:
+        10px;
+
+    padding:
+        7px
+        12px;
+
+    border-top:
+        1px solid
+        #172033;
+
+    color:
+        #94a3b8;
+
+    font-size:
+        14px;
+}
+
+
+.orders-location-order-row strong {
+    color:
+        #ffffff;
+
+    font-size:
+        14px;
+}
+
+
+.orders-location-orders-details {
+    margin-top:
+        7px;
+
+    overflow:
+        hidden;
+
+    border:
+        1px solid
+        #293548;
+
+    border-radius:
+        8px;
+}
+
+
+.orders-map-location-total {
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        space-between;
+
+    gap:
+        10px;
+
+    margin-top:
+        9px;
+
+    padding:
+        8px
+        9px;
+
+    border:
+        1px solid
+        #c2410c;
+
+    border-radius:
+        8px;
+
+    background:
+        rgba(
+            154,
+            52,
+            18,
+            0.14
+        );
+}
+
+
+.orders-map-location-total span {
+    color:
+        #94a3b8;
+
+    font-size:
+        14px;
+}
+
+
+.orders-map-location-total strong {
+    color:
+        #fdba74;
+
+    font-size:
+        16px;
+}
+
+
+.orders-map-location-details {
+    margin-top:
+        8px;
+
+    overflow:
+        hidden;
+
+    border:
+        1px solid
+        #334155;
+
+    border-radius:
+        8px;
+
+    background:
+        #0b1220;
+}
+
+
+.orders-map-location-select {
+    width:
+        100%;
+
+    min-height:
+        38px;
+
+    margin-top:
+        9px;
+
+    padding:
+        7px
+        9px;
+
+    border:
+        1px solid
+        #334155;
+
+    border-radius:
+        8px;
+
+    background:
+        #172033;
+
+    color:
+        #ffffff;
+
+    cursor:
+        pointer;
+
+    font:
+        inherit;
+
+    font-size:
+        14px;
+
+    font-weight:
+        800;
+}
+
+
+.orders-map-location-select:hover {
+    background:
+        #1e293b;
+}
+
+
+@media (max-width: 767px) {
+
+    .orders-address-location-card {
+        min-height:
+            64px;
+
+        padding:
+            10px
+            12px;
+    }
+
+
+    .orders-address-location-tons {
+        min-width:
+            64px;
+    }
+}

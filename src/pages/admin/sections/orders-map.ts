@@ -14,7 +14,11 @@ import {
 
 import {
     groupOrdersByLocation,
+    locationGroupAssignableOrders,
     locationGroupCompanyLabel,
+    locationGroupNewestAssignableOrder,
+    locationGroupPreviousRemainingTons,
+    locationGroupTotalRemainingTons,
     type AdminOrderLocationGroup
 } from "./orders-location-grouping";
 
@@ -471,26 +475,30 @@ function groupMarkerLabel(
 
 
     const routeNumbers =
-        group.orders
-            .flatMap(
-                order => {
+        Array.from(
+            new Set(
+                group.orders
+                    .flatMap(
+                        order => {
 
-                    const value =
-                        options
-                            .selectedTruckRouteNumbers[
-                                order.id
-                            ];
+                            const value =
+                                options
+                                    .selectedTruckRouteNumbers[
+                                        order.id
+                                    ];
 
 
-                    return value
-                        ? value
-                            .split("·")
-                            .filter(
-                                Boolean
-                            )
-                        : [];
-                }
-            );
+                            return value
+                                ? value
+                                    .split("·")
+                                    .filter(
+                                        Boolean
+                                    )
+                                : [];
+                        }
+                    )
+            )
+        );
 
 
     if (
@@ -524,14 +532,35 @@ function groupMarkerLabel(
     }
 
 
-    /*
-     * Без активна маршрутна номерация
-     * маркерът показва колко отделни
-     * заявки има на физическия адрес.
-     */
-    return String(
-        group.orders.length
-    );
+    const totalRemaining =
+        locationGroupTotalRemainingTons(
+            group
+        );
+
+
+    if (
+        totalRemaining >
+        0
+    ) {
+
+        return formatTons(
+            totalRemaining
+        );
+    }
+
+
+    if (
+        group.orders.some(
+            order =>
+                order.status ===
+                "in_progress"
+        )
+    ) {
+        return "▶";
+    }
+
+
+    return "✓";
 }
 
 
@@ -947,6 +976,29 @@ function groupPopupHtml(
     }
 
 
+    const assignableOrders =
+        locationGroupAssignableOrders(
+            group
+        );
+
+    const anchorOrder =
+        locationGroupNewestAssignableOrder(
+            group
+        ) ||
+        group.orders[
+            group.orders.length - 1
+        ];
+
+    const totalRemaining =
+        locationGroupTotalRemainingTons(
+            group
+        );
+
+    const previousRemaining =
+        locationGroupPreviousRemainingTons(
+            group
+        );
+
     const selectedTruckReady =
         Boolean(
             options.selectedTruckId &&
@@ -954,6 +1006,110 @@ function groupPopupHtml(
             options.selectedTruckFreeTons !==
                 null
         );
+
+    const selectedTruckFreeTons =
+        options.selectedTruckFreeTons ??
+        0;
+
+    const quickAssignTons =
+        selectedTruckReady
+            ? Math.min(
+                totalRemaining,
+                selectedTruckFreeTons
+            )
+            : 0;
+
+
+    let quickActionHtml =
+        "";
+
+
+    if (
+        totalRemaining <=
+        0
+    ) {
+
+        quickActionHtml = `
+            <div
+                class="orders-map-popup-quick-state"
+            >
+                ✅ Няма оставащи тонове
+            </div>
+        `;
+
+    } else if (
+        !options.selectedTruckId
+    ) {
+
+        quickActionHtml = `
+            <div
+                class="orders-map-popup-quick-state"
+            >
+                🚛 Първо избери активен камион
+            </div>
+        `;
+
+    } else if (
+        !selectedTruckReady
+    ) {
+
+        quickActionHtml = `
+            <div
+                class="orders-map-popup-quick-state"
+            >
+                ⚠️ Избраният камион е само за преглед
+            </div>
+        `;
+
+    } else if (
+        selectedTruckFreeTons <=
+        0
+    ) {
+
+        quickActionHtml = `
+            <div
+                class="orders-map-popup-quick-state"
+            >
+                🚛
+                ${escapeHtml(
+                    options.selectedTruckNumber ||
+                    "Камионът"
+                )}
+                е запълнен
+            </div>
+        `;
+
+    } else {
+
+        quickActionHtml = `
+            <button
+                type="button"
+                class="orders-map-popup-quick-assign"
+                data-orders-action="quick-assign"
+                data-order-id="${escapeHtml(
+                    anchorOrder.id
+                )}"
+            >
+                <strong>
+                    ➕ Добави към
+                    ${escapeHtml(
+                        options.selectedTruckNumber ||
+                        "камиона"
+                    )}
+                </strong>
+
+                <span>
+                    до
+                    ${escapeHtml(
+                        formatTons(
+                            quickAssignTons
+                        )
+                    )}
+                    т.
+                </span>
+            </button>
+        `;
+    }
 
 
     return `
@@ -982,184 +1138,122 @@ function groupPopupHtml(
                         group.siteName ||
                         "Адрес"
                     )}
-                    ·
-                    ${group.orders.length}
-                    ${
-                        group.orders.length === 1
-                            ? "заявка"
-                            : "заявки"
-                    }
                 </span>
             </div>
 
 
             <div
-                class="orders-map-group-orders"
+                class="orders-map-location-total"
             >
-                ${group.orders
-                    .map(
-                        order => {
+                <span>
+                    Общ остатък
+                </span>
 
-                            const assignments =
-                                currentAssignments(
-                                    order
-                                );
-
-
-                            const trucks =
-                                Array.from(
-                                    new Set(
-                                        assignments
-                                            .map(
-                                                assignment =>
-                                                    assignment
-                                                        .truckNumber
-                                            )
-                                            .filter(
-                                                Boolean
-                                            )
-                                    )
-                                );
+                <strong>
+                    ${escapeHtml(
+                        formatTons(
+                            totalRemaining
+                        )
+                    )}
+                    т.
+                </strong>
+            </div>
 
 
-                            const maxQuickTons =
-                                selectedTruckReady
+            ${
+                previousRemaining > 0
 
-                                    ? Math.min(
-                                        order.remainingTons,
+                    ? `
+                        <div
+                            class="orders-location-previous-warning"
+                        >
+                            ▲
+                            ${escapeHtml(
+                                formatTons(
+                                    previousRemaining
+                                )
+                            )}
+                            т. остатък от предишна заявка
+                        </div>
+                    `
 
-                                        options
-                                            .selectedTruckFreeTons ??
-                                        0
-                                    )
-
-                                    : 0;
+                    : ""
+            }
 
 
-                            const canQuickAssign =
-                                selectedTruckReady &&
-                                maxQuickTons >
-                                0;
+            ${
+                assignableOrders.length > 1
 
+                    ? `
+                        <details
+                            class="orders-map-location-details"
+                        >
+                            <summary>
+                                Подробности
+                                ·
+                                ${assignableOrders.length}
+                                заявки
+                            </summary>
 
-                            return `
-                                <div
-                                    class="orders-map-group-order-row"
-                                >
-                                    <button
-                                        type="button"
-                                        class="orders-map-group-order-main"
-                                        data-orders-action="select-order"
-                                        data-order-id="${escapeHtml(
-                                            order.id
-                                        )}"
-                                    >
-                                        <strong>
-                                            ${escapeHtml(
-                                                order.companyName
-                                            )}
-                                        </strong>
+                            <div>
+                                ${assignableOrders
+                                    .map(
+                                        (
+                                            order,
+                                            index
+                                        ) => `
+                                            <div
+                                                class="orders-location-order-row"
+                                            >
+                                                <span>
+                                                    ${
+                                                        index ===
+                                                        assignableOrders.length - 1
 
-                                        <span>
-                                            Заявка
-                                            #${escapeHtml(
-                                                order.orderNumber
-                                            )}
-                                            ·
-                                            ${escapeHtml(
-                                                statusLabel(
-                                                    order
-                                                )
-                                            )}
-                                        </span>
+                                                            ? "Нова"
+                                                            : "Предишна"
+                                                    }
+                                                    #${escapeHtml(
+                                                        order.orderNumber
+                                                    )}
+                                                </span>
 
-                                        <small>
-                                            ${
-                                                trucks.length
-
-                                                    ? `🚛 ${escapeHtml(
-                                                        trucks.join(
-                                                            ", "
+                                                <strong>
+                                                    ${escapeHtml(
+                                                        formatTons(
+                                                            order.remainingTons
                                                         )
-                                                    )}`
+                                                    )}
+                                                    т.
+                                                </strong>
+                                            </div>
+                                        `
+                                    )
+                                    .join("")}
+                            </div>
+                        </details>
+                    `
 
-                                                    : "⚠️ Няма камион"
-                                            }
-                                        </small>
-
-                                        ${
-                                            order.loadingRamp
-
-                                                ? `
-                                                    <small
-                                                        class="orders-map-group-ramp"
-                                                    >
-                                                        🚪 РАМПА
-                                                    </small>
-                                                `
-
-                                                : ""
-                                        }
-
-                                        ${
-                                            order.latestLoadingWarning
-
-                                                ? `
-                                                    <small
-                                                        class="orders-map-group-warning"
-                                                    >
-                                                        ⚠️ Несъответствие
-                                                    </small>
-                                                `
-
-                                                : ""
-                                        }
-                                    </button>
+                    : ""
+            }
 
 
-                                    <div
-                                        class="orders-map-group-order-side"
-                                    >
-                                        <strong>
-                                            ${escapeHtml(
-                                                formatTons(
-                                                    order.remainingTons
-                                                )
-                                            )}
-                                            т.
-                                        </strong>
+            <button
+                type="button"
+                class="orders-map-location-select"
+                data-orders-action="select-order"
+                data-order-id="${escapeHtml(
+                    anchorOrder.id
+                )}"
+            >
+                Отвори адреса
+            </button>
 
-                                        ${
-                                            canQuickAssign
 
-                                                ? `
-                                                    <button
-                                                        type="button"
-                                                        class="orders-map-group-quick"
-                                                        data-orders-action="quick-assign"
-                                                        data-order-id="${escapeHtml(
-                                                            order.id
-                                                        )}"
-                                                        title="Добави към ${
-                                                            escapeHtml(
-                                                                options.selectedTruckNumber ||
-                                                                "камиона"
-                                                            )
-                                                        }"
-                                                        aria-label="Бързо зачисляване"
-                                                    >
-                                                        ➕
-                                                    </button>
-                                                `
-
-                                                : ""
-                                        }
-                                    </div>
-                                </div>
-                            `;
-                        }
-                    )
-                    .join("")}
+            <div
+                class="orders-map-popup-quick-action"
+            >
+                ${quickActionHtml}
             </div>
         </div>
     `;

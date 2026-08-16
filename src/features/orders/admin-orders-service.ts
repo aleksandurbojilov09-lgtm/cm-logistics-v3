@@ -1333,12 +1333,21 @@ function tonsToKg(
 }
 
 
+export type AdminLocationLoadAssignmentResult = {
+    assignmentIds: string[];
+    assignedTons: number;
+    ordersUsed: number;
+};
+
+
 export async function
-assignOrderLoad(
-    orderId: string,
+assignLocationLoad(
+    anchorOrderId: string,
     truckId: string,
     tons: number
-): Promise<string> {
+): Promise<
+    AdminLocationLoadAssignmentResult
+> {
 
     const assignedKg =
         tonsToKg(
@@ -1351,10 +1360,10 @@ assignOrderLoad(
         error
     } =
         await supabase.rpc(
-            "orders_assign_load",
+            "orders_assign_location_load",
             {
-                p_order_id:
-                    orderId,
+                p_anchor_order_id:
+                    anchorOrderId,
 
                 p_truck_id:
                     truckId,
@@ -1374,21 +1383,65 @@ assignOrderLoad(
     }
 
 
-    if (
-        typeof data !==
-            "string" ||
-        !data
-    ) {
+    if (!isRecord(data)) {
 
         throw new Error(
-            "Товарът беше зачислен, но липсва идентификаторът на зачисляването."
+            "Товарът беше зачислен, но липсва валиден резултат."
         );
     }
 
 
-    return data;
-}
+    const assignmentIds =
+        Array.isArray(
+            data.assignment_ids
+        )
 
+            ? data
+                .assignment_ids
+                .map(
+                    stringValue
+                )
+                .filter(
+                    Boolean
+                )
+
+            : [];
+
+
+    const assignedTons =
+        numberValue(
+            data.assigned_tons
+        );
+
+    const ordersUsed =
+        Math.max(
+            Math.trunc(
+                numberValue(
+                    data.orders_used
+                )
+            ),
+            0
+        );
+
+
+    if (
+        assignmentIds.length === 0 ||
+        assignedTons <= 0 ||
+        ordersUsed <= 0
+    ) {
+
+        throw new Error(
+            "Товарът беше зачислен, но резултатът от базата е непълен."
+        );
+    }
+
+
+    return {
+        assignmentIds,
+        assignedTons,
+        ordersUsed
+    };
+}
 
 
 export async function
