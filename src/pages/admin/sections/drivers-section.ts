@@ -552,7 +552,7 @@ function renderDriverCard(
                                 <small
                                     class="driver-permit"
                                 >
-                                    Permit
+                                    Разрешително
                                     ${escapeHtml(
                                         driver.currentTrailerPermit
                                     )}

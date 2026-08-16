@@ -1533,7 +1533,7 @@ function assignmentHtml(
 
                                                 ${
                                                     assignment.trailerPermit
-                                                        ? ` • Permit ${escapeHtml(
+                                                        ? ` • Разрешително ${escapeHtml(
                                                             assignment.trailerPermit
                                                         )}`
                                                         : ""

@@ -2560,7 +2560,7 @@ void {
                                     class="driver-handoff-summary-row"
                                 >
                                     <span>
-                                        Позиция
+                                        Разрешително
                                     </span>
 
                                     <strong>
@@ -3522,7 +3522,7 @@ void {
                                     ${
                                         request.positionNumber
 
-                                            ? ` • Позиция ${escapeHtml(
+                                            ? ` • Разрешително ${escapeHtml(
                                                 request.positionNumber
                                             )}`
 

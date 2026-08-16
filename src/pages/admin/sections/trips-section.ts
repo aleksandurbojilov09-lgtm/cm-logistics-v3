@@ -1070,7 +1070,7 @@ function renderTripCard(
 
                 <div>
                     <span>
-                        Позиция / Permit
+                        Разрешително
                     </span>
 
                     <strong>

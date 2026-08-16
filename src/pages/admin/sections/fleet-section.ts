@@ -803,7 +803,7 @@ function renderTruckCard(
                                     <small
                                         class="fleet-permit"
                                     >
-                                        Permit
+                                        Разрешително
                                         ${escapeHtml(
                                             trailer
                                                 .permitNumber
@@ -970,7 +970,7 @@ function renderTrailers(): void {
                                     <div
                                         class="fleet-permit"
                                     >
-                                        Permit
+                                        Разрешително
                                         ${escapeHtml(
                                             trailer
                                                 .permitNumber ||
@@ -1215,7 +1215,7 @@ function openAddTrailerDialog():
 
 
             <label>
-                BIOEXIS Permit
+                Разрешително BIOEXIS
 
                 <input
                     id="k3NewTrailerPermit"
@@ -1432,7 +1432,7 @@ function buildTrailerOptions(
                                     .registrationNumber
                             )}
                             —
-                            Permit
+                            Разрешително
                             ${escapeHtml(
                                 trailer
                                     .permitNumber ||
