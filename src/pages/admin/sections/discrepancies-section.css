@@ -1143,3 +1143,150 @@
     }
 
 }
+
+
+/* =========================================================
+   K3 READABLE TYPOGRAPHY
+   Never use microscopic text for operational information.
+   ========================================================= */
+
+/* General secondary information */
+.discrepancies-summary-card span,
+.discrepancies-panel-header p,
+.discrepancy-card-header span,
+.discrepancy-description,
+.discrepancy-meta,
+.discrepancy-note,
+.discrepancy-reviewed-at {
+    font-size: 12px;
+}
+
+
+/* Status badges must also be readable */
+.discrepancy-status,
+.discrepancy-company-pending,
+.discrepancy-company-ok,
+.discrepancy-archive-item-status {
+    font-size: 12px;
+}
+
+
+/* Tons labels */
+.discrepancy-tons-grid span {
+    font-size: 12px;
+}
+
+
+.discrepancy-tons-grid strong {
+    font-size: 15px;
+}
+
+
+/* =========================================================
+   COMPANY ARCHIVE
+   ========================================================= */
+
+.discrepancy-company-header {
+    min-height: 66px;
+}
+
+
+.discrepancy-company-main strong {
+    font-size: 15px;
+}
+
+
+.discrepancy-company-main span {
+    margin-top: 4px;
+
+    font-size: 12px;
+
+    line-height: 1.35;
+}
+
+
+.discrepancy-company-pending,
+.discrepancy-company-ok {
+    padding:
+        5px
+        9px;
+}
+
+
+/* =========================================================
+   ARCHIVE SIGNAL ROW
+   ========================================================= */
+
+.discrepancy-archive-item-summary {
+    min-height: 52px;
+
+    padding:
+        9px
+        11px;
+}
+
+
+.discrepancy-archive-item-date,
+.discrepancy-archive-item-truck {
+    font-size: 12px;
+
+    line-height: 1.35;
+}
+
+
+.discrepancy-archive-item-summary
+.discrepancy-difference-negative,
+.discrepancy-archive-item-summary
+.discrepancy-difference-positive,
+.discrepancy-archive-item-summary
+.discrepancy-difference-zero {
+    font-size: 14px;
+}
+
+
+.discrepancy-archive-item-chevron,
+.discrepancy-company-chevron {
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 767px) {
+
+    .discrepancies-summary-card span,
+    .discrepancies-panel-header p,
+    .discrepancy-card-header span,
+    .discrepancy-description,
+    .discrepancy-meta,
+    .discrepancy-note,
+    .discrepancy-reviewed-at,
+    .discrepancy-status,
+    .discrepancy-company-pending,
+    .discrepancy-company-ok,
+    .discrepancy-archive-item-status,
+    .discrepancy-tons-grid span,
+    .discrepancy-company-main span,
+    .discrepancy-archive-item-date,
+    .discrepancy-archive-item-truck {
+        font-size: 13px;
+    }
+
+
+    .discrepancy-company-main strong {
+        font-size: 16px;
+    }
+
+
+    .discrepancy-archive-item-summary
+    .discrepancy-difference-negative,
+    .discrepancy-archive-item-summary
+    .discrepancy-difference-positive,
+    .discrepancy-archive-item-summary
+    .discrepancy-difference-zero {
+        font-size: 15px;
+    }
+
+}
