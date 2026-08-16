@@ -52,6 +52,11 @@ import {
     renderDriverDestinationPanel
 } from "./driver-destination";
 
+
+import {
+    initializeDriverArchive
+} from "./driver-archive";
+
 import {
     logoutCurrentSession
 } from "../../features/auth/logout";
@@ -191,6 +196,27 @@ string {
                 >
                     <button
                         type="button"
+                        class="
+                            driver-view-button
+                            driver-view-button-active
+                        "
+                        data-driver-archive-action="show-route"
+                        aria-pressed="true"
+                    >
+                        🚛 Курс
+                    </button>
+
+                    <button
+                        type="button"
+                        class="driver-view-button"
+                        data-driver-archive-action="show-archive"
+                        aria-pressed="false"
+                    >
+                        📅 Моят архив
+                    </button>
+
+                    <button
+                        type="button"
                         class="driver-logout"
                         data-driver-action="logout"
                     >
@@ -214,6 +240,7 @@ string {
 
                 <section
                     class="driver-summary"
+                    data-driver-route-content
                 >
 
                     <div
@@ -281,6 +308,7 @@ string {
                 <section
                     id="k3DriverTripControl"
                     class="driver-panel"
+                    data-driver-route-content
                 >
                     <div
                         class="driver-loading"
@@ -292,6 +320,7 @@ string {
 
                 <div
                     class="driver-route-grid"
+                    data-driver-route-content
                 >
 
                     <section
@@ -364,6 +393,13 @@ string {
                     </section>
 
                 </div>
+
+
+                <section
+                    id="k3DriverArchiveView"
+                    class="driver-archive-view"
+                    hidden
+                ></section>
 
             </main>
 
@@ -5010,6 +5046,12 @@ Promise<void> {
             "error"
         );
     }
+
+
+    initializeDriverArchive();
+
+
+
 
 
     await refresh();
