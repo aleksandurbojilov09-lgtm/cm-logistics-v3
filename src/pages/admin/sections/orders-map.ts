@@ -34,6 +34,9 @@ export type AdminOrdersMapOptions = {
     selectedTruckFreeTons:
         number | null;
 
+    selectedTruckRouteNumbers:
+        Record<string, string>;
+
     onSelectOrder:
         (
             orderId: string
@@ -236,8 +239,23 @@ function markerClass(
 
 function markerLabel(
     order:
-        AdminOrderListItem
+        AdminOrderListItem,
+
+    options:
+        AdminOrdersMapOptions
 ): string {
+
+    const routeNumber =
+        options
+            .selectedTruckRouteNumbers[
+                order.id
+            ];
+
+
+    if (routeNumber) {
+        return routeNumber;
+    }
+
 
     if (
         order.remainingTons >
@@ -248,12 +266,14 @@ function markerLabel(
         );
     }
 
+
     if (
         order.status ===
         "in_progress"
     ) {
         return "▶";
     }
+
 
     return "✓";
 }
@@ -877,7 +897,8 @@ renderAdminOrdersMap(
                         >
                             ${escapeHtml(
                                 markerLabel(
-                                    order
+                                    order,
+                                    options
                                 )
                             )}
                         </div>

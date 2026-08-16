@@ -211,6 +211,13 @@ string {
                         class="orders-dispatch-sidebar"
                     >
 
+                        <section
+                            id="k3SelectedTruckRoute"
+                            class="orders-truck-route"
+                            hidden
+                        ></section>
+
+
                         <div
                             id="k3SelectedOrder"
                             class="orders-selected-order"
@@ -762,6 +769,194 @@ function selectedTruckHasOrder(
 }
 
 
+type SelectedTruckRouteItem = {
+    order:
+        AdminOrderListItem;
+
+    assignment:
+        AdminOrderAssignment;
+
+    sequence:
+        number;
+};
+
+
+function selectedTruckRouteItems():
+SelectedTruckRouteItem[] {
+
+    if (!selectedTruckId) {
+        return [];
+    }
+
+
+    const items:
+        Array<{
+            order:
+                AdminOrderListItem;
+
+            assignment:
+                AdminOrderAssignment;
+        }> =
+        [];
+
+
+    for (
+        const order
+        of mapOrders
+    ) {
+
+        for (
+            const assignment
+            of currentOrderAssignments(
+                order
+            )
+        ) {
+
+            if (
+                assignment.truckId !==
+                selectedTruckId
+            ) {
+                continue;
+            }
+
+
+            items.push({
+                order,
+                assignment
+            });
+        }
+    }
+
+
+    /*
+     * Същият operational ред,
+     * използван от бизнес правилото:
+     *
+     * 1. loading ramp
+     * 2. assigned_at
+     * 3. assignment id
+     *
+     * Не обединяваме assignment-и —
+     * един assignment = една спирка.
+     */
+    items.sort(
+        (
+            first,
+            second
+        ) => {
+
+            if (
+                first.order.loadingRamp !==
+                second.order.loadingRamp
+            ) {
+
+                return first.order.loadingRamp
+                    ? -1
+                    : 1;
+            }
+
+
+            const firstTime =
+                Date.parse(
+                    first.assignment
+                        .assignedAt
+                ) || 0;
+
+            const secondTime =
+                Date.parse(
+                    second.assignment
+                        .assignedAt
+                ) || 0;
+
+
+            if (
+                firstTime !==
+                secondTime
+            ) {
+
+                return (
+                    firstTime -
+                    secondTime
+                );
+            }
+
+
+            return first.assignment.id
+                .localeCompare(
+                    second.assignment.id
+                );
+        }
+    );
+
+
+    return items.map(
+        (
+            item,
+            index
+        ) => ({
+            ...item,
+
+            sequence:
+                index + 1
+        })
+    );
+}
+
+
+function selectedTruckRouteNumbers():
+Record<string, string> {
+
+    const numbers =
+        new Map<
+            string,
+            number[]
+        >();
+
+
+    for (
+        const item
+        of selectedTruckRouteItems()
+    ) {
+
+        const current =
+            numbers.get(
+                item.order.id
+            ) || [];
+
+
+        current.push(
+            item.sequence
+        );
+
+
+        numbers.set(
+            item.order.id,
+            current
+        );
+    }
+
+
+    return Object.fromEntries(
+        Array.from(
+            numbers.entries()
+        ).map(
+            (
+                [
+                    orderId,
+                    values
+                ]
+            ) => [
+                orderId,
+
+                values.join(
+                    "·"
+                )
+            ]
+        )
+    );
+}
+
+
 function visibleOperationalOrders():
 AdminOrderListItem[] {
 
@@ -989,6 +1184,272 @@ void {
                 orderFilter
         );
     }
+}
+
+
+function renderSelectedTruckRoute():
+void {
+
+    const container =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3SelectedTruckRoute"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    const truck =
+        selectedOperationalTruck();
+
+
+    if (!truck) {
+
+        container.hidden =
+            true;
+
+        container.innerHTML =
+            "";
+
+        return;
+    }
+
+
+    const composition =
+        selectedComposition();
+
+
+    const route =
+        selectedTruckRouteItems();
+
+
+    const currentLoad =
+        truck.activeAssignedTons;
+
+
+    const freeTons =
+        composition
+            ? composition.freeTons
+            : Math.max(
+                24 -
+                currentLoad,
+                0
+            );
+
+
+    const loadPercent =
+        Math.min(
+            Math.max(
+                (
+                    currentLoad /
+                    24
+                ) * 100,
+                0
+            ),
+            100
+        );
+
+
+    container.hidden =
+        false;
+
+
+    container.innerHTML = `
+        <header
+            class="orders-truck-route-header"
+        >
+            <div
+                class="orders-truck-route-title"
+            >
+                <span>
+                    🚛 Маршрут
+                    (${route.length})
+                </span>
+
+                <strong>
+                    ${escapeHtml(
+                        truck.truckNumber
+                    )}
+                </strong>
+
+                <small>
+                    ${escapeHtml(
+                        truck.driverName ||
+                        "-"
+                    )}
+                </small>
+            </div>
+
+
+            <div
+                class="orders-truck-route-capacity"
+            >
+                <strong>
+                    ${escapeHtml(
+                        formatTons(
+                            currentLoad
+                        )
+                    )}
+                    / 24 т.
+                </strong>
+
+                <span>
+                    свободни
+                    ${escapeHtml(
+                        formatTons(
+                            freeTons
+                        )
+                    )}
+                    т.
+                </span>
+            </div>
+        </header>
+
+
+        <div
+            class="orders-truck-route-progress"
+            aria-hidden="true"
+        >
+            <span
+                style="width: ${loadPercent}%"
+            ></span>
+        </div>
+
+
+        ${
+            route.length
+
+                ? `
+                    <div
+                        class="orders-truck-route-list"
+                    >
+                        ${route
+                            .map(
+                                item => {
+
+                                    const canCancel =
+                                        item.assignment
+                                            .status ===
+                                            "assigned" &&
+                                        !item.assignment
+                                            .tripId;
+
+
+                                    return `
+                                        <div
+                                            class="
+                                                orders-truck-route-row
+                                                ${
+                                                    item.order
+                                                        .loadingRamp
+
+                                                        ? "orders-truck-route-row-ramp"
+
+                                                        : ""
+                                                }
+                                            "
+                                        >
+                                            <button
+                                                type="button"
+                                                class="orders-truck-route-select"
+                                                data-orders-action="select-order"
+                                                data-order-id="${escapeHtml(
+                                                    item.order.id
+                                                )}"
+                                            >
+                                                <span
+                                                    class="orders-truck-route-number"
+                                                >
+                                                    ${item.sequence}
+                                                </span>
+
+
+                                                <span
+                                                    class="orders-truck-route-main"
+                                                >
+                                                    <strong>
+                                                        ${escapeHtml(
+                                                            item.order
+                                                                .companyName
+                                                        )}
+                                                    </strong>
+
+                                                    <small>
+                                                        ${
+                                                            item.order
+                                                                .loadingRamp
+
+                                                                ? "🚪 РАМПА · "
+                                                                : ""
+                                                        }
+
+                                                        ${escapeHtml(
+                                                            item.order
+                                                                .siteName
+                                                        )}
+                                                    </small>
+                                                </span>
+
+
+                                                <strong
+                                                    class="orders-truck-route-tons"
+                                                >
+                                                    ${escapeHtml(
+                                                        formatTons(
+                                                            item.assignment
+                                                                .assignedTons
+                                                        )
+                                                    )}
+                                                    т.
+                                                </strong>
+                                            </button>
+
+
+                                            ${
+                                                canCancel
+
+                                                    ? `
+                                                        <button
+                                                            type="button"
+                                                            class="orders-truck-route-cancel"
+                                                            data-orders-action="cancel-route-assignment"
+                                                            data-order-id="${escapeHtml(
+                                                                item.order.id
+                                                            )}"
+                                                            data-assignment-id="${escapeHtml(
+                                                                item.assignment.id
+                                                            )}"
+                                                            title="Отмени зачисляването"
+                                                            aria-label="Отмени зачисляването"
+                                                        >
+                                                            ↩
+                                                        </button>
+                                                    `
+
+                                                    : ""
+                                            }
+                                        </div>
+                                    `;
+                                }
+                            )
+                            .join("")}
+                    </div>
+                `
+
+                : `
+                    <div
+                        class="orders-truck-route-empty"
+                    >
+                        Все още няма зачислени
+                        адреси за този камион.
+                    </div>
+                `
+        }
+    `;
 }
 
 
@@ -1732,6 +2193,55 @@ Promise<void> {
         visibleOperationalOrders();
 
 
+    const route =
+        selectedTruckRouteItems();
+
+
+    /*
+     * Маршрутът на избрания камион
+     * остава видим на картата,
+     * дори ако текущият филтър
+     * скрива вече напълно
+     * зачислена заявка.
+     */
+    const mapVisible =
+        [...visible];
+
+
+    const visibleIds =
+        new Set(
+            mapVisible.map(
+                order =>
+                    order.id
+            )
+        );
+
+
+    for (
+        const item
+        of route
+    ) {
+
+        if (
+            visibleIds.has(
+                item.order.id
+            )
+        ) {
+            continue;
+        }
+
+
+        mapVisible.push(
+            item.order
+        );
+
+
+        visibleIds.add(
+            item.order.id
+        );
+    }
+
+
     const composition =
         selectedComposition();
 
@@ -1741,7 +2251,7 @@ Promise<void> {
 
 
     await renderAdminOrdersMap(
-        visible,
+        mapVisible,
         fixedLocations,
         {
             selectedOrderId,
@@ -1756,6 +2266,9 @@ Promise<void> {
                 composition
                     ?.freeTons ??
                 null,
+
+            selectedTruckRouteNumbers:
+                selectedTruckRouteNumbers(),
 
             onSelectOrder:
                 orderId => {
@@ -1776,6 +2289,8 @@ Promise<void> {
     renderTruckSelector();
 
     renderFilterState();
+
+    renderSelectedTruckRoute();
 
     renderCompactOrders();
 
@@ -2775,6 +3290,33 @@ async function handleClick(
     ) {
 
         await submitSelectedAssignment(
+            button
+        );
+
+        return;
+    }
+
+
+    if (
+        action ===
+        "cancel-route-assignment"
+    ) {
+
+        const orderId =
+            button.dataset
+                .orderId;
+
+
+        if (orderId) {
+
+            selectedOrderId =
+                orderId;
+
+            renderCompactOrders();
+        }
+
+
+        await cancelSelectedAssignment(
             button
         );
 

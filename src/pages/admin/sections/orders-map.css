@@ -1819,3 +1819,429 @@
     }
 
 }
+
+
+/* =========================================================
+   K3 SELECTED TRUCK LIVE ROUTE
+   ========================================================= */
+
+.orders-dispatch-sidebar {
+    grid-template-rows:
+        auto
+        auto
+        minmax(0, 1fr);
+}
+
+
+.orders-truck-route {
+    border-bottom:
+        1px solid
+        #1e293b;
+
+    background:
+        #0b1220;
+}
+
+
+.orders-truck-route-header {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 10px;
+
+    padding:
+        10px
+        12px
+        8px;
+}
+
+
+.orders-truck-route-title {
+    min-width: 0;
+}
+
+
+.orders-truck-route-title span,
+.orders-truck-route-title strong,
+.orders-truck-route-title small {
+    display: block;
+}
+
+
+.orders-truck-route-title span {
+    color:
+        #60a5fa;
+
+    font-size: 9px;
+
+    font-weight: 900;
+
+    text-transform: uppercase;
+}
+
+
+.orders-truck-route-title strong {
+    margin-top: 2px;
+
+    color:
+        #ffffff;
+
+    font-size: 14px;
+}
+
+
+.orders-truck-route-title small {
+    margin-top: 1px;
+
+    overflow: hidden;
+
+    color:
+        #64748b;
+
+    font-size: 9px;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+
+.orders-truck-route-capacity {
+    flex: 0 0 auto;
+
+    text-align: right;
+}
+
+
+.orders-truck-route-capacity strong,
+.orders-truck-route-capacity span {
+    display: block;
+}
+
+
+.orders-truck-route-capacity strong {
+    color:
+        #ffffff;
+
+    font-size: 12px;
+}
+
+
+.orders-truck-route-capacity span {
+    margin-top: 2px;
+
+    color:
+        #94a3b8;
+
+    font-size: 8px;
+}
+
+
+.orders-truck-route-progress {
+    height: 4px;
+
+    margin:
+        0
+        12px
+        8px;
+
+    overflow: hidden;
+
+    border-radius:
+        999px;
+
+    background:
+        #1e293b;
+}
+
+
+.orders-truck-route-progress span {
+    display: block;
+
+    height: 100%;
+
+    border-radius:
+        inherit;
+
+    background:
+        #3b82f6;
+}
+
+
+.orders-truck-route-list {
+    max-height:
+        180px;
+
+    overflow-y: auto;
+
+    overscroll-behavior:
+        contain;
+
+    border-top:
+        1px solid
+        #172033;
+}
+
+
+.orders-truck-route-row {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto;
+
+    align-items: stretch;
+
+    border-bottom:
+        1px solid
+        #172033;
+}
+
+
+.orders-truck-route-row:last-child {
+    border-bottom: 0;
+}
+
+
+.orders-truck-route-select {
+    display: grid;
+
+    min-width: 0;
+
+    grid-template-columns:
+        26px
+        minmax(0, 1fr)
+        auto;
+
+    align-items: center;
+
+    gap: 7px;
+
+    padding:
+        7px
+        8px;
+
+    border: 0;
+
+    background:
+        transparent;
+
+    color:
+        inherit;
+
+    cursor: pointer;
+
+    font: inherit;
+
+    text-align: left;
+}
+
+
+.orders-truck-route-select:hover {
+    background:
+        #111827;
+}
+
+
+.orders-truck-route-number {
+    display: grid;
+
+    width: 24px;
+
+    height: 24px;
+
+    place-items: center;
+
+    border-radius:
+        50%;
+
+    background:
+        #2563eb;
+
+    color:
+        #ffffff;
+
+    font-size: 9px;
+
+    font-weight: 900;
+}
+
+
+.orders-truck-route-row-ramp
+.orders-truck-route-number {
+    background:
+        #7c3aed;
+}
+
+
+.orders-truck-route-main {
+    min-width: 0;
+}
+
+
+.orders-truck-route-main strong,
+.orders-truck-route-main small {
+    display: block;
+}
+
+
+.orders-truck-route-main strong {
+    overflow: hidden;
+
+    color:
+        #ffffff;
+
+    font-size: 10px;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+
+.orders-truck-route-main small {
+    margin-top: 2px;
+
+    overflow: hidden;
+
+    color:
+        #94a3b8;
+
+    font-size: 8px;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+
+.orders-truck-route-tons {
+    color:
+        #e2e8f0;
+
+    font-size: 9px;
+
+    white-space: nowrap;
+}
+
+
+.orders-truck-route-cancel {
+    width: 34px;
+
+    border: 0;
+
+    border-left:
+        1px solid
+        #172033;
+
+    background:
+        transparent;
+
+    color:
+        #fca5a5;
+
+    cursor: pointer;
+
+    font-size: 13px;
+
+    font-weight: 900;
+}
+
+
+.orders-truck-route-cancel:hover {
+    background:
+        rgba(
+            127,
+            29,
+            29,
+            0.25
+        );
+}
+
+
+.orders-truck-route-empty {
+    padding:
+        12px;
+
+    border-top:
+        1px solid
+        #172033;
+
+    color:
+        #64748b;
+
+    font-size: 9px;
+
+    text-align: center;
+}
+
+
+@media (max-width: 980px) {
+
+    .orders-dispatch-sidebar {
+        grid-template-rows:
+            auto
+            auto
+            auto;
+    }
+
+
+    .orders-truck-route-list {
+        max-height:
+            260px;
+    }
+
+
+    .orders-truck-route-header {
+        padding:
+            10px
+            11px
+            8px;
+    }
+
+}
+
+
+@media (max-width: 650px) {
+
+    .orders-truck-route-select {
+        grid-template-columns:
+            28px
+            minmax(0, 1fr)
+            auto;
+
+        min-height:
+            44px;
+    }
+
+
+    .orders-truck-route-number {
+        width:
+            26px;
+
+        height:
+            26px;
+    }
+
+
+    .orders-truck-route-main strong {
+        font-size:
+            11px;
+    }
+
+
+    .orders-truck-route-main small {
+        font-size:
+            9px;
+    }
+
+
+    .orders-truck-route-cancel {
+        width:
+            42px;
+    }
+
+}
