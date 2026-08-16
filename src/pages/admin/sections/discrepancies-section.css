@@ -694,3 +694,452 @@
     }
 
 }
+
+
+/* =========================================================
+   K3 COMPACT DISCREPANCY ARCHIVE
+   ========================================================= */
+
+
+/* -----------------------------------------
+   COMPANY ROW
+   ----------------------------------------- */
+
+.discrepancy-company-group {
+    overflow: hidden;
+}
+
+
+.discrepancy-company-header {
+    display: flex;
+
+    min-height: 58px;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding:
+        10px
+        13px;
+
+    border-bottom: 0;
+
+    cursor: pointer;
+
+    list-style: none;
+
+    user-select: none;
+}
+
+
+.discrepancy-company-header::-webkit-details-marker {
+    display: none;
+}
+
+
+.discrepancy-company-header:hover {
+    background:
+        rgba(
+            30,
+            41,
+            59,
+            0.55
+        );
+}
+
+
+.discrepancy-company-main {
+    min-width: 0;
+}
+
+
+.discrepancy-company-main strong {
+    overflow: hidden;
+
+    font-size: 13px;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+
+.discrepancy-company-main span {
+    overflow: hidden;
+
+    font-size: 9px;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+
+.discrepancy-company-summary {
+    display: flex;
+
+    flex: 0 0 auto;
+
+    align-items: center;
+
+    gap: 6px;
+}
+
+
+.discrepancy-company-pending,
+.discrepancy-company-ok {
+    margin: 0;
+
+    padding:
+        4px
+        7px;
+
+    font-size: 8px;
+}
+
+
+.discrepancy-company-chevron {
+    display: grid;
+
+    width: 26px;
+
+    height: 26px;
+
+    place-items: center;
+
+    color: #64748b;
+
+    font-size: 11px;
+
+    transition:
+        transform
+        140ms
+        ease;
+}
+
+
+.discrepancy-company-group[open]
+.discrepancy-company-chevron {
+    transform:
+        rotate(
+            180deg
+        );
+}
+
+
+.discrepancy-company-group[open]
+.discrepancy-company-header {
+    border-bottom:
+        1px solid
+        #334155;
+}
+
+
+/* -----------------------------------------
+   BOUNDED SIGNAL LIST
+   ----------------------------------------- */
+
+.discrepancy-company-items {
+    display: flex;
+
+    max-height: 520px;
+
+    flex-direction: column;
+
+    gap: 5px;
+
+    padding: 8px;
+
+    overflow-y: auto;
+
+    overscroll-behavior: contain;
+
+    scrollbar-gutter: stable;
+}
+
+
+/* -----------------------------------------
+   ONE SIGNAL = ONE COMPACT ROW
+   ----------------------------------------- */
+
+.discrepancy-archive-item {
+    border:
+        1px solid
+        #263449;
+
+    border-radius: 8px;
+
+    background:
+        #0b1220;
+}
+
+
+.discrepancy-archive-item-summary {
+    display: grid;
+
+    min-height: 42px;
+
+    grid-template-columns:
+        minmax(
+            120px,
+            1.2fr
+        )
+        80px
+        minmax(
+            100px,
+            0.8fr
+        )
+        auto
+        24px;
+
+    align-items: center;
+
+    gap: 8px;
+
+    padding:
+        7px
+        9px;
+
+    cursor: pointer;
+
+    list-style: none;
+
+    user-select: none;
+}
+
+
+.discrepancy-archive-item-summary::-webkit-details-marker {
+    display: none;
+}
+
+
+.discrepancy-archive-item-summary:hover {
+    background:
+        rgba(
+            30,
+            41,
+            59,
+            0.48
+        );
+}
+
+
+.discrepancy-archive-item-date,
+.discrepancy-archive-item-truck {
+    overflow: hidden;
+
+    color: #94a3b8;
+
+    font-size: 8px;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+
+.discrepancy-archive-item-summary
+.discrepancy-difference-negative,
+.discrepancy-archive-item-summary
+.discrepancy-difference-positive,
+.discrepancy-archive-item-summary
+.discrepancy-difference-zero {
+    font-size: 10px;
+
+    text-align: center;
+}
+
+
+.discrepancy-archive-item-status {
+    padding:
+        3px
+        6px;
+
+    border-radius: 999px;
+
+    font-size: 8px;
+
+    font-weight: 800;
+
+    white-space: nowrap;
+}
+
+
+.discrepancy-archive-item-reviewed {
+    background:
+        rgba(
+            20,
+            83,
+            45,
+            0.55
+        );
+
+    color:
+        #86efac;
+}
+
+
+.discrepancy-archive-item-pending {
+    background:
+        rgba(
+            120,
+            53,
+            15,
+            0.55
+        );
+
+    color:
+        #fde68a;
+}
+
+
+.discrepancy-archive-item-chevron {
+    color: #64748b;
+
+    font-size: 10px;
+
+    text-align: center;
+
+    transition:
+        transform
+        140ms
+        ease;
+}
+
+
+.discrepancy-archive-item[open]
+.discrepancy-archive-item-chevron {
+    transform:
+        rotate(
+            180deg
+        );
+}
+
+
+.discrepancy-archive-item-detail {
+    padding:
+        0
+        7px
+        7px;
+}
+
+
+.discrepancy-archive-item-detail
+.discrepancy-card {
+    margin: 0;
+}
+
+
+/*
+ * Архивът вече не показва
+ * две огромни карти една до друга.
+ * Пълната карта се вижда само
+ * след отваряне на конкретния ред.
+ */
+.discrepancy-company-group
+.discrepancies-list {
+    display: block;
+}
+
+
+/* -----------------------------------------
+   PHONE
+   ----------------------------------------- */
+
+@media (max-width: 767px) {
+
+    .discrepancy-company-header {
+        min-height: 54px;
+
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 7px;
+    }
+
+
+    .discrepancy-company-summary {
+        width: 100%;
+
+        flex-wrap: wrap;
+    }
+
+
+    .discrepancy-company-chevron {
+        margin-left: auto;
+    }
+
+
+    .discrepancy-company-items {
+        max-height: 440px;
+    }
+
+
+    .discrepancy-archive-item-summary {
+        grid-template-columns:
+            minmax(
+                0,
+                1fr
+            )
+            auto
+            22px;
+
+        gap: 5px;
+    }
+
+
+    .discrepancy-archive-item-date {
+        grid-column:
+            1;
+    }
+
+
+    .discrepancy-archive-item-summary
+    .discrepancy-difference-negative,
+    .discrepancy-archive-item-summary
+    .discrepancy-difference-positive,
+    .discrepancy-archive-item-summary
+    .discrepancy-difference-zero {
+        grid-column:
+            2;
+
+        grid-row:
+            1;
+
+        text-align: right;
+    }
+
+
+    .discrepancy-archive-item-chevron {
+        grid-column:
+            3;
+
+        grid-row:
+            1;
+    }
+
+
+    .discrepancy-archive-item-truck {
+        grid-column:
+            1;
+
+        grid-row:
+            2;
+    }
+
+
+    .discrepancy-archive-item-status {
+        grid-column:
+            2 / 4;
+
+        grid-row:
+            2;
+
+        justify-self: end;
+    }
+
+}

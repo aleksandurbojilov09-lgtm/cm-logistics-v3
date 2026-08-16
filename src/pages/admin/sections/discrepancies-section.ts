@@ -792,6 +792,108 @@ CompanyGroup[] {
 }
 
 
+function renderArchiveItem(
+    item:
+        AdminDiscrepancy
+): string {
+
+    const reviewed =
+        item.status ===
+            "reviewed";
+
+
+    const differenceClass =
+        item.differenceTons < 0
+
+            ? "discrepancy-difference-negative"
+
+            : item.differenceTons > 0
+
+                ? "discrepancy-difference-positive"
+
+                : "discrepancy-difference-zero";
+
+
+    return `
+        <details
+            class="discrepancy-archive-item"
+        >
+            <summary
+                class="discrepancy-archive-item-summary"
+            >
+                <span
+                    class="discrepancy-archive-item-date"
+                >
+                    ${escapeHtml(
+                        formatDate(
+                            item.createdAt
+                        )
+                    )}
+                </span>
+
+
+                <strong
+                    class="${differenceClass}"
+                >
+                    ${escapeHtml(
+                        formatSignedTons(
+                            item.differenceTons
+                        )
+                    )}
+                </strong>
+
+
+                <span
+                    class="discrepancy-archive-item-truck"
+                >
+                    🚛
+                    ${escapeHtml(
+                        item.truckNumber ||
+                        "-"
+                    )}
+                </span>
+
+
+                <span
+                    class="
+                        discrepancy-archive-item-status
+                        ${
+                            reviewed
+                                ? "discrepancy-archive-item-reviewed"
+                                : "discrepancy-archive-item-pending"
+                        }
+                    "
+                >
+                    ${
+                        reviewed
+                            ? "✅ Прегледано"
+                            : "⚠️ Непрегледано"
+                    }
+                </span>
+
+
+                <span
+                    class="discrepancy-archive-item-chevron"
+                    aria-hidden="true"
+                >
+                    ▾
+                </span>
+            </summary>
+
+
+            <div
+                class="discrepancy-archive-item-detail"
+            >
+                ${renderDiscrepancyCard(
+                    item,
+                    false
+                )}
+            </div>
+        </details>
+    `;
+}
+
+
 function renderArchive():
 string {
 
@@ -832,16 +934,27 @@ string {
                                 ).length;
 
 
+                            const reviewedCount =
+                                group.items.length -
+                                reportedCount;
+
+
+                            const latestItem =
+                                group.items[0] ||
+                                null;
+
+
                             return `
-                                <section
+                                <details
                                     class="discrepancy-company-group"
                                 >
 
-                                    <header
+                                    <summary
                                         class="discrepancy-company-header"
                                     >
-
-                                        <div>
+                                        <div
+                                            class="discrepancy-company-main"
+                                        >
                                             <strong>
                                                 🏢
                                                 ${escapeHtml(
@@ -850,60 +963,86 @@ string {
                                             </strong>
 
                                             <span>
-                                                ${
-                                                    group.items.length
-                                                }
+                                                ${group.items.length}
                                                 ${
                                                     group.items.length === 1
                                                         ? "сигнал"
                                                         : "сигнала"
                                                 }
+
+                                                ${
+                                                    latestItem
+                                                        ? `· Последен: ${escapeHtml(
+                                                            formatDate(
+                                                                latestItem.createdAt
+                                                            )
+                                                        )}`
+                                                        : ""
+                                                }
                                             </span>
                                         </div>
 
 
-                                        ${
-                                            reportedCount > 0
+                                        <div
+                                            class="discrepancy-company-summary"
+                                        >
+                                            ${
+                                                reportedCount > 0
 
-                                                ? `
-                                                    <span
-                                                        class="discrepancy-company-pending"
-                                                    >
-                                                        ⚠️
-                                                        ${reportedCount}
-                                                        непрегледани
-                                                    </span>
-                                                `
+                                                    ? `
+                                                        <span
+                                                            class="discrepancy-company-pending"
+                                                        >
+                                                            ⚠️
+                                                            ${reportedCount}
+                                                            непрегледани
+                                                        </span>
+                                                    `
 
-                                                : `
-                                                    <span
-                                                        class="discrepancy-company-ok"
-                                                    >
-                                                        ✅ Всички прегледани
-                                                    </span>
-                                                `
-                                        }
+                                                    : ""
+                                            }
 
-                                    </header>
+
+                                            ${
+                                                reviewedCount > 0
+
+                                                    ? `
+                                                        <span
+                                                            class="discrepancy-company-ok"
+                                                        >
+                                                            ✅
+                                                            ${reviewedCount}
+                                                            прегледани
+                                                        </span>
+                                                    `
+
+                                                    : ""
+                                            }
+
+
+                                            <span
+                                                class="discrepancy-company-chevron"
+                                                aria-hidden="true"
+                                            >
+                                                ▾
+                                            </span>
+                                        </div>
+                                    </summary>
 
 
                                     <div
-                                        class="discrepancies-list"
+                                        class="discrepancy-company-items"
                                     >
                                         ${
                                             group.items
                                                 .map(
-                                                    item =>
-                                                        renderDiscrepancyCard(
-                                                            item,
-                                                            false
-                                                        )
+                                                    renderArchiveItem
                                                 )
                                                 .join("")
                                         }
                                     </div>
 
-                                </section>
+                                </details>
                             `;
                         }
                     )
