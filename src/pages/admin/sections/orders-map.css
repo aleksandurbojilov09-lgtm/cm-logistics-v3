@@ -1786,11 +1786,13 @@
 
 
     .orders-compact-list {
-        max-height: 280px;
+        max-height: 520px;
 
         overflow-y: auto;
 
         overscroll-behavior: contain;
+
+        scrollbar-gutter: stable;
 
         border-top:
             1px solid
@@ -1808,7 +1810,7 @@
 
 
     .orders-compact-list {
-        max-height: 250px;
+        max-height: 460px;
     }
 
 
