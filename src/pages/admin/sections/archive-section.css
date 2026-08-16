@@ -568,3 +568,125 @@
         color: #93c5fd;
     }
 }
+
+
+/* =========================================================
+   DAY DIALOG
+   ========================================================= */
+
+.archive-day-dialog {
+    width: min(
+        920px,
+        calc(100vw - 32px)
+    );
+
+    max-width: none;
+    max-height: 86vh;
+
+    padding: 0;
+
+    border: 1px solid #334155;
+    border-radius: 16px;
+
+    background: #0b1220;
+
+    color: #ffffff;
+
+    overflow: hidden;
+}
+
+.archive-day-dialog::backdrop {
+    background: rgb(
+        2 6 23 / 72%
+    );
+
+    backdrop-filter:
+        blur(3px);
+}
+
+.archive-day-dialog-shell {
+    display: flex;
+
+    max-height: 86vh;
+
+    flex-direction: column;
+}
+
+.archive-day-dialog-topbar {
+    display: flex;
+
+    flex-shrink: 0;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 12px 14px;
+
+    border-bottom:
+        1px solid #223149;
+
+    background: #111827;
+}
+
+.archive-day-dialog-topbar > strong {
+    font-size: 16px;
+}
+
+.archive-day-dialog-topbar > button {
+    display: grid;
+
+    width: 38px;
+    height: 38px;
+
+    place-items: center;
+
+    border:
+        1px solid #334155;
+    border-radius: 9px;
+
+    background: #0b1220;
+
+    color: #ffffff;
+
+    cursor: pointer;
+
+    font: inherit;
+    font-size: 16px;
+    font-weight: 900;
+}
+
+.archive-day-dialog-topbar
+> button:hover {
+    background: #1e293b;
+}
+
+#k3ArchiveDayDialogContent {
+    overflow-y: auto;
+}
+
+.archive-calendar-cell:disabled {
+    cursor: default;
+}
+
+.archive-calendar-cell-empty:hover {
+    border-color: #223149;
+    background: #0a1220;
+}
+
+@media (max-width: 767px) {
+
+    .archive-day-dialog {
+        width:
+            calc(100vw - 16px);
+
+        max-height: 92vh;
+
+        border-radius: 14px;
+    }
+
+    .archive-day-dialog-shell {
+        max-height: 92vh;
+    }
+}

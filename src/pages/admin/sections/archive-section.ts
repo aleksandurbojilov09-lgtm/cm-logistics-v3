@@ -706,42 +706,6 @@ function buildCalendarCells(
 }
 
 
-function ensureSelectedDate():
-void {
-
-    const driver =
-        getSelectedDriver();
-
-    const cells =
-        buildCalendarCells(
-            driver
-        );
-
-    const valid =
-        selectedDate !== null &&
-        cells.some(
-            cell =>
-                cell.date ===
-                selectedDate
-        );
-
-    if (valid) {
-        return;
-    }
-
-    const firstWithData =
-        cells.find(
-            cell =>
-                cell.segments.length > 0
-        );
-
-    selectedDate =
-        firstWithData?.date ||
-        cells[0]?.date ||
-        null;
-}
-
-
 function renderSection():
 string {
 
@@ -853,6 +817,36 @@ string {
                     </div>
                 </main>
             </div>
+
+            <dialog
+                id="k3ArchiveDayDialog"
+                class="archive-day-dialog"
+            >
+                <div
+                    class="archive-day-dialog-shell"
+                >
+                    <div
+                        class="archive-day-dialog-topbar"
+                    >
+                        <strong>
+                            Детайли за деня
+                        </strong>
+
+                        <button
+                            type="button"
+                            data-archive-action="close-day"
+                            aria-label="Затвори"
+                            title="Затвори"
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    <div
+                        id="k3ArchiveDayDialogContent"
+                    ></div>
+                </div>
+            </dialog>
 
         </section>
     `;
@@ -972,19 +966,10 @@ void {
         return;
     }
 
-    ensureSelectedDate();
-
     const cells =
         buildCalendarCells(
             driver
         );
-
-    const activeCell =
-        cells.find(
-            cell =>
-                cell.date ===
-                selectedDate
-        ) || null;
 
     const firstWeekday =
         dayOfWeekIndex(
@@ -1077,14 +1062,6 @@ void {
                     .join("")}
             </div>
         </section>
-
-        <section
-            class="archive-day-panel"
-        >
-            ${renderSelectedDay(
-                activeCell
-            )}
-        </section>
     `;
 }
 
@@ -1092,10 +1069,6 @@ void {
 function renderCalendarCell(
     cell: CalendarCell
 ): string {
-
-    const isSelected =
-        cell.date ===
-        selectedDate;
 
     const hasData =
         cell.segments.length > 0;
@@ -1107,12 +1080,12 @@ function renderCalendarCell(
                 hasData
                     ? "archive-calendar-cell-has-data"
                     : "archive-calendar-cell-empty"
-            } ${
-                isSelected
-                    ? "archive-calendar-cell-selected"
-                    : ""
             }"
-            data-archive-action="select-date"
+            ${
+                hasData
+                    ? `data-archive-action="select-date"`
+                    : "disabled"
+            }
             data-date="${escapeHtml(
                 cell.date
             )}"
@@ -1154,6 +1127,85 @@ function renderCalendarCell(
             }
         </button>
     `;
+}
+
+
+function closeDayDialog():
+void {
+
+    const dialog =
+        document.querySelector<
+            HTMLDialogElement
+        >(
+            "#k3ArchiveDayDialog"
+        );
+
+    if (
+        dialog?.open
+    ) {
+        dialog.close();
+    }
+}
+
+
+function openDayDialog(
+    date: string
+): void {
+
+    const dialog =
+        document.querySelector<
+            HTMLDialogElement
+        >(
+            "#k3ArchiveDayDialog"
+        );
+
+    const content =
+        document.querySelector<
+            HTMLElement
+        >(
+            "#k3ArchiveDayDialogContent"
+        );
+
+    if (
+        !dialog ||
+        !content
+    ) {
+        return;
+    }
+
+    const driver =
+        getSelectedDriver();
+
+    const cell =
+        buildCalendarCells(
+            driver
+        )
+            .find(
+                item =>
+                    item.date ===
+                    date
+            );
+
+    if (
+        !cell ||
+        cell.segments.length === 0
+    ) {
+        return;
+    }
+
+    selectedDate =
+        date;
+
+    content.innerHTML =
+        renderSelectedDay(
+            cell
+        );
+
+    if (
+        !dialog.open
+    ) {
+        dialog.showModal();
+    }
 }
 
 
@@ -1569,7 +1621,6 @@ Promise<void> {
                 null;
         }
 
-        ensureSelectedDate();
         renderMonthHeader();
         renderDrivers();
         renderMain();
@@ -1710,7 +1761,7 @@ function handleClick(
         selectedDate =
             null;
 
-        ensureSelectedDate();
+        closeDayDialog();
         renderDrivers();
         renderMain();
         return;
@@ -1720,11 +1771,23 @@ function handleClick(
         action ===
         "select-date"
     ) {
-        selectedDate =
-            button.dataset.date ||
-            null;
+        const date =
+            button.dataset.date;
 
-        renderMain();
+        if (date) {
+            openDayDialog(
+                date
+            );
+        }
+
+        return;
+    }
+
+    if (
+        action ===
+        "close-day"
+    ) {
+        closeDayDialog();
     }
 }
 
