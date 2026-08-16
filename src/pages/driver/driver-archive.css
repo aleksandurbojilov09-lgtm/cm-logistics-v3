@@ -740,3 +740,20 @@ small {
         color: #93c5fd;
     }
 }
+
+
+/* =========================================================
+   ROUTE / ARCHIVE VIEW ISOLATION
+   ========================================================= */
+
+/*
+ * Author CSS such as .driver-route-grid { display: grid }
+ * can override the browser's default [hidden] rule.
+ *
+ * When "Моят архив" is active, all operational route
+ * content must be completely removed from layout.
+ */
+#k3DriverPortal
+[data-driver-route-content][hidden] {
+    display: none;
+}
