@@ -41,6 +41,10 @@ import {
     escapeHtml
 } from "../../../shared/lib/html";
 
+import {
+    groupOrdersByLocation
+} from "./orders-location-grouping";
+
 
 let clients:
     ClientManagementSnapshot | null =
@@ -2421,6 +2425,16 @@ void {
         visibleOperationalOrders();
 
 
+    const locationGroups =
+        groupOrdersByLocation(
+            visible
+        );
+
+
+    /*
+     * Горният count = реални заявки.
+     * Бутонът "Адреси" = физически адреси.
+     */
     totalCount.textContent =
         String(
             mapOrders.length
@@ -2428,7 +2442,7 @@ void {
 
     visibleCount.textContent =
         String(
-            visible.length
+            locationGroups.length
         );
 
 
@@ -2446,7 +2460,7 @@ void {
 
 
     if (
-        visible.length ===
+        locationGroups.length ===
         0
     ) {
 
@@ -2454,7 +2468,7 @@ void {
             <div
                 class="orders-compact-empty"
             >
-                Няма заявки,
+                Няма адреси,
                 които отговарят
                 на текущия филтър.
             </div>
@@ -2467,148 +2481,244 @@ void {
 
 
     list.innerHTML =
-        visible
+        locationGroups
             .map(
-                order => {
+                group => {
 
-                    const assignments =
-                        currentOrderAssignments(
-                            order
-                        );
-
-
-                    const trucks =
-                        Array.from(
-                            new Set(
-                                assignments
-                                    .map(
-                                        assignment =>
-                                            assignment
-                                                .truckNumber
-                                    )
-                                    .filter(
-                                        Boolean
-                                    )
+                    const selectedGroup =
+                        Boolean(
+                            selectedOrderId &&
+                            group.orders.some(
+                                order =>
+                                    order.id ===
+                                    selectedOrderId
                             )
                         );
 
 
+                    const shouldOpen =
+                        (
+                            group.orders.length ===
+                            1
+                        ) ||
+                        selectedGroup;
+
+
                     return `
-                        <button
-                            type="button"
+                        <details
                             class="
-                                orders-compact-item
+                                orders-address-group
                                 ${
-                                    selectedOrderId ===
-                                        order.id
-
-                                        ? "orders-compact-item-active"
-
+                                    selectedGroup
+                                        ? "orders-address-group-selected"
                                         : ""
                                 }
                             "
-                            data-orders-action="select-order"
-                            data-order-id="${escapeHtml(
-                                order.id
-                            )}"
+                            ${
+                                shouldOpen
+                                    ? "open"
+                                    : ""
+                            }
                         >
-                            <div
-                                class="orders-compact-main"
+                            <summary
+                                class="orders-address-group-summary"
                             >
-                                <strong>
-                                    ${escapeHtml(
-                                        order.companyName
-                                    )}
-                                </strong>
-
-                                <span>
+                                <span
+                                    class="orders-address-group-pin"
+                                >
                                     📍
-                                    ${escapeHtml(
-                                        order.siteAddress
-                                    )}
                                 </span>
 
-                                ${
-                                    order.loadingRamp
 
-                                        ? `
-                                            <small
-                                                class="orders-compact-ramp"
-                                            >
-                                                🚪 РАМПА
-                                                ·
-                                                ПЪРВА СПИРКА
-                                            </small>
-                                        `
+                                <span
+                                    class="orders-address-group-title"
+                                >
+                                    <strong>
+                                        ${escapeHtml(
+                                            group.address ||
+                                            group.siteName ||
+                                            "Адрес без име"
+                                        )}
+                                    </strong>
 
-                                        : ""
-                                }
+                                    <span>
+                                        ${
+                                            group.orders.length ===
+                                            1
 
-                                ${
-                                    order.latestLoadingWarning
+                                                ? "1 заявка"
 
-                                        ? `
-                                            <small
-                                                class="orders-compact-discrepancy"
-                                            >
-                                                ⚠️ Последно товарене:
-                                                разлика
-                                                ${escapeHtml(
-                                                    formatSignedTons(
-                                                        order.latestLoadingWarning
-                                                            .differenceTons
-                                                    )
-                                                )}
-                                                т.
-                                            </small>
-                                        `
-
-                                        : ""
-                                }
+                                                : `${group.orders.length} заявки`
+                                        }
+                                        на този адрес
+                                    </span>
+                                </span>
 
 
-                                <small>
-                                    ${
-                                        trucks.length
+                                <strong
+                                    class="orders-address-group-count"
+                                >
+                                    ${group.orders.length}
+                                </strong>
+                            </summary>
 
-                                            ? `🚛 ${escapeHtml(
-                                                trucks.join(
-                                                    ", "
-                                                )
-                                            )}`
-
-                                            : "⚠️ Няма камион"
-                                    }
-                                </small>
-                            </div>
 
                             <div
-                                class="
-                                    orders-compact-tons
-                                    ${
-                                        order.remainingTons <=
-                                            0
-
-                                            ? "orders-compact-tons-zero"
-
-                                            : ""
-                                    }
-                                "
+                                class="orders-address-group-orders"
                             >
-                                ${
-                                    order.remainingTons >
-                                    0
+                                ${group.orders
+                                    .map(
+                                        order => {
 
-                                        ? `${escapeHtml(
-                                            formatTons(
-                                                order.remainingTons
-                                            )
-                                        )} т.`
+                                            const assignments =
+                                                currentOrderAssignments(
+                                                    order
+                                                );
 
-                                        : "✓"
-                                }
+
+                                            const trucks =
+                                                Array.from(
+                                                    new Set(
+                                                        assignments
+                                                            .map(
+                                                                assignment =>
+                                                                    assignment
+                                                                        .truckNumber
+                                                            )
+                                                            .filter(
+                                                                Boolean
+                                                            )
+                                                    )
+                                                );
+
+
+                                            const active =
+                                                selectedOrderId ===
+                                                order.id;
+
+
+                                            return `
+                                                <button
+                                                    type="button"
+                                                    class="
+                                                        orders-address-order
+                                                        ${
+                                                            active
+                                                                ? "orders-address-order-active"
+                                                                : ""
+                                                        }
+                                                    "
+                                                    data-orders-action="select-order"
+                                                    data-order-id="${escapeHtml(
+                                                        order.id
+                                                    )}"
+                                                >
+                                                    <span
+                                                        class="orders-address-order-main"
+                                                    >
+                                                        <strong>
+                                                            ${escapeHtml(
+                                                                order.companyName
+                                                            )}
+                                                        </strong>
+
+                                                        <span>
+                                                            Заявка
+                                                            #${escapeHtml(
+                                                                order.orderNumber
+                                                            )}
+                                                            ·
+                                                            ${escapeHtml(
+                                                                statusLabel(
+                                                                    order.status
+                                                                )
+                                                            )}
+                                                        </span>
+
+                                                        <small>
+                                                            ${
+                                                                trucks.length
+
+                                                                    ? `🚛 ${escapeHtml(
+                                                                        trucks.join(
+                                                                            ", "
+                                                                        )
+                                                                    )}`
+
+                                                                    : "⚠️ Няма камион"
+                                                            }
+                                                        </small>
+
+                                                        ${
+                                                            order.loadingRamp
+
+                                                                ? `
+                                                                    <small
+                                                                        class="orders-address-order-ramp"
+                                                                    >
+                                                                        🚪 РАМПА · ПЪРВА СПИРКА
+                                                                    </small>
+                                                                `
+
+                                                                : ""
+                                                        }
+
+                                                        ${
+                                                            order.latestLoadingWarning
+
+                                                                ? `
+                                                                    <small
+                                                                        class="orders-address-order-warning"
+                                                                    >
+                                                                        ⚠️ Последно товарене:
+                                                                        ${escapeHtml(
+                                                                            formatSignedTons(
+                                                                                order.latestLoadingWarning
+                                                                                    .differenceTons
+                                                                            )
+                                                                        )}
+                                                                        т.
+                                                                    </small>
+                                                                `
+
+                                                                : ""
+                                                        }
+                                                    </span>
+
+
+                                                    <strong
+                                                        class="
+                                                            orders-address-order-tons
+                                                            ${
+                                                                order.remainingTons <=
+                                                                0
+
+                                                                    ? "orders-address-order-tons-zero"
+
+                                                                    : ""
+                                                            }
+                                                        "
+                                                    >
+                                                        ${
+                                                            order.remainingTons >
+                                                            0
+
+                                                                ? `${escapeHtml(
+                                                                    formatTons(
+                                                                        order.remainingTons
+                                                                    )
+                                                                )} т.`
+
+                                                                : "✓"
+                                                        }
+                                                    </strong>
+                                                </button>
+                                            `;
+                                        }
+                                    )
+                                    .join("")}
                             </div>
-                        </button>
+                        </details>
                     `;
                 }
             )

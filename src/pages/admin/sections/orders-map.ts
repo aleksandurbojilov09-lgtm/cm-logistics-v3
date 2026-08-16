@@ -13,6 +13,11 @@ import {
 } from "../../../shared/lib/html";
 
 import {
+    groupOrdersByLocation,
+    type AdminOrderLocationGroup
+} from "./orders-location-grouping";
+
+import {
     loadLeaflet,
     type LeafletCoordinate,
     type LeafletLayerGroup,
@@ -302,6 +307,230 @@ function markerLabel(
 
 
     return "✓";
+}
+
+
+function groupMarkerClass(
+    group:
+        AdminOrderLocationGroup,
+
+    options:
+        AdminOrdersMapOptions
+): string {
+
+    if (
+        group.orders.length ===
+        1
+    ) {
+
+        return markerClass(
+            group.orders[0],
+            options
+        );
+    }
+
+
+    const assignments =
+        group.orders.flatMap(
+            currentAssignments
+        );
+
+
+    const truckIds =
+        Array.from(
+            new Set(
+                assignments
+                    .map(
+                        assignment =>
+                            assignment.truckId
+                    )
+                    .filter(
+                        Boolean
+                    )
+            )
+        );
+
+
+    const classes = [
+        "orders-map-pin",
+        "orders-map-pin-grouped"
+    ];
+
+
+    if (
+        truckIds.length ===
+        0
+    ) {
+
+        classes.push(
+            "orders-map-pin-unassigned"
+        );
+
+    } else if (
+        truckIds.length ===
+        1
+    ) {
+
+        classes.push(
+            truckColorClass(
+                truckIds[0]
+            )
+        );
+
+    } else {
+
+        classes.push(
+            "orders-map-pin-mixed"
+        );
+    }
+
+
+    if (
+        group.orders.some(
+            order =>
+                order.loadingRamp
+        )
+    ) {
+
+        classes.push(
+            "orders-map-pin-ramp"
+        );
+    }
+
+
+    if (
+        group.orders.some(
+            order =>
+                Boolean(
+                    order.latestLoadingWarning
+                )
+        )
+    ) {
+
+        classes.push(
+            "orders-map-pin-discrepancy"
+        );
+    }
+
+
+    if (
+        options.selectedOrderId &&
+        group.orders.some(
+            order =>
+                order.id ===
+                options.selectedOrderId
+        )
+    ) {
+
+        classes.push(
+            "orders-map-pin-selected"
+        );
+    }
+
+
+    if (
+        options.selectedTruckId &&
+        truckIds.length >
+        0 &&
+        !truckIds.includes(
+            options.selectedTruckId
+        )
+    ) {
+
+        classes.push(
+            "orders-map-pin-muted"
+        );
+    }
+
+
+    return classes.join(
+        " "
+    );
+}
+
+
+function groupMarkerLabel(
+    group:
+        AdminOrderLocationGroup,
+
+    options:
+        AdminOrdersMapOptions
+): string {
+
+    if (
+        group.orders.length ===
+        1
+    ) {
+
+        return markerLabel(
+            group.orders[0],
+            options
+        );
+    }
+
+
+    const routeNumbers =
+        group.orders
+            .flatMap(
+                order => {
+
+                    const value =
+                        options
+                            .selectedTruckRouteNumbers[
+                                order.id
+                            ];
+
+
+                    return value
+                        ? value
+                            .split("·")
+                            .filter(
+                                Boolean
+                            )
+                        : [];
+                }
+            );
+
+
+    if (
+        routeNumbers.length ===
+        1
+    ) {
+
+        return routeNumbers[0];
+    }
+
+
+    if (
+        routeNumbers.length ===
+        2
+    ) {
+
+        return (
+            `${routeNumbers[0]}·${routeNumbers[1]}`
+        );
+    }
+
+
+    if (
+        routeNumbers.length >
+        2
+    ) {
+
+        return (
+            `${routeNumbers[0]}+${routeNumbers.length - 1}`
+        );
+    }
+
+
+    /*
+     * Без активна маршрутна номерация
+     * маркерът показва колко отделни
+     * заявки има на физическия адрес.
+     */
+    return String(
+        group.orders.length
+    );
 }
 
 
@@ -697,6 +926,235 @@ function popupHtml(
 }
 
 
+function groupPopupHtml(
+    group:
+        AdminOrderLocationGroup,
+
+    options:
+        AdminOrdersMapOptions
+): string {
+
+    if (
+        group.orders.length ===
+        1
+    ) {
+
+        return popupHtml(
+            group.orders[0],
+            options
+        );
+    }
+
+
+    const selectedTruckReady =
+        Boolean(
+            options.selectedTruckId &&
+            options.selectedTruckNumber &&
+            options.selectedTruckFreeTons !==
+                null
+        );
+
+
+    return `
+        <div
+            class="
+                orders-map-popup
+                orders-map-group-popup
+            "
+        >
+            <div
+                class="orders-map-group-header"
+            >
+                <strong>
+                    📍
+                    ${escapeHtml(
+                        group.address ||
+                        group.siteName ||
+                        "Адрес"
+                    )}
+                </strong>
+
+                <span>
+                    ${group.orders.length}
+                    отделни заявки
+                    на този адрес
+                </span>
+            </div>
+
+
+            <div
+                class="orders-map-group-orders"
+            >
+                ${group.orders
+                    .map(
+                        order => {
+
+                            const assignments =
+                                currentAssignments(
+                                    order
+                                );
+
+
+                            const trucks =
+                                Array.from(
+                                    new Set(
+                                        assignments
+                                            .map(
+                                                assignment =>
+                                                    assignment
+                                                        .truckNumber
+                                            )
+                                            .filter(
+                                                Boolean
+                                            )
+                                    )
+                                );
+
+
+                            const maxQuickTons =
+                                selectedTruckReady
+
+                                    ? Math.min(
+                                        order.remainingTons,
+
+                                        options
+                                            .selectedTruckFreeTons ??
+                                        0
+                                    )
+
+                                    : 0;
+
+
+                            const canQuickAssign =
+                                selectedTruckReady &&
+                                maxQuickTons >
+                                0;
+
+
+                            return `
+                                <div
+                                    class="orders-map-group-order-row"
+                                >
+                                    <button
+                                        type="button"
+                                        class="orders-map-group-order-main"
+                                        data-orders-action="select-order"
+                                        data-order-id="${escapeHtml(
+                                            order.id
+                                        )}"
+                                    >
+                                        <strong>
+                                            ${escapeHtml(
+                                                order.companyName
+                                            )}
+                                        </strong>
+
+                                        <span>
+                                            Заявка
+                                            #${escapeHtml(
+                                                order.orderNumber
+                                            )}
+                                            ·
+                                            ${escapeHtml(
+                                                statusLabel(
+                                                    order
+                                                )
+                                            )}
+                                        </span>
+
+                                        <small>
+                                            ${
+                                                trucks.length
+
+                                                    ? `🚛 ${escapeHtml(
+                                                        trucks.join(
+                                                            ", "
+                                                        )
+                                                    )}`
+
+                                                    : "⚠️ Няма камион"
+                                            }
+                                        </small>
+
+                                        ${
+                                            order.loadingRamp
+
+                                                ? `
+                                                    <small
+                                                        class="orders-map-group-ramp"
+                                                    >
+                                                        🚪 РАМПА
+                                                    </small>
+                                                `
+
+                                                : ""
+                                        }
+
+                                        ${
+                                            order.latestLoadingWarning
+
+                                                ? `
+                                                    <small
+                                                        class="orders-map-group-warning"
+                                                    >
+                                                        ⚠️ Несъответствие
+                                                    </small>
+                                                `
+
+                                                : ""
+                                        }
+                                    </button>
+
+
+                                    <div
+                                        class="orders-map-group-order-side"
+                                    >
+                                        <strong>
+                                            ${escapeHtml(
+                                                formatTons(
+                                                    order.remainingTons
+                                                )
+                                            )}
+                                            т.
+                                        </strong>
+
+                                        ${
+                                            canQuickAssign
+
+                                                ? `
+                                                    <button
+                                                        type="button"
+                                                        class="orders-map-group-quick"
+                                                        data-orders-action="quick-assign"
+                                                        data-order-id="${escapeHtml(
+                                                            order.id
+                                                        )}"
+                                                        title="Добави към ${
+                                                            escapeHtml(
+                                                                options.selectedTruckNumber ||
+                                                                "камиона"
+                                                            )
+                                                        }"
+                                                        aria-label="Бързо зачисляване"
+                                                    >
+                                                        ➕
+                                                    </button>
+                                                `
+
+                                                : ""
+                                        }
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    )
+                    .join("")}
+            </div>
+        </div>
+    `;
+}
+
+
 function addFixedLocations(
     leafletNamespace:
         LeafletNamespace,
@@ -928,15 +1386,21 @@ renderAdminOrdersMap(
             [];
 
 
+        const locationGroups =
+            groupOrdersByLocation(
+                orders
+            );
+
+
         for (
-            const order
-            of orders
+            const group
+            of locationGroups
         ) {
 
             if (
-                order.siteLatitude ===
+                group.latitude ===
                     null ||
-                order.siteLongitude ===
+                group.longitude ===
                     null
             ) {
                 continue;
@@ -945,9 +1409,29 @@ renderAdminOrdersMap(
 
             const coordinates:
                 LeafletCoordinate = [
-                    order.siteLatitude,
-                    order.siteLongitude
+                    group.latitude,
+                    group.longitude
                 ];
+
+
+            const groupTitle =
+                group.orders.length ===
+                1
+
+                    ? `${
+                        group.orders[0]
+                            .companyName
+                    } — ${
+                        group.orders[0]
+                            .siteName
+                    }`
+
+                    : `${
+                        group.orders.length
+                    } заявки — ${
+                        group.address ||
+                        group.siteName
+                    }`;
 
 
             const icon =
@@ -958,18 +1442,18 @@ renderAdminOrdersMap(
                     html: `
                         <div
                             class="${escapeHtml(
-                                markerClass(
-                                    order,
+                                groupMarkerClass(
+                                    group,
                                     options
                                 )
                             )}"
                             title="${escapeHtml(
-                                `${order.companyName} — ${order.siteName}`
+                                groupTitle
                             )}"
                         >
                             ${escapeHtml(
-                                markerLabel(
-                                    order,
+                                groupMarkerLabel(
+                                    group,
                                     options
                                 )
                             )}
@@ -1001,29 +1485,45 @@ renderAdminOrdersMap(
                             icon,
 
                             title:
-                                `${order.companyName} — ${order.siteName}`
+                                groupTitle
                         }
                     )
                     .addTo(
                         layer
                     )
                     .bindPopup(
-                        popupHtml(
-                            order,
+                        groupPopupHtml(
+                            group,
                             options
                         )
                     );
 
 
-            marker.on(
-                "click",
-                () => {
-                    options
-                        .onSelectOrder(
-                            order.id
-                        );
-                }
-            );
+            /*
+             * При единствена заявка пазим
+             * старото директно избиране.
+             *
+             * При няколко заявки НЕ избираме
+             * произволна — потребителят избира
+             * точната от popup-а.
+             */
+            if (
+                group.orders.length ===
+                1
+            ) {
+
+                marker.on(
+                    "click",
+                    () => {
+
+                        options
+                            .onSelectOrder(
+                                group.orders[0]
+                                    .id
+                            );
+                    }
+                );
+            }
 
 
             orderPoints.push(
