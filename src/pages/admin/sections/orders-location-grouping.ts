@@ -6,6 +6,9 @@ import type {
 export type AdminOrderLocationGroup = {
     key: string;
 
+    companyId: string;
+    siteId: string;
+
     siteName: string;
     address: string;
 
@@ -15,6 +18,42 @@ export type AdminOrderLocationGroup = {
     orders:
         AdminOrderListItem[];
 };
+
+
+const ASSIGNABLE_STATUSES =
+    new Set([
+        "pending",
+        "partial",
+        "assigned"
+    ]);
+
+
+function compareOrdersOldestFirst(
+    first:
+        AdminOrderListItem,
+
+    second:
+        AdminOrderListItem
+): number {
+
+    const createdAtDifference =
+        first.createdAt.localeCompare(
+            second.createdAt
+        );
+
+
+    if (
+        createdAtDifference !==
+        0
+    ) {
+        return createdAtDifference;
+    }
+
+
+    return first.id.localeCompare(
+        second.id
+    );
+}
 
 
 export function
@@ -61,68 +100,136 @@ locationGroupCompanyLabel(
 }
 
 
-function normalizeLocationText(
-    value: string
-): string {
-
-    return value
-        .trim()
-        .replace(
-            /\s+/g,
-            " "
-        )
-        .toLocaleLowerCase(
-            "bg-BG"
-        );
-}
-
-
 function locationKey(
     order:
         AdminOrderListItem
 ): string {
 
-    const address =
-        normalizeLocationText(
-            order.siteAddress
-        );
+    const companyId =
+        order.companyId.trim();
+
+    const siteId =
+        order.siteId.trim();
 
 
     /*
-     * Адресът е водещ за UI групирането.
+     * Реалната operational location identity е
+     * company_id + site_id.
      *
-     * Няколко отделни заявки могат да са
-     * за един и същ физически обект.
-     *
-     * Самите заявки НЕ се обединяват.
+     * Snapshot адресът и координатите НЕ участват
+     * в identity-то.
      */
-    if (address) {
-
-        return (
-            `address:${address}`
-        );
-    }
-
-
     if (
-        order.siteLatitude !== null &&
-        order.siteLongitude !== null
+        companyId &&
+        siteId
     ) {
 
         return (
-            `geo:${
-                order.siteLatitude
-                    .toFixed(5)
-            }:${
-                order.siteLongitude
-                    .toFixed(5)
-            }`
+            `location:${companyId}:${siteId}`
         );
     }
 
 
+    /*
+     * Ако legacy/невалиден ред няма identity,
+     * не го сливаме погрешно с друг адрес.
+     */
     return (
         `order:${order.id}`
+    );
+}
+
+
+export function
+locationGroupAssignableOrders(
+    group:
+        AdminOrderLocationGroup
+): AdminOrderListItem[] {
+
+    return group.orders
+        .filter(
+            order =>
+                ASSIGNABLE_STATUSES.has(
+                    order.status
+                ) &&
+                order.remainingTons >
+                    0
+        )
+        .slice()
+        .sort(
+            compareOrdersOldestFirst
+        );
+}
+
+
+export function
+locationGroupTotalRemainingTons(
+    group:
+        AdminOrderLocationGroup
+): number {
+
+    return locationGroupAssignableOrders(
+        group
+    ).reduce(
+        (
+            total,
+            order
+        ) =>
+            total +
+            order.remainingTons,
+
+        0
+    );
+}
+
+
+export function
+locationGroupPreviousRemainingTons(
+    group:
+        AdminOrderLocationGroup
+): number {
+
+    const openOrders =
+        locationGroupAssignableOrders(
+            group
+        );
+
+
+    return openOrders
+        .slice(
+            0,
+            -1
+        )
+        .reduce(
+            (
+                total,
+                order
+            ) =>
+                total +
+                order.remainingTons,
+
+            0
+        );
+}
+
+
+export function
+locationGroupNewestAssignableOrder(
+    group:
+        AdminOrderLocationGroup
+): AdminOrderListItem | null {
+
+    const openOrders =
+        locationGroupAssignableOrders(
+            group
+        );
+
+
+    return (
+        openOrders[
+            openOrders.length - 1
+        ] ||
+        null
     );
 }
 
@@ -164,11 +271,6 @@ groupOrdersByLocation(
             );
 
 
-            /*
-             * Ако първата заявка няма координати,
-             * но следваща на същия адрес има,
-             * използваме наличните координати.
-             */
             if (
                 existing.latitude === null &&
                 existing.longitude === null &&
@@ -192,6 +294,12 @@ groupOrdersByLocation(
             key,
             {
                 key,
+
+                companyId:
+                    order.companyId,
+
+                siteId:
+                    order.siteId,
 
                 siteName:
                     order.siteName,

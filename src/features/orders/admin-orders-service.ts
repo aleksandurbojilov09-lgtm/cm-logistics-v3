@@ -74,6 +74,9 @@ export type AdminOrderListItem = {
     id: string;
     orderNumber: string;
 
+    companyId: string;
+    siteId: string;
+
     companyName: string;
 
     siteName: string;
@@ -482,6 +485,16 @@ function mapOrder(
                 value.order_number
             ),
 
+        companyId:
+            stringValue(
+                value.company_id
+            ),
+
+        siteId:
+            stringValue(
+                value.site_id
+            ),
+
         companyName:
             stringValue(
                 value.company_name_snapshot
@@ -562,6 +575,8 @@ Promise<AdminOrderListItem[]> {
                 `
                 id,
                 order_number,
+                company_id,
+                site_id,
                 company_name_snapshot,
                 site_name_snapshot,
                 site_address_snapshot,
