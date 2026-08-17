@@ -117,7 +117,7 @@ export default {
 
 
             // =================================================
-            // VERIFY ACTIVE ADMIN
+            // VERIFY ACTIVE CALLER
             // =================================================
 
 
@@ -198,14 +198,22 @@ export default {
 
 
             if (
-                callerAdminError ||
-                !callerAdmin
+                callerAdminError
             ) {
+                console.error(
+                    "Caller admin lookup failed:",
+                    callerAdminError
+                );
+
                 return jsonError(
-                    "Само администратор може да управлява потребители.",
-                    403
+                    "Правата не можаха да бъдат проверени.",
+                    500
                 );
             }
+
+
+            const callerIsAdmin =
+                callerAdmin !== null;
 
 
             // =================================================
@@ -297,6 +305,72 @@ export default {
                 nullableTextValue(
                     parsedBody.companyId
                 );
+
+
+            // =================================================
+            // AUTHORIZATION
+            // =================================================
+
+
+            if (!callerIsAdmin) {
+
+                /*
+                 * Dispatcher may use this privileged
+                 * endpoint ONLY for Driver creation.
+                 */
+
+                if (
+                    roleCode !==
+                    "driver"
+                ) {
+                    return jsonError(
+                        "Нямате право да създавате този тип потребител.",
+                        403
+                    );
+                }
+
+
+                const {
+                    data:
+                        canManageDrivers,
+
+                    error:
+                        permissionError
+                } =
+                    await context
+                        .supabase
+                        .rpc(
+                            "has_my_permission",
+                            {
+                                p_permission_code:
+                                    "drivers.manage"
+                            }
+                        );
+
+
+                if (permissionError) {
+                    console.error(
+                        "drivers.manage check failed:",
+                        permissionError
+                    );
+
+                    return jsonError(
+                        "Правата за шофьори не можаха да бъдат проверени.",
+                        500
+                    );
+                }
+
+
+                if (
+                    canManageDrivers !==
+                    true
+                ) {
+                    return jsonError(
+                        "Нямате право да управлявате шофьори.",
+                        403
+                    );
+                }
+            }
 
 
             // =================================================

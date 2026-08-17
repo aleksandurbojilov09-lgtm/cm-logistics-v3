@@ -172,14 +172,22 @@ export default {
 
 
             if (
-                callerAdminError ||
-                !callerAdmin
+                callerAdminError
             ) {
+                console.error(
+                    "Caller admin lookup failed:",
+                    callerAdminError
+                );
+
                 return jsonError(
-                    "Само администратор може да преглежда клиентски регистрации.",
-                    403
+                    "Правата не можаха да бъдат проверени.",
+                    500
                 );
             }
+
+
+            const callerIsAdmin =
+                callerAdmin !== null;
 
 
             let parsedBody:
@@ -209,6 +217,68 @@ export default {
                 textValue(
                     parsedBody.action
                 ).toLowerCase();
+
+
+            if (
+                action !== "list" &&
+                action !== "review"
+            ) {
+                return jsonError(
+                    "Неподдържана операция.",
+                    400
+                );
+            }
+
+
+            if (!callerIsAdmin) {
+
+                const requiredPermission =
+                    action === "list"
+                        ? "clients.read"
+                        : "clients.manage";
+
+
+                const {
+                    data:
+                        hasPermission,
+
+                    error:
+                        permissionError
+                } =
+                    await context
+                        .supabase
+                        .rpc(
+                            "has_my_permission",
+                            {
+                                p_permission_code:
+                                    requiredPermission
+                            }
+                        );
+
+
+                if (permissionError) {
+                    console.error(
+                        "Client permission check failed:",
+                        permissionError
+                    );
+
+                    return jsonError(
+                        "Правата за клиентски регистрации не можаха да бъдат проверени.",
+                        500
+                    );
+                }
+
+
+                if (
+                    hasPermission !==
+                    true
+                ) {
+                    return jsonError(
+                        "Нямате право за тази операция.",
+                        403
+                    );
+                }
+            }
 
 
             if (action === "list") {
