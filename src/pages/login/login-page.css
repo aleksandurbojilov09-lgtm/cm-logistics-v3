@@ -322,3 +322,124 @@
             repeat(2, minmax(0, 1fr));
     }
 }
+
+
+body.password-reset-modal-open {
+    overflow: hidden;
+}
+
+.forgot-password-link {
+    align-self: center;
+    min-height: 32px;
+    padding: 4px 8px;
+    border: 0;
+    background: transparent;
+    color: var(--cm-color-primary-hover);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.forgot-password-link:hover {
+    color: var(--cm-color-primary);
+}
+
+.password-reset-modal[hidden] {
+    display: none;
+}
+
+.password-reset-modal {
+    position: fixed;
+    z-index: 1000;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+}
+
+.password-reset-backdrop {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    border: 0;
+    background: rgba(2, 6, 23, 0.82);
+    backdrop-filter: blur(4px);
+}
+
+.password-reset-dialog {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 480px);
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    padding: 22px;
+    border: 1px solid var(--cm-color-border);
+    border-radius: 20px;
+    background: var(--cm-color-surface);
+    box-shadow: var(--cm-shadow-large);
+}
+
+.password-reset-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.password-reset-header h2 {
+    margin: 0;
+    font-size: 22px;
+}
+
+.password-reset-description {
+    margin: 8px 0 0;
+    color: var(--cm-color-text-muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.password-reset-close {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid var(--cm-color-border-soft);
+    border-radius: 10px;
+    background: var(--cm-color-surface-soft);
+    color: var(--cm-color-text);
+    font-size: 24px;
+    line-height: 1;
+}
+
+.password-reset-close:hover {
+    border-color: var(--cm-color-primary-hover);
+}
+
+.password-reset-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.password-reset-message:empty {
+    display: none;
+}
+
+.password-reset-message {
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 14px;
+}
+
+.password-reset-message[data-status="error"] {
+    border: 1px solid #7f1d1d;
+    background: #450a0a;
+    color: #fecaca;
+}
+
+.password-reset-message[data-status="success"] {
+    border: 1px solid #166534;
+    background: #052e16;
+    color: #bbf7d0;
+}

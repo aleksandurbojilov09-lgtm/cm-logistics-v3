@@ -5,6 +5,10 @@ import {
 } from "../../features/auth/login";
 
 import {
+    requestPasswordReset
+} from "../../features/auth/request-password-reset";
+
+import {
     submitClientRegistration
 } from "../../features/clients/client-registration-service";
 
@@ -228,6 +232,14 @@ export function renderLoginPage(): string {
                                 >
                                     🔑 Вход
                                 </button>
+
+                                <button
+                                    id="forgotPasswordButton"
+                                    class="forgot-password-link"
+                                    type="button"
+                                >
+                                    Забравена парола?
+                                </button>
                             </form>
 
                         </div>
@@ -417,6 +429,89 @@ export function renderLoginPage(): string {
                         </div>
                     </section>
 
+                </div>
+
+                <div
+                    id="passwordResetModal"
+                    class="password-reset-modal"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="passwordResetTitle"
+                    aria-describedby="passwordResetDescription"
+                    hidden
+                >
+                    <button
+                        class="password-reset-backdrop"
+                        type="button"
+                        data-password-reset-close
+                        aria-label="Затвори прозореца"
+                    ></button>
+
+                    <section class="password-reset-dialog">
+                        <header class="password-reset-header">
+                            <div>
+                                <h2 id="passwordResetTitle">
+                                    Забравена парола
+                                </h2>
+
+                                <p
+                                    id="passwordResetDescription"
+                                    class="password-reset-description"
+                                >
+                                    Въведете само потребителското си ID. Администратор или диспечер ще провери заявката и ще се свърже с вас на записания телефон.
+                                </p>
+                            </div>
+
+                            <button
+                                class="password-reset-close"
+                                type="button"
+                                data-password-reset-close
+                                aria-label="Затвори"
+                            >
+                                ×
+                            </button>
+                        </header>
+
+                        <form
+                            id="passwordResetForm"
+                            class="password-reset-form"
+                            autocomplete="off"
+                        >
+                            <div class="login-field">
+                                <label for="passwordResetLoginId">
+                                    Потребителско ID
+                                </label>
+
+                                <input
+                                    id="passwordResetLoginId"
+                                    name="username"
+                                    type="text"
+                                    autocomplete="username"
+                                    placeholder="Въведете ID"
+                                    minlength="3"
+                                    maxlength="32"
+                                    pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,31}"
+                                    autocapitalize="none"
+                                    spellcheck="false"
+                                    required
+                                />
+                            </div>
+
+                            <div
+                                id="passwordResetMessage"
+                                class="password-reset-message"
+                                aria-live="polite"
+                            ></div>
+
+                            <button
+                                id="passwordResetSubmitButton"
+                                class="login-button"
+                                type="submit"
+                            >
+                                Изпрати заявка
+                            </button>
+                        </form>
+                    </section>
                 </div>
 
             </div>
@@ -888,6 +983,48 @@ export function initializeLoginPage(): void {
             "#loginMessage"
         );
 
+    const forgotPasswordButton =
+        document.querySelector<
+            HTMLButtonElement
+        >(
+            "#forgotPasswordButton"
+        );
+
+    const passwordResetModal =
+        document.querySelector<
+            HTMLDivElement
+        >(
+            "#passwordResetModal"
+        );
+
+    const passwordResetForm =
+        document.querySelector<
+            HTMLFormElement
+        >(
+            "#passwordResetForm"
+        );
+
+    const passwordResetLoginId =
+        document.querySelector<
+            HTMLInputElement
+        >(
+            "#passwordResetLoginId"
+        );
+
+    const passwordResetMessage =
+        document.querySelector<
+            HTMLDivElement
+        >(
+            "#passwordResetMessage"
+        );
+
+    const passwordResetSubmitButton =
+        document.querySelector<
+            HTMLButtonElement
+        >(
+            "#passwordResetSubmitButton"
+        );
+
     const loginTab =
         document.querySelector<
             HTMLButtonElement
@@ -945,6 +1082,12 @@ export function initializeLoginPage(): void {
         !rememberMeInput ||
         !loginButton ||
         !loginMessage ||
+        !forgotPasswordButton ||
+        !passwordResetModal ||
+        !passwordResetForm ||
+        !passwordResetLoginId ||
+        !passwordResetMessage ||
+        !passwordResetSubmitButton ||
         !loginTab ||
         !registerTab ||
         !loginSection ||
@@ -958,6 +1101,57 @@ export function initializeLoginPage(): void {
 
 
     disposeRegistrationMap();
+
+
+    const closePasswordResetModal =
+        (): void => {
+            passwordResetModal.hidden =
+                true;
+
+            document.body.classList.remove(
+                "password-reset-modal-open"
+            );
+
+            forgotPasswordButton.focus();
+        };
+
+
+    const openPasswordResetModal =
+        (): void => {
+            passwordResetForm.reset();
+
+            passwordResetLoginId.value =
+                normalizeLoginId(
+                    usernameInput.value
+                );
+
+            setMessage(
+                passwordResetMessage,
+                "",
+                null
+            );
+
+            passwordResetSubmitButton.disabled =
+                false;
+
+            passwordResetSubmitButton.textContent =
+                "Изпрати заявка";
+
+            passwordResetModal.hidden =
+                false;
+
+            document.body.classList.add(
+                "password-reset-modal-open"
+            );
+
+            window.setTimeout(
+                () => {
+                    passwordResetLoginId.focus();
+                    passwordResetLoginId.select();
+                },
+                0
+            );
+        };
 
 
     const showTab = (
@@ -1012,6 +1206,40 @@ export function initializeLoginPage(): void {
     registerTab.addEventListener(
         "click",
         () => showTab("register")
+    );
+
+
+    forgotPasswordButton.addEventListener(
+        "click",
+        openPasswordResetModal
+    );
+
+    passwordResetModal.addEventListener(
+        "click",
+        event => {
+            const target =
+                event.target;
+
+            if (
+                target instanceof
+                    HTMLElement &&
+                target.closest(
+                    "[data-password-reset-close]"
+                )
+            ) {
+                closePasswordResetModal();
+            }
+        }
+    );
+
+    passwordResetModal.addEventListener(
+        "keydown",
+        event => {
+            if (event.key === "Escape") {
+                event.preventDefault();
+                closePasswordResetModal();
+            }
+        }
     );
 
 
@@ -1078,6 +1306,64 @@ export function initializeLoginPage(): void {
 
                 loginButton.textContent =
                     "🔑 Вход";
+            }
+        }
+    );
+
+
+    passwordResetForm.addEventListener(
+        "submit",
+        async event => {
+            event.preventDefault();
+
+            setMessage(
+                passwordResetMessage,
+                "",
+                null
+            );
+
+            passwordResetSubmitButton.disabled =
+                true;
+
+            passwordResetSubmitButton.textContent =
+                "Изпращане...";
+
+
+            let requestSucceeded =
+                false;
+
+
+            try {
+                const message =
+                    await requestPasswordReset(
+                        passwordResetLoginId.value
+                    );
+
+                requestSucceeded =
+                    true;
+
+                setMessage(
+                    passwordResetMessage,
+                    message,
+                    "success"
+                );
+            } catch (error) {
+                setMessage(
+                    passwordResetMessage,
+                    error instanceof Error &&
+                    error.message
+                        ? error.message
+                        : "Заявката не можа да бъде изпратена. Опитайте отново.",
+                    "error"
+                );
+            } finally {
+                passwordResetSubmitButton.disabled =
+                    requestSucceeded;
+
+                passwordResetSubmitButton.textContent =
+                    requestSucceeded
+                        ? "Заявката е изпратена"
+                        : "Изпрати заявка";
             }
         }
     );
