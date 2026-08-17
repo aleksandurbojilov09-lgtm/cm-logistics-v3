@@ -1698,6 +1698,27 @@ void {
                         </label>
 
 
+                        <label>
+                            Официално тегло от
+                            кантара в BIOEXIS (кг)
+
+                            <input
+                                id="k3DriverOfficialUnloadedKg"
+                                type="number"
+                                min="1"
+                                step="1"
+                                inputmode="numeric"
+                                required
+                                placeholder="Напр. 23684"
+                            />
+
+                            <small>
+                                Въведи точно килограмите
+                                от кантарната бележка.
+                            </small>
+                        </label>
+
+
                         <button
                             type="submit"
                             class="
@@ -4113,11 +4134,19 @@ async function submitFinish(
     form: HTMLFormElement
 ): Promise<void> {
 
-    const input =
+    const endKmInput =
         form.querySelector<
             HTMLInputElement
         >(
             "#k3DriverEndKm"
+        );
+
+
+    const officialKgInput =
+        form.querySelector<
+            HTMLInputElement
+        >(
+            "#k3DriverOfficialUnloadedKg"
         );
 
 
@@ -4130,7 +4159,8 @@ async function submitFinish(
 
 
     if (
-        !input ||
+        !endKmInput ||
+        !officialKgInput ||
         !button
     ) {
         return;
@@ -4149,7 +4179,10 @@ async function submitFinish(
 
         await finishDriverTrip(
             Number(
-                input.value
+                endKmInput.value
+            ),
+            Number(
+                officialKgInput.value
             )
         );
 
@@ -4158,7 +4191,7 @@ async function submitFinish(
 
 
         setMessage(
-            "🏁 Курсът е приключен успешно.",
+            "🏁 Курсът е приключен с официалното тегло от BIOEXIS.",
             "success"
         );
 

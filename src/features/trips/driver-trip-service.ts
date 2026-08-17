@@ -788,8 +788,24 @@ markDriverStopLoaded(
 
 export async function
 finishDriverTrip(
-    endKm: number
+    endKm: number,
+    officialUnloadedKg: number
 ): Promise<void> {
+
+    if (
+        !Number.isFinite(
+            officialUnloadedKg
+        ) ||
+        officialUnloadedKg <= 0 ||
+        !Number.isInteger(
+            officialUnloadedKg
+        )
+    ) {
+        throw new Error(
+            "Официалните килограми трябва да бъдат цяло положително число."
+        );
+    }
+
 
     const {
         error
@@ -800,7 +816,10 @@ finishDriverTrip(
                 p_end_km:
                     positiveOdometer(
                         endKm
-                    )
+                    ),
+
+                p_official_unloaded_kg:
+                    officialUnloadedKg
             }
         );
 
