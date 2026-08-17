@@ -1,0 +1,15 @@
+{
+  "name": "k3-logistics",
+  "compatibility_date": "2026-08-17",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  },
+  "routes": [
+    {
+      "pattern": "k3logistic.com",
+      "custom_domain": true
+    }
+  ]
+}
