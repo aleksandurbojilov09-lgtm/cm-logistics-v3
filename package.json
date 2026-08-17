@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "npm run check:fonts && tsc && vite build",
     "preview": "vite preview",
-    "check:fonts": "node scripts/check-font-floor.mjs"
+    "check:fonts": "node scripts/check-font-floor.mjs",
+    "k3:check": "npm run build && git diff --check"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.0.0",
