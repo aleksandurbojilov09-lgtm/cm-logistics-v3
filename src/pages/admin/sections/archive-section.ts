@@ -73,8 +73,15 @@ type CalendarCell = {
     dayNumber: number;
     payableKm: number;
     tripCount: number;
+
     segments:
         AdminDriverArchiveSegment[];
+
+    spanningSegments:
+        AdminDriverArchiveSegment[];
+
+    spanStartsHere: boolean;
+    spanEndsHere: boolean;
 };
 
 
@@ -275,30 +282,6 @@ function dateTimeLabel(
 }
 
 
-function timeLabel(
-    value: string
-): string {
-
-    return new Intl
-        .DateTimeFormat(
-            "bg-BG",
-            {
-                timeZone:
-                    BUSINESS_TIMEZONE,
-
-                hour:
-                    "2-digit",
-
-                minute:
-                    "2-digit"
-            }
-        )
-        .format(
-            new Date(value)
-        );
-}
-
-
 function daysInMonth(
     monthStart: string
 ): number {
@@ -356,6 +339,79 @@ function dateForDay(
         `${monthStart.slice(0, 8)}${padDay(day)}`
     );
 }
+
+
+
+function businessDate(
+    value: string
+): string {
+
+    const instant =
+        new Date(value);
+
+
+    if (
+        Number.isNaN(
+            instant.getTime()
+        )
+    ) {
+        return "";
+    }
+
+
+    const parts =
+        new Intl.DateTimeFormat(
+            "en",
+            {
+                timeZone:
+                    BUSINESS_TIMEZONE,
+
+                year:
+                    "numeric",
+
+                month:
+                    "2-digit",
+
+                day:
+                    "2-digit"
+            }
+        )
+            .formatToParts(
+                instant
+            );
+
+
+    const year =
+        parts.find(
+            part =>
+                part.type ===
+                    "year"
+        )?.value || "";
+
+    const month =
+        parts.find(
+            part =>
+                part.type ===
+                    "month"
+        )?.value || "";
+
+    const day =
+        parts.find(
+            part =>
+                part.type ===
+                    "day"
+        )?.value || "";
+
+
+    return (
+        year &&
+        month &&
+        day
+            ? `${year}-${month}-${day}`
+            : ""
+    );
+}
+
 
 
 function formatNumber(
@@ -688,6 +744,48 @@ function buildCalendarCells(
                     )
             );
 
+        const spanningSegments =
+            driver
+                ? driver.segments
+                    .filter(
+                        segment => {
+
+                            const startDate =
+                                businessDate(
+                                    segment.startedAt
+                                );
+
+                            const endDate =
+                                businessDate(
+                                    segment.endedAt
+                                );
+
+                            return Boolean(
+                                startDate &&
+                                endDate &&
+                                date >= startDate &&
+                                date <= endDate
+                            );
+                        }
+                    )
+                : [];
+
+        const spanStartsHere =
+            spanningSegments.some(
+                segment =>
+                    businessDate(
+                        segment.startedAt
+                    ) === date
+            );
+
+        const spanEndsHere =
+            spanningSegments.some(
+                segment =>
+                    businessDate(
+                        segment.endedAt
+                    ) === date
+            );
+
         const tripCount =
             new Set(
                 segments.map(
@@ -712,7 +810,10 @@ function buildCalendarCells(
             dayNumber: day,
             payableKm,
             tripCount,
-            segments
+            segments,
+            spanningSegments,
+            spanStartsHere,
+            spanEndsHere
         });
     }
 
@@ -1136,13 +1237,31 @@ function renderCalendarCell(
     const hasData =
         cell.segments.length > 0;
 
+    const hasTripSpan =
+        cell.spanningSegments.length >
+            0;
+
     return `
         <button
             type="button"
             class="archive-calendar-cell ${
                 hasData
                     ? "archive-calendar-cell-has-data"
-                    : "archive-calendar-cell-empty"
+                    : hasTripSpan
+                        ? "archive-calendar-cell-trip-span-only"
+                        : "archive-calendar-cell-empty"
+            } ${
+                hasTripSpan
+                    ? "archive-calendar-cell-trip-span"
+                    : ""
+            } ${
+                cell.spanStartsHere
+                    ? "archive-calendar-cell-trip-start"
+                    : ""
+            } ${
+                cell.spanEndsHere
+                    ? "archive-calendar-cell-trip-end"
+                    : ""
             }"
             ${
                 hasData
@@ -1182,11 +1301,17 @@ function renderCalendarCell(
                             )} курса
                         </small>
                     `
-                    : `
-                        <strong class="archive-calendar-km archive-calendar-km-empty">
-                            —
-                        </strong>
-                    `
+                    : hasTripSpan
+                        ? `
+                            <strong class="archive-calendar-trip-continues">
+                                В курс
+                            </strong>
+                        `
+                        : `
+                            <strong class="archive-calendar-km archive-calendar-km-empty">
+                                —
+                            </strong>
+                        `
             }
         </button>
     `;
@@ -1417,6 +1542,12 @@ function renderTripCard(
     const first =
         ordered[0];
 
+    const last =
+        ordered[
+            ordered.length -
+                1
+        ];
+
     const totalKm =
         ordered.reduce(
             (
@@ -1445,9 +1576,17 @@ function renderTripCard(
                     </strong>
 
                     <small>
+                        Начало:
                         ${escapeHtml(
                             dateTimeLabel(
-                                first.tripCompletedAt
+                                first.startedAt
+                            )
+                        )}
+                        <br>
+                        Край:
+                        ${escapeHtml(
+                            dateTimeLabel(
+                                last.endedAt
                             )
                         )}
                     </small>
@@ -1538,11 +1677,11 @@ function renderSegment(
 
                 <small>
                     ${escapeHtml(
-                        timeLabel(
+                        dateTimeLabel(
                             segment.startedAt
                         )
                     )} → ${escapeHtml(
-                        timeLabel(
+                        dateTimeLabel(
                             segment.endedAt
                         )
                     )} · ${escapeHtml(

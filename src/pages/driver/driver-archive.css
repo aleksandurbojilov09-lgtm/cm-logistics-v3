@@ -867,3 +867,72 @@ small {
         opacity: 0.72;
     }
 }
+
+/* =========================================================
+   MULTI-DAY TRIP SPAN
+   ========================================================= */
+
+.driver-archive-cell-trip-span {
+    position: relative;
+    overflow: visible;
+    border-color: #3b82f6;
+    background: #14213d;
+}
+
+.driver-archive-cell-trip-span-only {
+    cursor: default;
+    opacity: 1;
+}
+
+.driver-archive-trip-continues {
+    color: #93c5fd;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.driver-archive-cell-trip-span::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    right: -4px;
+    bottom: 8px;
+    left: -4px;
+    height: 7px;
+    border-radius: 0;
+    background: #3b82f6;
+}
+
+.driver-archive-cell-trip-span > * {
+    position: relative;
+    z-index: 1;
+}
+
+.driver-archive-cell-trip-start::before {
+    left: 50%;
+    border-radius: 999px 0 0 999px;
+}
+
+.driver-archive-cell-trip-end::before {
+    right: 50%;
+    border-radius: 0 999px 999px 0;
+}
+
+.driver-archive-cell-trip-start.driver-archive-cell-trip-end::before {
+    right: calc(50% - 4px);
+    left: calc(50% - 4px);
+    border-radius: 999px;
+}
+
+@media (max-width: 767px) {
+    .driver-archive-cell-trip-span::before {
+        bottom: 6px;
+    }
+
+    .driver-archive-trip-continues {
+        display: none;
+    }
+
+    .driver-archive-cell-active::after {
+        display: none;
+    }
+}

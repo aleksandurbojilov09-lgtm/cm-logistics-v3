@@ -207,7 +207,7 @@ function dayLabel(
 }
 
 
-function timeLabel(
+function dateTimeLabel(
     value: string
 ): string {
 
@@ -222,6 +222,15 @@ function timeLabel(
             {
                 timeZone:
                     BUSINESS_TIMEZONE,
+
+                day:
+                    "2-digit",
+
+                month:
+                    "2-digit",
+
+                year:
+                    "numeric",
 
                 hour:
                     "2-digit",
@@ -289,6 +298,78 @@ function dateForDay(
                 2,
                 "0"
             )}`
+    );
+}
+
+
+
+function businessDate(
+    value: string
+): string {
+
+    const instant =
+        new Date(value);
+
+
+    if (
+        Number.isNaN(
+            instant.getTime()
+        )
+    ) {
+        return "";
+    }
+
+
+    const parts =
+        new Intl.DateTimeFormat(
+            "en",
+            {
+                timeZone:
+                    BUSINESS_TIMEZONE,
+
+                year:
+                    "numeric",
+
+                month:
+                    "2-digit",
+
+                day:
+                    "2-digit"
+            }
+        )
+            .formatToParts(
+                instant
+            );
+
+
+    const year =
+        parts.find(
+            part =>
+                part.type ===
+                    "year"
+        )?.value || "";
+
+    const month =
+        parts.find(
+            part =>
+                part.type ===
+                    "month"
+        )?.value || "";
+
+    const day =
+        parts.find(
+            part =>
+                part.type ===
+                    "day"
+        )?.value || "";
+
+
+    return (
+        year &&
+        month &&
+        day
+            ? `${year}-${month}-${day}`
+            : ""
     );
 }
 
@@ -765,6 +846,41 @@ function segmentsForDate(
 }
 
 
+
+function segmentsSpanningDate(
+    date: string
+): DriverArchiveSegment[] {
+
+    return (
+        archive?.segments
+            .filter(
+                segment => {
+
+                    const startDate =
+                        businessDate(
+                            segment.startedAt
+                        );
+
+                    const endDate =
+                        businessDate(
+                            segment.endedAt
+                        );
+
+
+                    return Boolean(
+                        startDate &&
+                        endDate &&
+                        date >= startDate &&
+                        date <= endDate
+                    );
+                }
+            ) ||
+        []
+    );
+}
+
+
+
 function renderCalendar():
 void {
 
@@ -871,6 +987,31 @@ void {
                             date
                         );
 
+                    const spanningSegments =
+                        segmentsSpanningDate(
+                            date
+                        );
+
+                    const hasTripSpan =
+                        spanningSegments.length >
+                            0;
+
+                    const spanStartsHere =
+                        spanningSegments.some(
+                            segment =>
+                                businessDate(
+                                    segment.startedAt
+                                ) === date
+                        );
+
+                    const spanEndsHere =
+                        spanningSegments.some(
+                            segment =>
+                                businessDate(
+                                    segment.endedAt
+                                ) === date
+                        );
+
                     const km =
                         segments
                             .reduce(
@@ -907,7 +1048,24 @@ void {
                                 ${
                                     hasData
                                         ? "driver-archive-cell-active"
-                                        : "driver-archive-cell-empty"
+                                        : hasTripSpan
+                                            ? "driver-archive-cell-trip-span-only"
+                                            : "driver-archive-cell-empty"
+                                }
+                                ${
+                                    hasTripSpan
+                                        ? "driver-archive-cell-trip-span"
+                                        : ""
+                                }
+                                ${
+                                    spanStartsHere
+                                        ? "driver-archive-cell-trip-start"
+                                        : ""
+                                }
+                                ${
+                                    spanEndsHere
+                                        ? "driver-archive-cell-trip-end"
+                                        : ""
                                 }
                             "
                             ${
@@ -953,13 +1111,23 @@ void {
                                         </small>
                                     `
 
-                                    : `
-                                        <span
-                                            class="driver-archive-no-data"
-                                        >
-                                            —
-                                        </span>
-                                    `
+                                    : hasTripSpan
+
+                                        ? `
+                                            <span
+                                                class="driver-archive-trip-continues"
+                                            >
+                                                В курс
+                                            </span>
+                                        `
+
+                                        : `
+                                            <span
+                                                class="driver-archive-no-data"
+                                            >
+                                                —
+                                            </span>
+                                        `
                             }
                         </button>
                     `;
@@ -1011,14 +1179,14 @@ function renderSegment(
 
                 <span>
                     ${escapeHtml(
-                        timeLabel(
+                        dateTimeLabel(
                             segment
                                 .startedAt
                         )
                     )}
                     →
                     ${escapeHtml(
-                        timeLabel(
+                        dateTimeLabel(
                             segment
                                 .endedAt
                         )
@@ -1223,6 +1391,12 @@ function openDay(
                         const first =
                             ordered[0];
 
+                        const last =
+                            ordered[
+                                ordered.length -
+                                    1
+                            ];
+
 
                         const tripKm =
                             ordered
@@ -1259,6 +1433,24 @@ function openDay(
                                                 tripStatusLabel(
                                                     first
                                                         .tripStatus
+                                                )
+                                            )}
+                                        </span>
+
+                                        <span>
+                                            Начало:
+                                            ${escapeHtml(
+                                                dateTimeLabel(
+                                                    first
+                                                        .startedAt
+                                                )
+                                            )}
+                                            <br>
+                                            Край:
+                                            ${escapeHtml(
+                                                dateTimeLabel(
+                                                    last
+                                                        .endedAt
                                                 )
                                             )}
                                         </span>

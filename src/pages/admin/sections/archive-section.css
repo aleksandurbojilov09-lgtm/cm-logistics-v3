@@ -786,3 +786,72 @@
         opacity: 0.72;
     }
 }
+
+/* =========================================================
+   MULTI-DAY TRIP SPAN
+   ========================================================= */
+
+.archive-calendar-cell-trip-span {
+    position: relative;
+    overflow: visible;
+    border-color: #3b82f6;
+    background: #14213d;
+}
+
+.archive-calendar-cell-trip-span-only {
+    cursor: default;
+    opacity: 1;
+}
+
+.archive-calendar-trip-continues {
+    color: #93c5fd;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.archive-calendar-cell-trip-span::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    right: -4px;
+    bottom: 8px;
+    left: -4px;
+    height: 7px;
+    border-radius: 0;
+    background: #3b82f6;
+}
+
+.archive-calendar-cell-trip-span > * {
+    position: relative;
+    z-index: 1;
+}
+
+.archive-calendar-cell-trip-start::before {
+    left: 50%;
+    border-radius: 999px 0 0 999px;
+}
+
+.archive-calendar-cell-trip-end::before {
+    right: 50%;
+    border-radius: 0 999px 999px 0;
+}
+
+.archive-calendar-cell-trip-start.archive-calendar-cell-trip-end::before {
+    right: calc(50% - 4px);
+    left: calc(50% - 4px);
+    border-radius: 999px;
+}
+
+@media (max-width: 767px) {
+    .archive-calendar-cell-trip-span::before {
+        bottom: 6px;
+    }
+
+    .archive-calendar-trip-continues {
+        display: none;
+    }
+
+    .archive-calendar-cell-has-data::after {
+        display: none;
+    }
+}
