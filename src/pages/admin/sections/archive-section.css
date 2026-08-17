@@ -690,3 +690,99 @@
         max-height: 92vh;
     }
 }
+
+/* =========================================================
+   CALENDAR VISUAL / MOBILE REFRESH
+   ========================================================= */
+
+.archive-calendar-panel {
+    background: #111827;
+}
+
+.archive-weekday {
+    color: #cbd5e1;
+}
+
+.archive-calendar-cell {
+    min-width: 0;
+    border-color: #334155;
+    background: #0f172a;
+}
+
+.archive-calendar-cell-has-data {
+    border-color: #3b82f6;
+    background:
+        linear-gradient(
+            145deg,
+            #172554,
+            #10213e
+        );
+}
+
+.archive-month-control > strong {
+    padding: 9px 12px;
+    border: 1px solid #fb923c;
+    border-radius: 10px;
+    background: #f97316;
+    color: #111827;
+}
+
+@media (max-width: 767px) {
+    .archive-calendar-panel {
+        padding: 8px;
+        overflow: hidden;
+    }
+
+    .archive-weekdays,
+    .archive-calendar-grid {
+        width: 100%;
+        gap: 4px;
+    }
+
+    .archive-weekday {
+        min-width: 0;
+        padding: 6px 0;
+        font-size: 14px;
+    }
+
+    .archive-calendar-cell,
+    .archive-calendar-blank {
+        min-width: 0;
+        min-height: 54px;
+    }
+
+    .archive-calendar-cell {
+        position: relative;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        padding: 5px 2px;
+        border-radius: 9px;
+        text-align: center;
+    }
+
+    .archive-calendar-day {
+        font-size: 16px;
+        line-height: 1;
+    }
+
+    .archive-calendar-km,
+    .archive-calendar-trips {
+        display: none;
+    }
+
+    .archive-calendar-cell-has-data::after {
+        content: "";
+        position: absolute;
+        bottom: 6px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #60a5fa;
+        box-shadow: 0 0 0 2px #172554;
+    }
+
+    .archive-calendar-cell-empty {
+        opacity: 0.72;
+    }
+}
