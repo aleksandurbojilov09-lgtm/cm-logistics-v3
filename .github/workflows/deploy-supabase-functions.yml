@@ -1,8 +1,9 @@
-name: Deploy Supabase Edge Functions
+name: Supabase Edge Functions
 
 on:
   push:
     branches:
+      - dev
       - main
     paths:
       - "supabase/functions/**"
@@ -15,7 +16,7 @@ permissions:
   contents: read
 
 jobs:
-  deploy:
+  functions:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -25,14 +26,22 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@v6
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
         with:
-          persist-credentials: false
+          deno-version: v2.x
+
+      - name: Check Edge Functions
+        run: deno check supabase/functions/*/index.ts
 
       - name: Setup Supabase CLI
-        uses: supabase/setup-cli@3c2f5e2ae34c34e428e8e206e2c4d21fa2d20fbf
+        if: github.ref_name == 'main'
+        uses: supabase/setup-cli@v1
         with:
           version: latest
 
       - name: Deploy Edge Functions
+        if: github.ref_name == 'main'
         run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
