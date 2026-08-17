@@ -420,3 +420,360 @@
         flex-direction: column;
     }
 }
+
+/* =========================================================
+   BIOEXIS EXPORT / PREVIEW
+   ========================================================= */
+
+.bioexis-export-toolbar {
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 8px;
+
+    flex-wrap: wrap;
+}
+
+
+.bioexis-export-toolbar button,
+.bioexis-preview-toolbar button {
+    min-height: 40px;
+
+    padding: 8px 13px;
+
+    border: 1px solid #334155;
+
+    border-radius: 9px;
+
+    background: #172554;
+
+    color: #bfdbfe;
+
+    font-size: 14px;
+
+    font-weight: 900;
+
+    cursor: pointer;
+}
+
+
+.bioexis-export-toolbar button:hover,
+.bioexis-preview-toolbar button:hover {
+    border-color: #3b82f6;
+
+    background: #1e3a8a;
+}
+
+
+.bioexis-export-toolbar button:disabled,
+.bioexis-preview-toolbar button:disabled {
+    cursor: wait;
+
+    opacity: 0.65;
+}
+
+
+.bioexis-export-toolbar
+.bioexis-export-excel,
+.bioexis-preview-toolbar
+.bioexis-export-excel {
+    border-color: #15803d;
+
+    background: #14532d;
+
+    color: #bbf7d0;
+}
+
+
+.bioexis-preview-dialog {
+    width: min(
+        1400px,
+        calc(
+            100vw - 30px
+        )
+    );
+
+    max-width: none;
+
+    max-height: calc(
+        100vh - 30px
+    );
+
+    padding: 0;
+
+    border: 1px solid #334155;
+
+    border-radius: 14px;
+
+    background: #0f172a;
+
+    color: #ffffff;
+}
+
+
+.bioexis-preview-dialog::backdrop {
+    background: rgba(
+        2,
+        6,
+        23,
+        0.82
+    );
+
+    backdrop-filter: blur(5px);
+}
+
+
+.bioexis-preview-shell {
+    display: grid;
+
+    grid-template-rows:
+        auto
+        minmax(
+            0,
+            1fr
+        );
+
+    max-height: calc(
+        100vh - 32px
+    );
+}
+
+
+.bioexis-preview-toolbar {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 12px 14px;
+
+    border-bottom: 1px solid #334155;
+
+    background: #0b1424;
+}
+
+
+.bioexis-preview-toolbar > strong {
+    font-size: 15px;
+}
+
+
+.bioexis-preview-toolbar > div {
+    display: flex;
+
+    gap: 8px;
+
+    flex-wrap: wrap;
+}
+
+
+.bioexis-preview-toolbar
+.bioexis-preview-close {
+    border-color: #991b1b;
+
+    background: #450a0a;
+
+    color: #fecaca;
+}
+
+
+.bioexis-preview-scroll {
+    overflow: auto;
+
+    padding: 18px;
+
+    background: #cbd5e1;
+}
+
+
+.bioexis-print-document {
+    width: min(
+        1200px,
+        100%
+    );
+
+    margin: 0 auto;
+
+    padding: 28px;
+
+    background: #ffffff;
+
+    color: #0f172a;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size: 14px;
+}
+
+
+.bioexis-print-header {
+    display: flex;
+
+    align-items: flex-end;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin-bottom: 20px;
+
+    padding-bottom: 12px;
+
+    border-bottom: 2px solid #0f172a;
+}
+
+
+.bioexis-print-header strong {
+    font-size: 16px;
+}
+
+
+.bioexis-print-header h1 {
+    margin: 5px 0 0;
+
+    font-size: 23px;
+}
+
+
+.bioexis-print-month {
+    font-size: 16px;
+
+    font-weight: 800;
+}
+
+
+.bioexis-print-meta {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(
+                0,
+                1fr
+            )
+        );
+
+    gap: 10px;
+
+    margin-bottom: 18px;
+}
+
+
+.bioexis-print-meta > div {
+    padding: 10px;
+
+    border: 1px solid #cbd5e1;
+}
+
+
+.bioexis-print-meta span,
+.bioexis-print-meta strong {
+    display: block;
+}
+
+
+.bioexis-print-meta span {
+    margin-bottom: 4px;
+
+    color: #475569;
+
+    font-size: 14px;
+}
+
+
+.bioexis-print-meta strong {
+    font-size: 14px;
+}
+
+
+.bioexis-print-table {
+    width: 100%;
+
+    border-collapse: collapse;
+}
+
+
+.bioexis-print-table th,
+.bioexis-print-table td {
+    padding: 7px 8px;
+
+    border: 1px solid #94a3b8;
+
+    font-size: 14px;
+
+    vertical-align: top;
+}
+
+
+.bioexis-print-table th {
+    background: #e2e8f0;
+
+    font-weight: 800;
+
+    text-align: left;
+}
+
+
+.bioexis-print-number {
+    text-align: right !important;
+
+    white-space: nowrap;
+}
+
+
+.bioexis-print-empty {
+    padding: 24px !important;
+
+    text-align: center;
+}
+
+
+@media (
+    max-width: 767px
+) {
+
+    .bioexis-export-toolbar {
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+    }
+
+
+    .bioexis-export-toolbar button {
+        padding-inline: 7px;
+    }
+
+
+    .bioexis-preview-toolbar {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+
+    .bioexis-preview-scroll {
+        padding: 8px;
+    }
+
+
+    .bioexis-print-document {
+        min-width: 900px;
+
+        padding: 20px;
+    }
+}
