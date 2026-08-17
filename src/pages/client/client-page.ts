@@ -460,18 +460,17 @@ string {
                             class="client-order-form"
                         >
 
-                            <label>
-                                Обект
-
-                                <select
-                                    id="k3ClientOrderSite"
-                                    required
-                                >
-                                    <option value="">
-                                        Зареждане...
-                                    </option>
-                                </select>
-                            </label>
+                            <select
+                                id="k3ClientOrderSite"
+                                required
+                                hidden
+                                aria-hidden="true"
+                                tabindex="-1"
+                            >
+                                <option value="">
+                                    Зареждане...
+                                </option>
+                            </select>
 
 
                             <label>
