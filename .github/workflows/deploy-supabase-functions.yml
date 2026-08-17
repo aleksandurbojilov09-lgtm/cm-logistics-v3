@@ -28,10 +28,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Setup Deno
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
+      - name: Install Deno
+        run: npm install --global deno
+
+      - name: Verify Deno
+        run: deno --version
 
       - name: Check Edge Functions
         run: deno check supabase/functions/*/index.ts
