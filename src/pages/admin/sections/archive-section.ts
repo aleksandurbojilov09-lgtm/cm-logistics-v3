@@ -1468,13 +1468,13 @@ function renderTripCard(
                 class="archive-trip-meta"
             >
                 <span>
-                    Товар:
+                    Официален товар:
                     <strong>
                         ${escapeHtml(
-                            formatTons(
-                                first.tripLoadedTons
+                            formatNumber(
+                                first.tripLoadedKg
                             )
-                        )} т.
+                        )} кг
                     </strong>
                 </span>
 

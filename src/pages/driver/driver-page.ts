@@ -1704,12 +1704,13 @@ void {
 
                             <input
                                 id="k3DriverOfficialUnloadedKg"
-                                type="number"
-                                min="1"
-                                step="1"
+                                type="text"
                                 inputmode="numeric"
+                                maxlength="5"
+                                pattern="[0-9]{1,5}"
+                                autocomplete="off"
                                 required
-                                placeholder="Напр. 23684"
+                                placeholder="Напр. 23950"
                             />
 
                             <small>

@@ -58,6 +58,8 @@ export type AdminDriverArchiveSegment = {
         string | null;
 
 
+    tripLoadedKg: number;
+
     tripLoadedTons: number;
 
     tripDiscrepancyCount:
@@ -317,6 +319,11 @@ function parseSegment(
                 value.endReason
             ),
 
+
+        tripLoadedKg:
+            numberValue(
+                value.tripLoadedKg
+            ),
 
         tripLoadedTons:
             numberValue(

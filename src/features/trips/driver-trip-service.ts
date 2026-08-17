@@ -797,12 +797,13 @@ finishDriverTrip(
             officialUnloadedKg
         ) ||
         officialUnloadedKg <= 0 ||
+        officialUnloadedKg > 99999 ||
         !Number.isInteger(
             officialUnloadedKg
         )
     ) {
         throw new Error(
-            "Официалните килограми трябва да бъдат цяло положително число."
+            "Официалното тегло трябва да е между 1 и 99 999 кг."
         );
     }
 

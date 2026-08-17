@@ -253,12 +253,12 @@ function printableRow(
 
             <td class="bioexis-print-number">
                 ${
-                    row.loadedTons ===
+                    row.loadedKg ===
                     null
                         ? ""
                         : escapeHtml(
                             formatTons(
-                                row.loadedTons
+                                row.loadedKg
                             )
                         )
                 }
@@ -364,7 +364,7 @@ function buildPrintableReportHtml(
                         <th>Начален км</th>
                         <th>Краен км</th>
                         <th>Км</th>
-                        <th>Официален товар (т.)</th>
+                        <th>Официален товар (кг)</th>
                     </tr>
                 </thead>
 
@@ -413,7 +413,7 @@ function buildPrintableReportHtml(
                         >
                             ${escapeHtml(
                                 formatTons(
-                                    report.summary.loadedTons
+                                    report.summary.loadedKg
                                 )
                             )}
                         </th>
@@ -845,7 +845,7 @@ async function exportBioexisExcel(
                 "Начален км",
                 "Краен км",
                 "Км",
-                "Официален товар (т.)"
+                "Официален товар (кг)"
             ]
         ];
 
@@ -885,10 +885,10 @@ async function exportBioexisExcel(
 
                     row.km,
 
-                    row.loadedTons ===
+                    row.loadedKg ===
                         null
                             ? ""
-                            : row.loadedTons
+                            : row.loadedKg
                 ]
             );
         }
@@ -907,7 +907,7 @@ async function exportBioexisExcel(
                 "",
                 "ОБЩО",
                 report.summary.totalKm,
-                report.summary.loadedTons
+                report.summary.loadedKg
             ]
         );
 
@@ -1299,12 +1299,12 @@ function renderRow(
                 class="bioexis-number-cell bioexis-tons-cell"
             >
                 ${
-                    row.loadedTons ===
+                    row.loadedKg ===
                     null
                         ? ""
                         : escapeHtml(
                             formatTons(
-                                row.loadedTons
+                                row.loadedKg
                             )
                         )
                 }
@@ -1466,16 +1466,16 @@ function renderReport(
 
                 <article>
                     <span>
-                        Реален товар
+                        Официален товар
                     </span>
 
                     <strong>
                         ${escapeHtml(
                             formatTons(
                                 report.summary
-                                    .loadedTons
+                                    .loadedKg
                             )
-                        )} т.
+                        )} кг
                     </strong>
                 </article>
             </section>
@@ -1543,7 +1543,7 @@ function renderReport(
                                             </th>
 
                                             <th>
-                                                Тонове
+                                                Килограми
                                             </th>
                                         </tr>
                                     </thead>
