@@ -1,6 +1,9 @@
 import {
     withSupabase
 } from "npm:@supabase/server@^1";
+import type {
+    EdgeDatabase
+} from "../_shared/database-contract.ts";
 
 
 const AUTH_EMAIL_DOMAIN =
@@ -84,7 +87,7 @@ function isUuid(
 
 
 export default {
-    fetch: withSupabase(
+    fetch: withSupabase<EdgeDatabase>(
         {
             auth: "user"
         },
