@@ -1,0 +1,222 @@
+.system-users-section {
+    width: 100%;
+}
+
+.system-users-layout {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1.25fr)
+        minmax(280px, 0.75fr);
+    gap: 18px;
+}
+
+.system-users-panel {
+    border:
+        1px solid
+        rgba(148, 163, 184, 0.18);
+    border-radius: 14px;
+    background:
+        rgba(15, 23, 42, 0.72);
+    overflow: hidden;
+}
+
+.system-users-header {
+    padding: 20px;
+    border-bottom:
+        1px solid
+        rgba(148, 163, 184, 0.14);
+}
+
+.system-users-header h3 {
+    margin: 4px 0 6px;
+    font-size: 18px;
+}
+
+.system-users-header p {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.system-users-kicker {
+    display: inline-block;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #fb923c;
+}
+
+.system-users-form {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    padding: 20px;
+}
+
+.system-users-form label {
+    display: grid;
+    gap: 7px;
+    color: #dbeafe;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.system-users-form label:nth-child(3),
+.system-users-form label:nth-child(4),
+.system-users-form label:nth-child(5),
+.system-form-message,
+.system-submit-button {
+    grid-column: 1 / -1;
+}
+
+.system-users-form input {
+    width: 100%;
+    min-height: 44px;
+    border:
+        1px solid
+        rgba(148, 163, 184, 0.24);
+    border-radius: 10px;
+    background: #07101f;
+    color: #f8fafc;
+    padding: 10px 12px;
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+}
+
+.system-users-form input:focus {
+    border-color: #3b82f6;
+    box-shadow:
+        0 0 0 3px
+        rgba(59, 130, 246, 0.14);
+}
+
+.system-users-form small {
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.45;
+}
+
+.system-password-row {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1fr)
+        44px;
+    gap: 8px;
+}
+
+.system-password-toggle {
+    min-width: 44px;
+    min-height: 44px;
+    border:
+        1px solid
+        rgba(148, 163, 184, 0.24);
+    border-radius: 10px;
+    background: #111c2f;
+    color: #f8fafc;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.system-form-message {
+    min-height: 22px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.system-form-message[data-state="success"] {
+    color: #4ade80;
+}
+
+.system-form-message[data-state="error"] {
+    color: #f87171;
+}
+
+.system-submit-button {
+    min-height: 46px;
+    border: 0;
+    border-radius: 10px;
+    background:
+        linear-gradient(
+            135deg,
+            #2563eb,
+            #3b82f6
+        );
+    color: white;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.system-submit-button:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
+.system-info-panel {
+    align-self: start;
+}
+
+.system-info-list {
+    display: grid;
+    gap: 12px;
+    padding: 20px;
+}
+
+.system-info-list > div {
+    display: grid;
+    gap: 5px;
+    padding: 14px;
+    border:
+        1px solid
+        rgba(148, 163, 184, 0.14);
+    border-radius: 10px;
+    background:
+        rgba(2, 6, 23, 0.28);
+}
+
+.system-info-list strong {
+    font-size: 14px;
+    color: #f8fafc;
+}
+
+.system-info-list span {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #94a3b8;
+}
+
+@media (max-width: 900px) {
+    .system-users-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 767px) {
+    .system-users-layout {
+        gap: 12px;
+    }
+
+    .system-users-header,
+    .system-users-form,
+    .system-info-list {
+        padding: 14px;
+    }
+
+    .system-users-form {
+        grid-template-columns: 1fr;
+        gap: 13px;
+    }
+
+    .system-users-form label,
+    .system-users-form label:nth-child(3),
+    .system-users-form label:nth-child(4),
+    .system-users-form label:nth-child(5),
+    .system-form-message,
+    .system-submit-button {
+        grid-column: 1;
+    }
+}

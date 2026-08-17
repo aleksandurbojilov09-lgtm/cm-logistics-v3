@@ -43,7 +43,7 @@ export type AdminDriverListItem = {
 };
 
 
-export type CreateDriverInput = {
+type CreateManagedAccountInput = {
     displayName: string;
 
     phone: string;
@@ -52,6 +52,14 @@ export type CreateDriverInput = {
 
     password: string;
 };
+
+
+export type CreateDriverInput =
+    CreateManagedAccountInput;
+
+
+export type CreateDispatcherInput =
+    CreateManagedAccountInput;
 
 
 type JsonRecord =
@@ -368,8 +376,10 @@ export async function loadAdminDrivers():
 }
 
 
-export async function createDriverAccount(
-    input: CreateDriverInput
+async function createManagedAccount(
+    input: CreateManagedAccountInput,
+    roleCode: "driver" | "dispatcher",
+    fallbackMessage: string
 ): Promise<void> {
 
     const {
@@ -397,8 +407,7 @@ export async function createDriverAccount(
                         password:
                             input.password,
 
-                        roleCode:
-                            "driver",
+                        roleCode,
 
                         employeeCode:
                             null
@@ -411,7 +420,7 @@ export async function createDriverAccount(
         throw new Error(
             await getFunctionErrorMessage(
                 error,
-                "Шофьорът не можа да бъде създаден."
+                fallbackMessage
             )
         );
     }
@@ -429,7 +438,31 @@ export async function createDriverAccount(
                 data.message
             )
                 ? data.message
-                : "Шофьорът не можа да бъде създаден."
+                : fallbackMessage
         );
     }
+}
+
+
+export async function createDriverAccount(
+    input: CreateDriverInput
+): Promise<void> {
+
+    await createManagedAccount(
+        input,
+        "driver",
+        "Шофьорът не можа да бъде създаден."
+    );
+}
+
+
+export async function createDispatcherAccount(
+    input: CreateDispatcherInput
+): Promise<void> {
+
+    await createManagedAccount(
+        input,
+        "dispatcher",
+        "Диспечерът не можа да бъде създаден."
+    );
 }

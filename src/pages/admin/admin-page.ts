@@ -93,6 +93,13 @@ const ADMIN_VIEW_CONFIG = {
         subtitle: "Приключени курсове и история",
         label: "Архив",
         icon: "📊"
+    },
+
+    system: {
+        title: "Система",
+        subtitle: "Технически потребители и достъп",
+        label: "Система",
+        icon: "⚙️"
     }
 } as const;
 
@@ -139,6 +146,34 @@ function isAdminView(
 }
 
 
+function isViewAllowedForActiveRole(
+    view: AdminView
+): boolean {
+
+    return (
+        activePortalRole === "admin" ||
+        view !== "system"
+    );
+}
+
+
+function getVisibleViews():
+    AdminView[] {
+
+    const views =
+        Object.keys(
+            ADMIN_VIEW_CONFIG
+        ) as AdminView[];
+
+    return views.filter(
+        view =>
+            isViewAllowedForActiveRole(
+                view
+            )
+    );
+}
+
+
 function getSavedAdminView():
     AdminView {
     try {
@@ -147,7 +182,12 @@ function getSavedAdminView():
                 getViewStorageKey()
             );
 
-        if (isAdminView(saved)) {
+        if (
+            isAdminView(saved) &&
+            isViewAllowedForActiveRole(
+                saved
+            )
+        ) {
             return saved;
         }
     } catch {
@@ -217,21 +257,28 @@ async function loadSectionModule(
 
 function renderDesktopNavigation():
     string {
+
     return (
-        Object.entries(
-            ADMIN_VIEW_CONFIG
-        )
+        getVisibleViews()
             .map(
-                ([view, config]) => `
-                    <button
-                        type="button"
-                        class="admin-nav-button"
-                        data-admin-view="${view}"
-                    >
-                        ${config.icon}
-                        ${config.label}
-                    </button>
-                `
+                view => {
+
+                    const config =
+                        ADMIN_VIEW_CONFIG[
+                            view
+                        ];
+
+                    return `
+                        <button
+                            type="button"
+                            class="admin-nav-button"
+                            data-admin-view="${view}"
+                        >
+                            ${config.icon}
+                            ${config.label}
+                        </button>
+                    `;
+                }
             )
             .join("")
     );
@@ -249,12 +296,13 @@ function renderMobileNavigation():
         ];
 
     const moreViews:
-        AdminView[] = [
-            "registrations",
-            "drivers",
-            "fleet",
-            "archive"
-        ];
+        AdminView[] =
+        getVisibleViews().filter(
+            view =>
+                !primaryViews.includes(
+                    view
+                )
+        );
 
 
     const renderButton =
@@ -736,8 +784,16 @@ function updateHeader(
 async function openAdminView(
     view: AdminView
 ): Promise<void> {
+
+    const allowedView =
+        isViewAllowedForActiveRole(
+            view
+        )
+            ? view
+            : "orders";
+
     activeView =
-        view;
+        allowedView;
 
     saveAdminView(
         activeView
