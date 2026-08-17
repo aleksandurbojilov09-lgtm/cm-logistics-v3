@@ -35,7 +35,7 @@ jobs:
         run: deno --version
 
       - name: Check Edge Functions
-        run: deno check supabase/functions/*/index.ts
+        run: deno check --node-modules-dir=auto supabase/functions/*/index.ts
 
       - name: Setup Supabase CLI
         if: github.ref_name == 'main'
