@@ -108,8 +108,10 @@ export function renderLoginPage(): string {
                             />
 
                             <text
-                                x="62"
-                                y="156"
+                                x="180"
+                                y="110"
+                                text-anchor="middle"
+                                dominant-baseline="central"
                                 fill="#111827"
                                 font-size="142"
                                 font-family="Arial, Helvetica, sans-serif"
