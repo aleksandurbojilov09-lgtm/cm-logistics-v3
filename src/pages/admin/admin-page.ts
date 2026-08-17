@@ -5,8 +5,44 @@ import {
 } from "../../features/auth/logout";
 
 
-const ADMIN_VIEW_STORAGE_KEY =
-    "k3_admin_active_view";
+export type OperationsPortalRole =
+    | "admin"
+    | "dispatcher";
+
+
+let activePortalRole:
+    OperationsPortalRole =
+    "admin";
+
+
+function getViewStorageKey():
+string {
+
+    return activePortalRole ===
+        "dispatcher"
+        ? "k3_dispatcher_active_view"
+        : "k3_admin_active_view";
+}
+
+
+function getPortalAreaLabel():
+string {
+
+    return activePortalRole ===
+        "dispatcher"
+        ? "Оперативен панел"
+        : "Администрация";
+}
+
+
+function getPortalUserLabel():
+string {
+
+    return activePortalRole ===
+        "dispatcher"
+        ? "Диспечер"
+        : "Администратор";
+}
 
 
 const ADMIN_VIEW_CONFIG = {
@@ -108,7 +144,7 @@ function getSavedAdminView():
     try {
         const saved =
             sessionStorage.getItem(
-                ADMIN_VIEW_STORAGE_KEY
+                getViewStorageKey()
             );
 
         if (isAdminView(saved)) {
@@ -127,7 +163,7 @@ function saveAdminView(
 ): void {
     try {
         sessionStorage.setItem(
-            ADMIN_VIEW_STORAGE_KEY,
+            getViewStorageKey(),
             view
         );
     } catch {
@@ -437,7 +473,13 @@ function renderFallbackSection(
    ============================================ */
 
 
-export function renderPage(): string {
+export function renderOperationsPage(
+    role: OperationsPortalRole
+): string {
+
+    activePortalRole =
+        role;
+
     return `
         <div class="admin-page">
 
@@ -457,7 +499,7 @@ export function renderPage(): string {
                         class="admin-mobile-heading"
                     >
                         <span>
-                            Администрация
+                            ${getPortalAreaLabel()}
                         </span>
 
                         <strong
@@ -494,7 +536,7 @@ export function renderPage(): string {
                         </h1>
 
                         <p>
-                            Администрация
+                            ${getPortalAreaLabel()}
                         </p>
 
                     </div>
@@ -502,7 +544,7 @@ export function renderPage(): string {
 
                     <nav
                         class="admin-nav"
-                        aria-label="Администрация"
+                        aria-label="${getPortalAreaLabel()}"
                     >
                         ${renderDesktopNavigation()}
                     </nav>
@@ -556,7 +598,7 @@ export function renderPage(): string {
                             <div
                                 class="admin-user-card-name"
                             >
-                                Администратор
+                                ${getPortalUserLabel()}
                             </div>
 
                         </div>
@@ -577,13 +619,22 @@ export function renderPage(): string {
 
             <nav
                 class="admin-mobile-nav"
-                aria-label="Администрация"
+                aria-label="${getPortalAreaLabel()}"
             >
                 ${renderMobileNavigation()}
             </nav>
 
         </div>
     `;
+}
+
+
+export function renderPage():
+string {
+
+    return renderOperationsPage(
+        "admin"
+    );
 }
 
 
@@ -877,8 +928,14 @@ function initializeLogout():
    ============================================ */
 
 
-export async function initializePage():
-    Promise<void> {
+export async function
+initializeOperationsPage(
+    role: OperationsPortalRole
+): Promise<void> {
+
+    activePortalRole =
+        role;
+
     initializeNavigation();
 
     initializeLogout();
@@ -888,5 +945,14 @@ export async function initializePage():
 
     await openAdminView(
         initialView
+    );
+}
+
+
+export async function initializePage():
+Promise<void> {
+
+    await initializeOperationsPage(
+        "admin"
     );
 }
