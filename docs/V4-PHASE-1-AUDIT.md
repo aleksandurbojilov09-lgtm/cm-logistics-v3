@@ -78,7 +78,7 @@ The only repository-side production operation in Block 1A was creation and push 
 - 1A — GitHub verification and V3 freeze: **COMPLETE**
 - 1B — Repository and workflow audit: **COMPLETE**
 - 1C — Supabase schema and migration audit: **COMPLETE**
-- 1D — Current business flow mapping: **PENDING**
+- 1D — Current business flow mapping: **COMPLETE**
 - 1E — V4 gap analysis and Phase 2 inputs: **PENDING**
 
 ---
@@ -1293,3 +1293,561 @@ Block 1C is therefore complete, with:
 `migration_baseline_status = INCOMPLETE`
 
 It is not blocked because the live schema, constraints, indexes, triggers, RLS, grants and relevant RPC behavior were successfully verified.
+
+---
+
+## Block 1D — Current business flow mapping
+
+Status: **COMPLETE**
+
+This section describes the verified current V3 behavior.
+
+It does not describe the proposed V4 relation workflow.
+
+### Current order-to-trip lifecycle
+
+| Stage | Primary data | Current operation | Result |
+|---|---|---|---|
+| Client creates request | `orders` | `orders_create_client` | New Order with status `pending` and trusted company/site snapshots |
+| Client edits request | `orders` | `orders_update_client` | Quantity/note updated while business execution has not started |
+| Dispatcher/Admin allocates cargo | `order_assignments` | `orders_assign_location_load` / `orders_assign_load` | Cargo allocated to current permanent Truck + Driver + Trailer composition |
+| Partial allocation | `orders` + `order_assignments` | DB status trigger | Order becomes `partial` |
+| Full pre-trip allocation | `orders` + `order_assignments` | DB status trigger | Order becomes `assigned` |
+| Driver starts | `trips`, `trip_segments`, `trip_stops`, `order_assignments` | `trips_start_driver` | Real Trip is created atomically |
+| Trip operational progress | `trip_stops`, `order_assignments` | `trips_mark_stop_loaded` and related interaction RPCs | Current stop becomes loaded and next stop becomes en-route |
+| Driver/truck handoff | fleet + segments + assignments | handoff/truck-change RPCs | Composition history and segment history preserved |
+| BIOEXIS finish | `trips`, `trip_segments`, assignments | `trips_finish_driver(end_km, official_unloaded_kg)` | Final segment and Trip completed atomically |
+| Archive/reporting | completed Trips and Segments | archive/BIOEXIS RPCs | Trips, cargo and km reported from historical data |
+
+### Client order creation
+
+Current frontend caller:
+
+`src/features/orders/client-orders-service.ts`
+
+RPC:
+
+`orders_create_client(site_id, requested_kg, note)`
+
+Verified behavior:
+
+- requires authenticated user
+- validates requested kg > 0
+- resolves Site and Company from live DB
+- requires active Site and Company
+- verifies the user is a member of that Company
+- captures trusted snapshots:
+  - company
+  - site
+  - address
+  - contact
+  - phone
+  - coordinates
+  - loading-ramp flag
+  - creator name
+- creates the Order with status `pending`
+
+Physical location identity remains:
+
+`company_id + site_id`
+
+The client does not send free company identity or snapshot values.
+
+### Client order editing
+
+Current frontend caller:
+
+`orders_update_client`
+
+Editing is allowed only while the Order is:
+
+- `pending`
+- `partial`
+- `assigned`
+
+Editing is rejected after any assignment reaches:
+
+- `accepted`
+- `en_route`
+- `arrived`
+- `loaded`
+- `completed`
+
+The requested amount cannot be reduced below already allocated non-cancelled kg.
+
+The function recalculates pre-trip Order status as:
+
+- no allocation → `pending`
+- partial allocation → `partial`
+- fully allocated → `assigned`
+
+### Current cancellation finding
+
+`orders.status` supports:
+
+`cancelled`
+
+and the schema contains terminal timestamp protection for that state.
+
+However, the current inspected V3 client/admin application flow does not expose a public RPC that cancels the entire Order.
+
+The current public cancellation operation is:
+
+`orders_cancel_assignment(assignment_id)`
+
+It cancels an individual assignment only before Trip start.
+
+That operation:
+
+- preserves the assignment row as history
+- sets assignment status to `cancelled`
+- does not delete it
+- triggers recalculation of the parent Order
+
+Therefore the verified normal application path currently traced for Orders is allocation/completion rather than explicit whole-Order cancellation.
+
+The existence of historical or privileged whole-Order cancellation data must not be interpreted as a current user-facing cancellation workflow without additional evidence.
+
+### Current dispatcher allocation
+
+Admin and Dispatcher currently use the same operational workspace.
+
+Operational Orders include:
+
+- `pending`
+- `partial`
+- `assigned`
+- `in_progress`
+
+Orders available for new allocation exclude:
+
+- `in_progress`
+- rows with zero remaining quantity
+
+Current physical-location grouping uses:
+
+`company_id + site_id`
+
+Within a location, allocatable Orders are ordered oldest-first by:
+
+1. `created_at`
+2. `id`
+
+### Current assignment boundary
+
+The dispatcher does not directly create a Trip.
+
+Current assignment creates:
+
+`order_assignments`
+
+against the exact current:
+
+- `vehicle_assignment_id`
+- Driver
+- Truck
+- Trailer
+
+with immutable historical composition snapshots.
+
+`orders_assign_load`:
+
+- locks Truck first
+- rejects Truck already in active Trip
+- requires a valid permanent composition
+- locks the Order
+- protects Order remaining quantity
+- protects 24,000 kg Truck capacity
+
+`orders_assign_location_load`:
+
+- groups by physical location
+- locks relevant Orders
+- distributes requested kg oldest-first
+- delegates each slice to `orders_assign_load`
+
+### Order status transitions
+
+Verified normal lifecycle:
+
+| From | Trigger | To |
+|---|---|---|
+| new | `orders_create_client` | `pending` |
+| `pending` | some but not all requested kg allocated | `partial` |
+| `pending` / `partial` | all requested kg allocated | `assigned` |
+| `assigned` / `partial` | operational assignment starts | `in_progress` |
+| `in_progress` | all non-cancelled requested quantity completed | `completed` |
+| `partial` / `assigned` | assignment cancelled before Trip start | recalculated `pending`, `partial` or `assigned` |
+
+`cancelled` is a valid terminal Order status but no current whole-Order cancellation RPC was identified in the inspected application flow.
+
+### Order-assignment status transitions
+
+Verified statuses:
+
+- `assigned`
+- `accepted`
+- `en_route`
+- `arrived`
+- `loaded`
+- `completed`
+- `cancelled`
+
+Current normal Trip-start behavior converts:
+
+- first Trip Stop assignment → `en_route`
+- remaining Trip assignments → `accepted`
+
+Loading progression converts:
+
+- current → `loaded`
+- next → `en_route`
+
+Trip completion converts all non-cancelled Trip assignments to:
+
+`completed`
+
+Pre-start cancellation converts:
+
+`assigned → cancelled`
+
+### Trip creation
+
+The current V3 dispatcher allocation does not create a persistent planned Trip.
+
+Although `trips.status = planned` exists in the schema, normal current execution creates the Trip at Driver start.
+
+RPC:
+
+`trips_start_driver(start_km)`
+
+This operation locks/revalidates the current composition and pending cargo and atomically creates:
+
+1. one `trips` row
+2. first `trip_segments` row
+3. one `trip_stops` row for each relevant `order_assignment`
+4. links those assignments to the Trip
+
+Current Trip Stop order is:
+
+1. loading-ramp Orders first
+2. assignment `assigned_at`
+3. assignment `id`
+
+### Trip-stop ownership
+
+DB constraint:
+
+`UNIQUE(trip_stops.order_assignment_id)`
+
+Current verified rule:
+
+**1 order_assignment = 1 trip_stop**
+
+A Trip can therefore contain multiple Orders for the same physical address, but each underlying assignment remains individually represented.
+
+### Trip status lifecycle
+
+Verified DB states:
+
+| State | Required lifecycle timestamps |
+|---|---|
+| `planned` | no `started_at`, `completed_at`, `cancelled_at` |
+| `active` | `primary_driver_id` + `started_at` |
+| `completed` | `primary_driver_id` + `started_at` + `completed_at` |
+| `cancelled` | `cancelled_at` |
+
+Current normal Driver flow:
+
+`Trip created directly as active → completed`
+
+No current normal dispatcher-created planned Trip is used.
+
+### Trip stop lifecycle
+
+Verified states:
+
+`waiting → en_route → loaded`
+
+At Trip start:
+
+- Stop 1 = `en_route`
+- remaining Stops = `waiting`
+
+`trips_mark_stop_loaded`:
+
+- locks current Trip and Stop
+- locks next Stop
+- locks affected Orders
+- marks current Stop loaded
+- marks next Stop en-route
+
+All Stops must be loaded before Trip completion.
+
+### Trip segment lifecycle
+
+Each Trip may contain many historical Segments but at most one active Segment.
+
+Initial Trip start creates Segment 1.
+
+A Driver handoff or Truck change:
+
+- closes current Segment
+- stores its final km
+- creates the next Segment
+- preserves composition snapshots
+
+Completion closes the final active Segment.
+
+Segment payable distance is:
+
+`end_km - start_km`
+
+Total Trip km is:
+
+sum of all completed Segment distances.
+
+### Driver handoff
+
+Current handoff keeps the same Truck and Trailer but changes Driver.
+
+Request:
+
+- locks Trip + current Segment
+- validates receiving Driver
+- locks relevant fleet state
+- captures restore snapshot
+
+Acceptance:
+
+- locks and revalidates the request
+- ends outgoing operational fleet assignment
+- creates temporary assignment for receiving Driver
+- closes outgoing Segment at `handoff_km`
+- opens receiving Segment at the same `handoff_km`
+- changes only active/future Order assignment ownership
+- preserves already-loaded historical ownership
+- updates `trips.primary_driver_id`
+
+Because one Segment ends at exactly the km where the next begins, distance is not double-counted.
+
+### Truck change
+
+Truck-change flow may be:
+
+- `temporary_for_trip`
+- `permanent`
+
+The request validates and locks the involved operational resources.
+
+Driver confirmation:
+
+- closes current vehicle assignment
+- closes old Segment
+- creates new vehicle assignment
+- creates new active Segment
+- preserves already-loaded Stops/history
+- replaces operational assignments only for waiting/en-route Stops
+
+The existing `trip_stop` rows continue to represent the same operational Stops.
+
+### Fleet assignment lifecycle
+
+Permanent ownership and current operational state are separate.
+
+`driver_home_trucks`
+
+represents permanent Home relation.
+
+`vehicle_assignments`
+
+represents operational composition history.
+
+Normal permanent composition lifecycle:
+
+`no active assignment → permanent assignment → ended historical assignment → replacement permanent assignment`
+
+Temporary Trip lifecycle:
+
+`permanent state → temporary_for_trip state → Trip completion → automatic restoration`
+
+Critical current protections include:
+
+- one active Driver assignment
+- one active Truck assignment
+- one active Trailer assignment
+- no garage composition change while Truck is in active Trip
+- temporary assignment cannot be released through normal garage flow
+- Home relation is protected while its Driver is temporarily away
+
+### BIOEXIS completion
+
+Frontend uses:
+
+`trips_finish_driver(end_km, official_unloaded_kg)`
+
+Official unloaded kg:
+
+- is exact integer kilograms
+- must be from 1 to 99,999
+- is written on `trips`
+- is written in the same transaction as Trip completion
+
+If the downstream completion lifecycle fails, the weight update rolls back.
+
+Completion then:
+
+- requires all Stops loaded
+- locks Trip
+- locks final Segment
+- locks Trip Orders
+- closes Segment
+- completes non-cancelled assignments
+- restores temporary fleet state
+- completes Trip
+
+### Current data ownership
+
+| Business value | Authoritative source |
+|---|---|
+| Client requested cargo | `orders.requested_kg` |
+| Allocated cargo slice | `order_assignments.assigned_kg` |
+| Operational loaded assignment qty | `order_assignments.loaded_kg` |
+| Official BIOEXIS Trip cargo | `trips.official_unloaded_kg` |
+| Stop historical cargo | `trip_stops.assigned_kg_snapshot` |
+| Driver/Truck/Trailer history | `trip_segments` + assignment snapshots |
+| Payable distance | completed `trip_segments` |
+| Trip completion date | `trips.completed_at` |
+| Permanent Driver↔Truck home | `driver_home_trucks` |
+| Current/historical operational composition | `vehicle_assignments` |
+
+### Archive model
+
+Business timezone is:
+
+`Europe/Sofia`
+
+#### Admin/Dispatcher Driver archive
+
+`trips_admin_get_driver_archive(month)`
+
+Monthly completed Trip count:
+
+- counts Trips whose `completed_at` falls in the selected Europe/Sofia month
+
+Payable km:
+
+- sums completed Segment km
+- does not depend on current `trips.primary_driver_id`
+- therefore historical Driver handoffs remain payable to their actual Segment Driver
+
+Cargo:
+
+- counted once per completed Trip
+- authoritative source is `official_unloaded_kg`
+- legacy Trips without official value use historical loaded-assignment fallback
+
+#### Driver self archive
+
+`trips_get_driver_archive(month)`
+
+Returns only that Driver's completed Segments.
+
+Summary contains:
+
+- payable km
+- distinct Trip count
+- distinct work-day count
+
+Cargo is intentionally not part of the Driver self archive.
+
+#### BIOEXIS archive/report
+
+`trips_admin_get_bioexis_report`
+
+uses completed Trips for the selected Trailer.
+
+For each Trip:
+
+- cargo is counted once
+- official unloaded kg is preferred
+- legacy fallback uses loaded assignment kg
+- Trip km is the sum of completed Segment km
+
+Flat BIOEXIS rows may contain multiple Segment rows for one Trip.
+
+Cargo is emitted only on the first Segment row to prevent double-counting.
+
+### Multi-day archive behavior
+
+The Admin archive frontend contains explicit multi-day span presentation state:
+
+- `spanningSegments`
+- `spanStartsHere`
+- `spanEndsHere`
+
+Database archive calculations do not split odometer distance into synthetic per-day kilometre slices.
+
+A completed Segment remains one distance record.
+
+Its archive work date is based on Segment `ended_at` in `Europe/Sofia`.
+
+Trip operational monthly count is based on Trip `completed_at` in `Europe/Sofia`.
+
+Therefore current V3 keeps:
+
+- Trip counting
+- cargo counting
+- Segment payable km
+
+as separate ownership concepts.
+
+### Current RBAC matrix
+
+| Capability | Admin | Dispatcher | Driver | Client |
+|---|---|---|---|---|
+| Existing defined permission codes | wildcard via `has_permission` | explicit role permissions | no generic operational grants | no generic operational grants |
+| `orders.read` | yes | yes | contextual RLS only | own-company contextual RLS |
+| `orders.manage` | yes | yes | no | own RPCs only |
+| `trips.read` | yes | yes | own Trip/Segment context | no generic Trip access |
+| `trips.manage` | yes | yes | Driver lifecycle RPCs only | no |
+| `fleet.read` | yes | yes | own/current fleet context | no |
+| `fleet.manage` | yes | yes | no | no |
+| `discrepancies.read/manage` | yes | yes | Driver report operation only | no |
+| `relations.plan` | does not exist | does not exist | does not exist | does not exist |
+| `relations.dispatch` | does not exist | does not exist | does not exist | does not exist |
+
+Admin wildcard behavior applies only to permission codes that actually exist in `permissions`.
+
+### Current concurrency / transaction boundaries
+
+Critical mutations are PostgreSQL RPC calls.
+
+Each RPC invocation executes in one database transaction.
+
+Verified lock patterns include:
+
+- assignment: Truck → composition → Order
+- assignment cancellation: Truck → assignment
+- Trip start: Truck → composition → involved Orders
+- stop progression: Trip/current Stop → next Stop → Orders
+- Driver handoff: request/Trip/Segment → receiving Driver → relevant fleet assignments
+- Truck change: request/Trip/Segment → Trucks in stable order → Orders → Stops → vehicle assignments
+- Trip finish: Trip → Segment → Orders
+
+DB trigger guards provide an additional concurrency boundary for:
+
+- Order over-allocation
+- Truck 24,000 kg capacity
+- immutable historical composition
+- assignment/status synchronization
+
+### Block 1D conclusion
+
+Current V3 has a clear operational boundary:
+
+**Dispatcher allocation creates cargo assignments, not Trips.**
+
+The real Trip and its ordered Stops become historical/operational entities only when the Driver starts.
+
+This is the most important current-flow fact for the V4 relation-to-Trip integration design in Block 1E.
