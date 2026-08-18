@@ -132,7 +132,7 @@ export default {
                         is_active
                         `
                     )
-                    .eq(
+                    .ilike(
                         "login_id",
                         loginId
                     )
@@ -231,8 +231,8 @@ export default {
             ) {
 
                 const {
-                    data: clientLink,
-                    error: clientLinkError
+                    data: clientLinks,
+                    error: clientLinksError
                 } =
                     await context
                         .supabaseAdmin
@@ -242,18 +242,30 @@ export default {
                             "user_id",
                             profile.id
                         )
-                        .eq(
-                            "is_primary",
-                            true
-                        )
-                        .limit(1)
-                        .maybeSingle();
+                        .limit(50);
 
 
                 if (
-                    clientLinkError ||
-                    !clientLink
+                    clientLinksError ||
+                    !clientLinks?.length
                 ) {
+                    return successResponse();
+                }
+
+
+                const companyIds =
+                    clientLinks
+                        .map(
+                            link =>
+                                typeof link.company_id ===
+                                    "string"
+                                    ? link.company_id
+                                    : ""
+                        )
+                        .filter(Boolean);
+
+
+                if (!companyIds.length) {
                     return successResponse();
                 }
 
@@ -265,11 +277,16 @@ export default {
                     await context
                         .supabaseAdmin
                         .from("client_companies")
-                        .select("is_active")
-                        .eq(
+                        .select("id")
+                        .in(
                             "id",
-                            clientLink.company_id
+                            companyIds
                         )
+                        .eq(
+                            "is_active",
+                            true
+                        )
+                        .limit(1)
                         .maybeSingle();
 
 
@@ -284,8 +301,7 @@ export default {
 
 
                 if (
-                    company?.is_active !==
-                        true
+                    !company
                 ) {
                     return successResponse();
                 }
@@ -305,7 +321,10 @@ export default {
                         `
                         id,
                         status,
-                        requested_at
+                        requested_at,
+                        reviewed_at,
+                        completed_at,
+                        updated_at
                         `
                     )
                     .eq(
@@ -342,18 +361,29 @@ export default {
                 }
 
 
-                const lastRequestedAt =
+                const cooldownTimestamp =
+                    recent.status ===
+                        "completed"
+                        ? recent.completed_at
+                        : recent.status ===
+                            "rejected"
+                            ? recent.reviewed_at
+                            : recent.updated_at;
+
+
+                const lastHandledAt =
                     Date.parse(
+                        cooldownTimestamp ||
                         recent.requested_at
                     );
 
 
                 if (
                     Number.isFinite(
-                        lastRequestedAt
+                        lastHandledAt
                     ) &&
                     Date.now() -
-                        lastRequestedAt <
+                        lastHandledAt <
                         10 * 60 * 1000
                 ) {
                     return successResponse();
