@@ -77,7 +77,7 @@ The only repository-side production operation in Block 1A was creation and push 
 
 - 1A — GitHub verification and V3 freeze: **COMPLETE**
 - 1B — Repository and workflow audit: **COMPLETE**
-- 1C — Supabase schema and migration audit: **PENDING**
+- 1C — Supabase schema and migration audit: **COMPLETE**
 - 1D — Current business flow mapping: **PENDING**
 - 1E — V4 gap analysis and Phase 2 inputs: **PENDING**
 
@@ -529,3 +529,767 @@ Block 1C must therefore verify against the real Supabase database:
 - whether all required historical/core migrations exist in the repository
 
 No assumption from the old handoff is accepted as proof.
+
+---
+
+## Block 1C — Supabase schema and migration audit
+
+Status: **COMPLETE**
+
+Live project verified:
+
+- Supabase project name: `cm-logistics-v3`
+- Project ref: `bqrwcgortfmjjdywqzqu`
+- Status during audit: `ACTIVE_HEALTHY`
+- Region: `eu-central-1`
+
+All live-database inspection performed in this block was read-only.
+
+No migration, DDL, DML, role change, grant change or production data change was executed.
+
+### Migration history
+
+Repository contains exactly 13 migration files:
+
+1. `20260815162400_create_fixed_locations.sql`
+2. `20260816121500_orders_assign_location_load.sql`
+3. `20260816123700_orders_assign_location_load_lock_order.sql`
+4. `20260816135200_trips_admin_driver_archive.sql`
+5. `20260816143500_trips_get_driver_archive.sql`
+6. `20260816154500_trips_admin_bioexis_report.sql`
+7. `20260817042000_dispatcher_operations_authorization.sql`
+8. `20260817080500_client_single_active_site.sql`
+9. `20260817102500_trips_official_bioexis_weight.sql`
+10. `20260817104500_official_weight_kg_display_fix.sql`
+11. `20260817144000_password_reset_requests.sql`
+12. `20260817162500_password_reset_admin_workflow.sql`
+13. `20260818070000_password_reset_active_client_memberships.sql`
+
+The live `supabase_migrations.schema_migrations` table contains the exact same 13 versions and names.
+
+### Migration baseline status
+
+**INCOMPLETE**
+
+The live production database contains the complete core V3 schema, RBAC model, fleet model and core order/trip RPCs, but the repository migration history begins only at:
+
+`20260815162400_create_fixed_locations`
+
+The migrations that originally created the following core objects are not present in the repository:
+
+- core profiles/RBAC schema
+- client companies/sites/users
+- orders
+- order assignments
+- drivers
+- trucks
+- trailers
+- driver home trucks
+- vehicle assignments
+- trips
+- trip stops
+- trip segments
+- many core helper functions
+- many core lifecycle RPCs
+- original indexes, constraints, RLS and grants
+
+Therefore an empty Supabase database **cannot be reconstructed from the current repository migrations alone**.
+
+This is a reproducibility gap, not evidence that the current production schema is missing or broken.
+
+A reproducible baseline must be created safely in a later phase. No baseline migration is created in Phase 1.
+
+### Relevant live tables
+
+All required relevant tables exist in `public` and have RLS enabled:
+
+- `profiles`
+- `roles`
+- `permissions`
+- `user_roles`
+- `role_permissions`
+- `client_companies`
+- `client_sites`
+- `client_users`
+- `orders`
+- `order_assignments`
+- `trips`
+- `trip_stops`
+- `trip_segments`
+- `drivers`
+- `trucks`
+- `trailers`
+- `driver_home_trucks`
+- `vehicle_assignments`
+
+### Verified status values
+
+`orders.status`:
+
+- `pending`
+- `partial`
+- `assigned`
+- `in_progress`
+- `completed`
+- `cancelled`
+
+`order_assignments.status`:
+
+- `assigned`
+- `accepted`
+- `en_route`
+- `arrived`
+- `loaded`
+- `completed`
+- `cancelled`
+
+`trips.status`:
+
+- `planned`
+- `active`
+- `completed`
+- `cancelled`
+
+`trip_stops.status`:
+
+- `waiting`
+- `en_route`
+- `loaded`
+
+`trip_segments.status`:
+
+- `active`
+- `completed`
+
+`vehicle_assignments.assignment_mode`:
+
+- `permanent`
+- `temporary_for_trip`
+
+`roles.code`:
+
+- `admin`
+- `dispatcher`
+- `driver`
+- `client`
+
+### Orders — verified database invariants
+
+`orders` contains both canonical integer kilograms and compatibility/display tons.
+
+Important columns include:
+
+- `id`
+- `order_number`
+- `company_id`
+- `site_id`
+- `requested_kg`
+- `requested_tons`
+- `note`
+- `status`
+- company/site snapshots
+- coordinates snapshots
+- `loading_ramp_snapshot`
+- `created_by`
+- `completed_at`
+- `cancelled_at`
+- `created_at`
+- `updated_at`
+
+DB constraints verify:
+
+- `requested_kg > 0`
+- `order_number` is unique
+- company and site must match through composite FK:
+  `(company_id, site_id) -> client_sites(company_id, id)`
+- required snapshots cannot be blank
+- coordinate snapshots must be both null or both present
+- terminal timestamps must match terminal status
+- exact status list is DB-enforced
+
+### Order assignments — verified database invariants
+
+Important columns include:
+
+- `order_id`
+- `vehicle_assignment_id`
+- `driver_id`
+- `truck_id`
+- `trailer_id`
+- nullable `trip_id`
+- `assigned_kg`
+- `loaded_kg`
+- `status`
+- composition snapshots
+- `assigned_by`
+- `assigned_at`
+- `completed_at`
+- `cancelled_at`
+- `cancelled_by`
+
+DB constraints verify:
+
+- `assigned_kg > 0`
+- `loaded_kg` cannot be negative
+- started assignment states require `trip_id`
+- terminal timestamps must match status
+- composition references are real FKs
+
+Critical DB triggers:
+
+`cm_private.enforce_order_assignment_capacity()`
+
+- locks the Order
+- blocks moving an existing assignment to another Order
+- prevents total non-cancelled assignment kg from exceeding requested kg
+
+`cm_private.enforce_truck_assignment_capacity()`
+
+- locks the Truck
+- blocks rewriting the historical composition of an existing assignment
+- validates a new assignment against a real active `vehicle_assignment`
+- enforces maximum operational truck load of exactly `24000 kg`
+
+`cm_private.enforce_order_requested_capacity()`
+
+- blocks reducing `requested_kg` below already allocated non-cancelled kg
+
+`cm_private.sync_order_allocation_status()`
+
+- locks the Order
+- derives current Order status from its assignments
+- produces `pending`, `partial`, `assigned`, `in_progress`, or `completed`
+- keeps terminal timestamps synchronized
+
+`cm_private.guard_loading_ramp_assignment()`
+
+- loading-ramp cargo cannot be introduced after ordinary addresses
+- two different loading-ramp sites cannot coexist on the same operational Truck
+- loading-ramp cargo cannot be newly inserted into an already-started Trip
+- more cargo from the already-established same ramp remains allowed
+
+Therefore capacity and allocation integrity are not frontend-only rules.
+
+### Current allocation RPCs
+
+`orders_assign_load(uuid, uuid, bigint) -> uuid`
+
+Verified behavior:
+
+- `SECURITY DEFINER`
+- empty `search_path`
+- requires `orders.manage`
+- locks Truck first
+- rejects Truck already in an active Trip
+- locks/revalidates active composition
+- requires permanent ready composition
+- locks Order
+- enforces Order remaining quantity
+- enforces Truck 24,000 kg capacity
+- inserts `order_assignments` with composition snapshots
+
+`orders_assign_location_load(uuid, uuid, bigint) -> jsonb`
+
+Verified behavior:
+
+- `SECURITY DEFINER`
+- requires `orders.manage`
+- physical location identity is `company_id + site_id`
+- locks Truck and relevant Orders
+- allocation order is `created_at`, then `id`
+- maximum Truck capacity is 24,000 kg
+- delegates each oldest-first Order slice to `orders_assign_load`
+
+`orders_cancel_assignment(uuid) -> jsonb`
+
+Verified behavior:
+
+- requires `orders.manage`
+- locks Truck before assignment
+- can cancel only before Trip start:
+  `trip_id IS NULL` and status `assigned`
+- cancellation preserves history; it does not delete the assignment
+- DB trigger recalculates Order status
+
+### Trip table
+
+Important columns:
+
+- `id`
+- `trip_number`
+- `primary_driver_id`
+- `status`
+- `note`
+- `created_by`
+- `started_at`
+- `completed_at`
+- `cancelled_at`
+- `official_unloaded_kg`
+- timestamps
+
+DB lifecycle constraints verify:
+
+- `planned`: no started/completed/cancelled timestamps
+- `active`: primary driver and `started_at` required
+- `completed`: primary driver, started and completed timestamps required
+- `cancelled`: `cancelled_at` required
+- completed/cancelled timestamps cannot coexist
+
+`official_unloaded_kg`:
+
+- positive when present
+- maximum `99999`
+- completed trips require an official value for new/updated rows
+
+The completed-weight requirement is currently `NOT VALID`, intentionally preserving older historical rows without invented values.
+
+### Trip stops
+
+Important verified invariants:
+
+- `UNIQUE(order_assignment_id)`
+- `UNIQUE(trip_id, stop_number)`
+- `stop_number >= 1`
+- assigned kg snapshot must be positive
+- latitude/longitude ranges are DB checked
+- waiting/en-route stops have no `loaded_at`
+- loaded stops require `loaded_at`
+
+The unique assignment constraint is DB proof of:
+
+**1 `order_assignment` = 1 `trip_stop`**
+
+### Trip segments
+
+Important verified invariants:
+
+- `UNIQUE(trip_id, segment_number)`
+- segment number >= 1
+- `start_km >= 0`
+- `end_km >= start_km` when present
+- active segment:
+  - `end_km IS NULL`
+  - `ended_at IS NULL`
+- completed segment:
+  - `end_km IS NOT NULL`
+  - `ended_at IS NOT NULL`
+
+Partial unique indexes enforce at most one active segment per:
+
+- Trip
+- Driver
+- Truck
+- Trailer
+- Vehicle Assignment
+
+This confirms the historical-multiple / one-active-segment model at DB level.
+
+### Vehicle assignment model
+
+`vehicle_assignments` includes:
+
+- nullable `driver_id`
+- `truck_id`
+- nullable `trailer_id`
+- `assignment_mode`
+- nullable `temporary_trip_id`
+- nullable `previous_assignment_id`
+- `started_at`
+- nullable `ended_at`
+- `ended_reason`
+- timestamps
+
+DB constraints enforce:
+
+- modes are only `permanent` / `temporary_for_trip`
+- temporary assignment requires a Driver
+- permanent assignment has no `temporary_trip_id`
+- temporary assignment requires a `temporary_trip_id`
+- end time cannot precede start time
+
+Partial unique indexes enforce only one active assignment for each:
+
+- Driver
+- Truck
+- Trailer
+
+`driver_home_trucks` independently preserves permanent home ownership:
+
+- primary key: `driver_id`
+- unique: `truck_id`
+
+### Fleet RPC locking
+
+`fleet_set_permanent_composition`
+
+- requires `fleet.manage`
+- locks Truck, current assignment, home relation, relevant Driver and Trailer
+- blocks composition change during active Trip
+- blocks normal garage editing of a temporary composition
+- protects Home relations when Driver is temporarily away
+- validates Driver/Trailer conflicts
+- ends previous assignment as history
+- writes a new permanent `vehicle_assignment`
+
+`fleet_release_truck`
+
+- requires `fleet.manage`
+- locks Truck, Home relation and current assignment
+- blocks release while Truck is in active Trip
+- blocks release while Home Driver is away in a temporary active Trip
+- blocks normal release of temporary composition
+- ends current assignment and removes Home relation
+
+### Trip start boundary
+
+`trips_start_driver(bigint) -> jsonb`
+
+Verified live behavior:
+
+- requires authenticated active primary Driver
+- rejects second active Trip
+- resolves the real active permanent composition
+- locks Truck
+- locks and revalidates `vehicle_assignment`
+- locks all Orders used by the pending cargo in deterministic order
+- checks active Driver/Truck/Trailer/Assignment conflicts
+- rejects stale cargo assigned to an old composition
+- validates active Client/Site and GPS coordinates
+
+Then, in the same PostgreSQL transaction, it:
+
+1. creates `trips`
+2. creates the first `trip_segment`
+3. creates `trip_stops`
+4. links existing `order_assignments` to the new Trip
+
+Current stop ordering at Trip start is:
+
+1. `loading_ramp_snapshot DESC`
+2. `order_assignment.assigned_at`
+3. `order_assignment.id`
+
+The first stop becomes `en_route`; remaining stops become `waiting`.
+
+Important current V3 boundary:
+
+Although `trips.status` supports `planned`, the normal current flow does **not** create a persistent planned Trip during dispatch assignment.
+
+The actual Trip is created when the Driver presses Start.
+
+### Stop progression
+
+`trips_mark_stop_loaded`
+
+uses an authenticated wrapper and protected internal implementation.
+
+The internal operation:
+
+- locks active Trip/current stop
+- locks the next waiting stop
+- locks affected Orders in stable order
+- changes current stop and assignment to loaded
+- changes next stop and assignment to en-route
+
+### Trip completion and official BIOEXIS weight
+
+Authenticated frontend uses:
+
+`trips_finish_driver(bigint, bigint)`
+
+The second parameter is exact official unloaded kg.
+
+The wrapper:
+
+- locks active Trip
+- writes official weight
+- invokes the existing finish lifecycle inside the same transaction
+
+The old one-argument function is no longer executable by `authenticated`.
+
+Completion lifecycle:
+
+- requires all Trip Stops loaded
+- locks active Trip
+- locks active Segment
+- locks all Orders belonging to the Trip
+- closes active Segment with final odometer
+- completes non-cancelled assignments
+- restores temporary fleet state where required
+- marks Trip completed
+
+Trip total km is calculated as the sum of:
+
+`segment.end_km - segment.start_km`
+
+for completed segments.
+
+### Driver handoff lifecycle
+
+`trips_request_driver_handoff`
+
+- locks active Trip and active Segment
+- validates handoff km
+- validates receiving Driver
+- rejects conflicting active Trip/Segment/request
+- locks relevant fleet state
+- captures restore snapshot
+- creates a pending handoff request
+
+`trips_accept_driver_handoff`
+
+- locks request
+- locks Trip and outgoing active Segment
+- locks/revalidates receiving Driver
+- locks relevant active vehicle assignments
+- verifies current fleet snapshot still equals captured snapshot
+- ends current operational fleet assignments
+- creates a new `temporary_for_trip` vehicle assignment on the same Truck/Trailer
+- closes Driver 1 Segment at handoff km
+- starts Driver 2 Segment at the same handoff km
+- moves only waiting/en-route assignment ownership to Driver 2
+- preserves loaded historical ownership
+- changes `trips.primary_driver_id` to Driver 2
+
+The shared handoff km is an exact boundary and does not duplicate payable distance when segment deltas are summed.
+
+### Truck-change lifecycle
+
+Public truck-change RPCs are authorization/interaction wrappers around restricted internal `_unchecked` functions.
+
+Request flow:
+
+- requires `trips.manage`
+- permanent change additionally requires `fleet.manage`
+- locks active Trip and Segment
+- locks both Trucks in stable order
+- locks relevant fleet assignments
+- validates operational-load and active-trip conflicts
+- captures a fleet snapshot
+- creates `pending_driver_km` request
+
+Driver confirmation:
+
+- locks request
+- locks Trip and source Segment
+- locks both Trucks
+- locks relevant Orders
+- locks Trip Stops
+- locks relevant Vehicle Assignments
+- rejects stale snapshot
+
+It then:
+
+- closes old vehicle assignment
+- creates replacement vehicle assignment
+- closes old Segment
+- creates new active Segment
+- for waiting/en-route stops:
+  - cancels old `order_assignment`
+  - creates a replacement assignment on the new Truck
+  - rewires the existing `trip_stop`
+- leaves loaded Stops and their historical assignments untouched
+
+### Temporary fleet restoration
+
+A live trigger:
+
+`trips_restore_temporary_fleet_before_completion`
+
+calls:
+
+`cm_private.restore_temporary_fleet_before_trip_completion()`
+
+When a Trip transitions from active to completed, the helper restores pending temporary fleet state before completion is finalized.
+
+### RBAC — verified live model
+
+`cm_private.is_active_user()`
+
+requires an active `profiles` row for `auth.uid()`.
+
+`cm_private.has_permission(code)`
+
+requires:
+
+- active user
+- requested permission code exists
+
+Then authorization succeeds if either:
+
+- user has any `admin` role, or
+- one of the user's roles has that permission in `role_permissions`
+
+This means Admin is a wildcard over all defined permission codes even though Admin currently has no explicit `role_permissions` rows.
+
+`get_my_primary_role()`
+
+returns the user's `is_primary = true` role only when the profile is active.
+
+### Current role/permission matrix
+
+Admin:
+
+- implicit access to every existing permission code through `has_permission`
+
+Dispatcher explicit permissions:
+
+- `clients.manage`
+- `clients.read`
+- `discrepancies.manage`
+- `discrepancies.read`
+- `drivers.manage`
+- `fleet.manage`
+- `fleet.read`
+- `orders.manage`
+- `orders.read`
+- `trips.manage`
+- `trips.read`
+- `users.read`
+
+Driver:
+
+- no explicit role-permission rows
+
+Client:
+
+- no explicit role-permission rows
+
+The proposed future codes:
+
+- `relations.plan`
+- `relations.dispatch`
+
+do not exist and were not created in Phase 1.
+
+### RLS
+
+All relevant tables have RLS enabled.
+
+Important SELECT policies:
+
+- Clients: `clients.read` or membership in own company
+- Orders: `cm_private.can_read_order`
+- Order assignments: inherited through `can_read_order(order_id)`
+- Trips/Stops/Segments: `cm_private.can_read_trip`
+- Fleet: own Driver/Home/active composition or `fleet.read`
+- Profiles: self or `users.read`
+
+`can_read_order` allows:
+
+- `orders.read`
+- client membership of Order company
+- Driver with a non-cancelled assignment to the Order
+
+`can_read_trip` allows:
+
+- `trips.read`
+- active Driver who is primary Driver
+- active Driver who has a Segment in the Trip
+
+Some older overlapping SELECT policies remain on `trips` and `trip_segments`.
+They are an audit/hygiene finding, not changed in Phase 1.
+
+### Grants and SECURITY DEFINER findings
+
+Core public RPCs are normally:
+
+- not executable by `anon`
+- executable by `authenticated`
+- executable by `service_role`
+
+Internal `_unchecked` trip mutation functions are restricted from `authenticated` and are executable by `service_role`.
+
+However, six Driver handoff RPCs currently have `EXECUTE` for `anon`:
+
+- `trips_request_driver_handoff`
+- `trips_accept_driver_handoff`
+- `trips_cancel_driver_handoff`
+- `trips_reject_driver_handoff`
+- `trips_get_driver_handoff_state`
+- `trips_list_driver_handoff_candidates`
+
+They are `SECURITY DEFINER`.
+
+Supabase Security Advisor independently reports these as:
+
+`Public Can Execute SECURITY DEFINER Function`
+
+with severity `WARN`.
+
+Their current bodies depend on `auth.uid()` and mutation paths reject missing/invalid authenticated identity, but the grants are broader than necessary.
+
+Recommended future action:
+
+- explicitly review and revoke unintended anon EXECUTE grants in a dedicated migration
+- do not change them directly in production
+- regression-test driver handoff after grant cleanup
+
+This is a verified security-hygiene finding, not a Phase 1 production fix.
+
+### Table-grant hygiene findings
+
+Some older table-level grants are broader than the normal application requirement, including grants to `anon` on tables such as `roles`, `user_roles` and `trip_stops`.
+
+RLS remains enabled and the relevant RLS policy boundaries prevent normal anonymous row access.
+
+These grants should still be normalized as part of a later security/baseline cleanup after tests.
+
+No grant was changed in Phase 1.
+
+### Security Advisor
+
+The live Supabase Security Advisor additionally reports informational tables with RLS enabled but no policies, including:
+
+- `permissions`
+- `role_permissions`
+- `roles`
+- `user_roles`
+
+This is consistent with those tables being intentionally inaccessible through normal row-level API access and used behind SECURITY DEFINER helpers/service operations.
+
+The advisor also reports leaked-password protection as disabled.
+
+These findings are recorded only; Phase 1 does not alter Auth settings.
+
+### Edge Functions — live vs repository
+
+Live active Edge Functions:
+
+- `admin-user-manage` — `verify_jwt = true`
+- `admin-client-registration` — `verify_jwt = true`
+- `client-register` — `verify_jwt = false`
+- `admin-password-reset` — `verify_jwt = true`
+- `password-reset-request` — `verify_jwt = false`
+
+This matches `supabase/config.toml`.
+
+No live Edge Function mismatch was found.
+
+### Block 1C conclusion
+
+The current production database schema is real and internally much more complete than the repository migration history.
+
+Critical V3 invariants for:
+
+- allocation
+- truck capacity
+- one active fleet resource
+- trip-stop uniqueness
+- trip-segment lifecycle
+- one active segment
+- fleet handoff/change
+- official BIOEXIS weight
+- completion history
+
+are protected at database/RPC level.
+
+The critical deficiency is **reproducibility**:
+
+the repository does not contain the original core baseline migrations.
+
+Block 1C is therefore complete, with:
+
+`migration_baseline_status = INCOMPLETE`
+
+It is not blocked because the live schema, constraints, indexes, triggers, RLS, grants and relevant RPC behavior were successfully verified.
