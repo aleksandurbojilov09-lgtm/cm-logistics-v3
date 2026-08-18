@@ -79,7 +79,7 @@ The only repository-side production operation in Block 1A was creation and push 
 - 1B — Repository and workflow audit: **COMPLETE**
 - 1C — Supabase schema and migration audit: **COMPLETE**
 - 1D — Current business flow mapping: **COMPLETE**
-- 1E — V4 gap analysis and Phase 2 inputs: **PENDING**
+- 1E — V4 gap analysis and Phase 2 inputs: **COMPLETE**
 
 ---
 
@@ -1851,3 +1851,457 @@ Current V3 has a clear operational boundary:
 The real Trip and its ordered Stops become historical/operational entities only when the Driver starts.
 
 This is the most important current-flow fact for the V4 relation-to-Trip integration design in Block 1E.
+
+---
+
+## Block 1E — V4 gap analysis and Phase 2 inputs
+
+Status: **COMPLETE**
+
+This section separates verified V3 facts from proposed V4 architecture.
+
+No recommendation in this section was implemented during Phase 1.
+
+### Verified V3 gaps
+
+The current production schema contains no dedicated Relation/Route/Planning tables.
+
+Current `trips` contains no:
+
+- `relation_id`
+- planned load date
+- expected return date
+- planning revision
+
+Current permission codes do not include:
+
+- `relations.plan`
+- `relations.dispatch`
+
+The current V3 dispatch boundary is:
+
+`Order -> order_assignment -> Driver start -> Trip`
+
+A current `order_assignment` already requires an operational Truck/Driver/Trailer composition.
+
+Therefore current `order_assignments` are not suitable as Planner-stage reservation records.
+
+### Recommended V4 boundary
+
+**Proposal: Relation owns planning; Trip owns execution and history.**
+
+The new planning layer should exist before the current Trip boundary.
+
+Before Trip start, Relation should own:
+
+- ordered operational locations
+- underlying Order allocations
+- planned load date
+- expected return date
+- Planner/Fleet workflow state
+- intended Fleet composition
+- revision/concurrency state
+- planning audit history
+
+After Trip start, existing V3 operational/history ownership should remain:
+
+- `order_assignments`
+- `trips`
+- `trip_stops`
+- `trip_segments`
+- odometer history
+- composition history
+- official BIOEXIS kilograms
+- archives
+
+### Recommended future concepts
+
+Phase 2 should design, but not assume final names for:
+
+1. Relation header
+2. ordered Relation Stop
+3. Relation Order Allocation
+4. Relation audit event
+5. user-scoped Dispatcher capability
+
+### Physical location and Order identity
+
+Verified V3 physical location identity is:
+
+`company_id + site_id`
+
+Existing:
+
+`orders-location-grouping.ts`
+
+already implements this identity and oldest-first ordering.
+
+Oldest-first is:
+
+1. `orders.created_at`
+2. `orders.id`
+
+Several Orders at one physical address may be grouped visually and operationally, but underlying Order records must remain separate.
+
+### Recommended Relation allocations
+
+A future Relation allocation should reference the actual:
+
+`orders.id`
+
+and store integer kilograms.
+
+One Relation physical Stop may contain several underlying Order allocations.
+
+This preserves the existing historical invariant:
+
+`1 order_assignment = 1 trip_stop`
+
+when the Relation is later materialized into a real Trip.
+
+### Reservation recommendation
+
+Recommended default:
+
+- `draft` does not hard-reserve Order quantity
+- `sent` reserves quantity
+- `assigned` keeps the reservation
+- withdrawal `sent -> draft` releases reservation
+- Trip start converts reservation to operational history
+
+Reason:
+
+An unfinished Planner draft should not indefinitely block valid Order quantity.
+
+This remains a proposal requiring Phase 2 approval.
+
+### Over-allocation protection
+
+Future available quantity should account for both legacy operational allocations and V4 reservations.
+
+Recommended formula:
+
+`available_kg = requested_kg - operational_allocated_kg - active_relation_reserved_kg`
+
+Every reservation-changing RPC should:
+
+- lock affected Orders
+- use deterministic lock ordering
+- re-read current quantities after locking
+- reject over-allocation
+- commit the mutation atomically
+
+### Relation capacity
+
+Verified business requirement:
+
+one Relation represents one Truck load.
+
+Maximum:
+
+`24000 integer kg`
+
+The DB must enforce this.
+
+Frontend tons remain display/input convenience only.
+
+### Fleet assignment recommendation
+
+Fleet Dispatcher assigns one intended:
+
+- Truck
+- Driver
+- Trailer
+
+Relation should store the selected planning identity and audit information.
+
+At real Trip start the backend must re-resolve and lock the actual current `vehicle_assignment`.
+
+The frontend must not be trusted to provide stale composition truth.
+
+If the intended composition is no longer valid, start must fail safely.
+
+### Truck conflicts
+
+Future Fleet assignment must lock the selected Truck before validation.
+
+It must reject conflicts including:
+
+- active Trip
+- incompatible legacy pending load
+- conflicting assigned Relation
+- invalid Driver/Truck/Trailer composition
+
+Open business decision:
+
+Can a Truck hold more than one future assigned Relation when planned ranges do not overlap?
+
+If no, use a simple single-active-future-assignment invariant.
+
+If yes, Phase 2 should design DB-protected date-range conflict prevention.
+
+### Recommended Relation-to-Trip transaction
+
+Recommended Trip-start materialization:
+
+1. lock Relation
+2. verify Relation status and revision
+3. lock selected Truck
+4. resolve and lock real active Fleet composition
+5. lock Relation allocations
+6. lock underlying Orders in deterministic order
+7. verify reservations
+8. create operational `order_assignments`
+9. create one Trip
+10. create first `trip_segment`
+11. create one `trip_stop` per assignment
+12. link Relation and Trip
+13. consume/release planning reservations
+14. commit atomically
+
+Failure at any step must roll back the entire operation.
+
+### Relation-to-Trip cardinality
+
+Recommended invariant:
+
+**one started Relation -> exactly one Trip**
+
+The one-to-one link should be DB protected.
+
+After start, operational truth remains the existing Trip model.
+
+### Withdrawal
+
+Planner may perform:
+
+`sent -> draft`
+
+only when:
+
+- no Fleet composition is assigned
+- no Trip is linked
+
+Withdrawal should release Relation reservations in the same transaction.
+
+### Assigned Relation editing
+
+Fleet Dispatcher may edit an assigned Relation only before real Trip start.
+
+Recommended checks:
+
+- no linked Trip
+- correct expected revision
+- rerun capacity validation
+- rerun Order reservation validation
+- rerun Fleet conflict validation
+
+After Trip creation, Relation planning mutations must be rejected.
+
+### Reorder, move and swap
+
+Cross-Relation reorder/move/swap should be one PostgreSQL transaction.
+
+Recommended deterministic lock sequence:
+
+1. involved Relation headers ordered by ID
+2. affected Stops ordered by ID
+3. affected Orders ordered by ID
+4. Fleet resources where necessary
+
+### Optimistic concurrency
+
+Recommended Relation field:
+
+`revision bigint`
+
+Planning mutations should require:
+
+`expected_revision`
+
+Use both:
+
+- PostgreSQL row locks for correctness
+- optimistic revision for stale-screen detection
+
+Successful mutation increments the Relation revision.
+
+### Audit events
+
+Future Relation audit history should record important changes such as:
+
+- created
+- sent
+- withdrawn
+- Fleet assigned
+- Fleet changed
+- Stop reordered
+- Stop moved
+- Stops swapped
+- allocation changed
+- Trip started
+
+Audit records must be server-side business data, never browser-local history.
+
+### Dispatcher capabilities
+
+Verified current primary role for both operational Dispatcher users is:
+
+`dispatcher`
+
+Recommended future direction:
+
+keep role-based routing as `dispatcher`, but distinguish Planner and Fleet authority with user-scoped capabilities.
+
+Candidate permission codes:
+
+- `relations.plan`
+- `relations.dispatch`
+
+These codes are proposals only and were not created in Phase 1.
+
+Admin wildcard semantics must remain compatible.
+
+### UI reuse
+
+Strong reuse/reference candidates:
+
+- shared Supabase client
+- shared Leaflet loader
+- routing/auth foundation
+- HTML utilities
+- location identity logic
+- oldest-first logic
+
+`orders-location-grouping.ts` is a strong pure-logic reuse/extraction candidate.
+
+`orders-map.ts` should be treated mainly as behavioral/visual reference because it is coupled to existing Order Assignment and selected-Truck state.
+
+The V4 Relation list and map should share one authoritative Stop-number source.
+
+### Minimum two-date Trip rule
+
+Verified existing Trip timestamps are:
+
+- `started_at timestamptz`
+- `completed_at timestamptz`
+
+Recommended V4 completed-Trip rule:
+
+`(completed_at AT TIME ZONE 'Europe/Sofia')::date >
+ (started_at AT TIME ZONE 'Europe/Sofia')::date`
+
+This is a calendar-date rule, not a 24-hour duration rule.
+
+Payable km must remain:
+
+sum of completed Segment odometer deltas.
+
+Do not split or duplicate km across calendar dates.
+
+### Archive compatibility
+
+Existing archive ownership should remain:
+
+- Trip count -> `trips.completed_at`
+- official cargo -> `trips.official_unloaded_kg`
+- payable km -> completed `trip_segments`
+
+Relation planning dates must not replace actual Trip timestamps in operational archives.
+
+### Legacy coexistence
+
+During V4 rollout, old V3 Order Assignment operations and new Relation reservations may coexist temporarily.
+
+Phase 2 must explicitly prevent:
+
+- one Order quantity being consumed by both models
+- one Truck being committed to conflicting legacy/V4 work
+
+This protection must exist in DB/RPC logic, not only in UI.
+
+### Reproducible baseline prerequisite
+
+Verified migration status remains:
+
+`INCOMPLETE`
+
+Recommended future baseline strategy:
+
+1. create a reviewed schema-only V3 core baseline
+2. version it before `20260815162400`
+3. rebuild an isolated empty Supabase staging project
+4. apply baseline plus the existing 13 migrations
+5. compare resulting schema with production expectations
+6. run V3 regression tests
+7. only after proof, deliberately repair production migration history to mark the baseline as already applied
+8. never execute baseline DDL against the already-populated production schema
+
+### Staging recommendation
+
+Do not create staging in Phase 1.
+
+Recommended Phase 2 staging:
+
+an isolated empty Supabase project in the same region, primarily to prove repository reproducibility before V4 feature migrations.
+
+No paid service is authorized by this recommendation.
+
+### Security findings carried forward
+
+Future separately tested security cleanup should review:
+
+- unintended `anon` EXECUTE on six Driver handoff SECURITY DEFINER RPCs
+- broad legacy table grants
+- Supabase Auth leaked-password protection setting
+
+Do not silently bundle these changes into unrelated Relation behavior.
+
+### Required Phase 2 test families
+
+Phase 2 planning should include:
+
+- empty DB rebuild
+- V3 regression
+- 24,000 kg Relation capacity
+- oldest-first allocation
+- concurrent Planner send
+- over-allocation rejection
+- withdrawal/release
+- stale revision
+- reorder
+- cross-Relation move
+- cross-Relation swap
+- Fleet conflicts
+- assigned edit before start
+- rejection after start
+- exactly one Relation -> one Trip
+- exactly one Assignment -> one Trip Stop
+- stale Fleet composition rollback
+- two-Europe/Sofia-date completion
+- Driver handoff continuity
+- Truck-change continuity
+- no cargo double-count
+- no km double-count
+- archive boundaries
+- BIOEXIS official kilograms
+- Planner/Fleet capability separation
+- Admin compatibility
+
+### Open business questions
+
+Phase 2 requires explicit decisions on:
+
+1. Can one Truck hold multiple future assigned Relations if planned date ranges do not overlap?
+2. Should reservation begin at `draft`, or only when Planner sends the Relation? Audit recommendation: reservation begins on send.
+3. When several Orders share one physical location, should the Driver perform one grouped physical confirmation or independently progress each underlying Trip Stop?
+4. If planned dates change after Fleet assignment, must Fleet assignment be reconfirmed?
+5. May Fleet Dispatcher replace Driver/Trailer on an assigned pre-start Relation without first returning it to `sent`?
+
+### Block 1E conclusion
+
+The existing V3 operational Trip/Segment/Fleet/Archive model can be preserved.
+
+Recommended V4 architecture adds a transactional planning/reservation layer before the current Trip boundary.
+
+No V4 schema, permission, UI or production behavior was implemented in Phase 1.
