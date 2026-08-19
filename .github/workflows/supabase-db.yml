@@ -52,7 +52,7 @@ jobs:
 
           extract_local() {
             while IFS='|' read -r local remote rest; do
-              local="$(printf '%s' "$local" | tr -d '[:space:]')"
+              local="$(printf '%s' "$local" | sed 's/[[:space:]`]//g')"
               if [[ "$local" =~ ^[0-9]{14}$ ]]; then
                 printf '%s\n' "$local"
               fi
@@ -61,7 +61,7 @@ jobs:
 
           extract_remote() {
             while IFS='|' read -r local remote rest; do
-              remote="$(printf '%s' "$remote" | tr -d '[:space:]')"
+              remote="$(printf '%s' "$remote" | sed 's/[[:space:]`]//g')"
               if [[ "$remote" =~ ^[0-9]{14}$ ]]; then
                 printf '%s\n' "$remote"
               fi
