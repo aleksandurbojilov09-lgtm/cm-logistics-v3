@@ -41,6 +41,24 @@ Phase 3 staging proof изпълни точно тази последовате�
 
 SHA-256:
 
-`92537e68b5679bd1c869ad88d64c38b529c31c5bea32262c6c1327223cf6b299`
+`eb2449ea9963902c6ab8181669abd1a28f8e7da8105b6253eafe696ce060b307`
 
 Виж `docs/V4-PHASE-3-BASELINE-PROOF.md` за пълното доказателство и ограниченията.
+
+
+## Phase 3C correction
+
+Phase 3C добавя explicit USAGE, SELECT и UPDATE права за:
+
+- public.orders_order_number_seq
+- public.trips_trip_number_seq
+
+за ролите:
+
+- anon
+- authenticated
+- service_role
+
+Production broad default privileges не се копират в baseline-а.
+
+Corrected baseline + unchanged 13 migrations е доказан успешно върху празна изолирана Supabase база.

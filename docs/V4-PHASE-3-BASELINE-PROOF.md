@@ -24,7 +24,8 @@ Production беше използвана само read-only за schema/migratio
 ## Baseline artifact
 
 - Path: `supabase/baseline/20260815000000_v3_core_baseline.sql`
-- SHA-256: `92537e68b5679bd1c869ad88d64c38b529c31c5bea32262c6c1327223cf6b299`
+- Original Phase 3 SHA-256: `92537e68b5679bd1c869ad88d64c38b529c31c5bea32262c6c1327223cf6b299`
+- Corrected Phase 3C SHA-256: `eb2449ea9963902c6ab8181669abd1a28f8e7da8105b6253eafe696ce060b307`
 - UTF-8 byte size during proof: `215877`
 - Baseline е извън активната `supabase/migrations/` директория.
 - Baseline не съдържа production business data, Auth users, passwords, tokens или production PII.
@@ -79,7 +80,7 @@ Scratch schema-ите бяха премахнати след сравнение�
 - Function bodies: **MATCH / 0 differences**
 - Effective function EXECUTE grants: **MATCH / 0 differences**
 - Table grants: **MATCH / 0 differences**
-- Sequence ACLs: **MATCH / 0 differences**
+- Sequence ACLs: **ORIGINAL PHASE 3 RESULT WAS INCORRECT — corrected by Phase 3C**
 - Extensions relevant to the proven final state: **MATCH**
 - Enums: `0 / 0`
 - Views/materialized views: `0 / 0`
@@ -194,3 +195,29 @@ If a future test run fails, fix the baseline or test fixture and repeat in an is
 ## Phase 3 conclusion
 
 The V3 core is reproducible from an explicit historical baseline plus the existing 13 migrations. Phase 3 establishes the database foundation required before any V4 Relation implementation. Phase 4 is not started by this proof.
+
+
+## Phase 3C erratum
+
+Original Phase 3 incorrectly reported:
+
+`Sequence ACLs: MATCH / 0 differences`
+
+The original baseline missed explicit sequence privileges for:
+
+- `public.orders_order_number_seq`
+- `public.trips_trip_number_seq`
+
+Phase 3C corrected these privileges for:
+
+- `anon`
+- `authenticated`
+- `service_role`
+
+Corrected baseline SHA-256:
+
+`eb2449ea9963902c6ab8181669abd1a28f8e7da8105b6253eafe696ce060b307`
+
+Corrected baseline + unchanged 13 migrations was rebuilt successfully on an empty isolated Supabase database.
+
+See `docs/V4-PHASE-3C-SEQUENCE-ACL-CORRECTION.md`.

@@ -173,6 +173,8 @@ create table public.orders (
   loading_ramp_snapshot boolean default false not null
 );
 
+grant usage, select, update on sequence public.orders_order_number_seq to anon, authenticated, service_role;
+
 create table public.permissions (
   id uuid default gen_random_uuid() not null,
   code text not null,
@@ -340,6 +342,8 @@ create table public.trips (
   created_at timestamp with time zone default now() not null,
   updated_at timestamp with time zone default now() not null
 );
+
+grant usage, select, update on sequence public.trips_trip_number_seq to anon, authenticated, service_role;
 
 create table public.trucks (
   id uuid default gen_random_uuid() not null,
